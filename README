@@ -57,7 +57,7 @@ All required libraries will be downloaded as a dependencies. Supported versions 
 https://github.com/tomaszmakarewicz/Dynamics
 You can download latest master snapshot by command:
         git clone git://github.com/tomaszmakarewicz/Dynamics.git
-Than run PyMOL as a root. On the top Menu choose Plugin->Manage Plugins->Install... Than choose dynamics.py file. After installation restart PyMOL with normal user privilege.
+Than run PyMOL as a root. On the top Menu choose Plugin->Manage Plugins->Install... Than choose dynamics_pymol_plugin.py file. After installation restart PyMOL with normal user privilege.
 ________________
 
 
