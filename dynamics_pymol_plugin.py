@@ -23,7 +23,7 @@ except:
 ##Globals variables
 help_name = ["-h", "h", "-help", "help"]
 clean_name = ["-c", "c", "clean", "-clean"]
-plugin_ver = " 1.0.1"
+plugin_ver = " 1.0.2pre"
 
 stop = 0
 restraints_var = 0
@@ -883,10 +883,7 @@ def select_file(entry, project_name):
 			os.makedirs(dir_path_project)
 			shutil.copyfile(file.name, dir_path_project + name2[0] + ".pdb")
 			print "pdb_copied"
-		elif os.path.isfile(dir_path_project +"options.pickle") == True:
-			load1()
 		set_config_files(name2[0])	
-		save1()
 	except:
 		pass
 	root.destroy()
@@ -980,11 +977,12 @@ def set_config_files(name, v2_group="", v3_field="", v4_water="", water_v="", ch
 		v3_field.set(gromacs.force_field_list[gromacs2.field-1][0])
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
-		checkbox_restraints.set(restraints_var)
 		if restraints_var == 0 and config_button_restraints != "":
+			checkbox_restraints.set(restraints_var)
 			config_button_restraints.configure(state=DISABLED)
 		elif restraints_var == 1 and config_button_restraints != "":
-				config_button_restraints.configure(state=ACTIVE)
+			checkbox_restraints.set(restraints_var)
+			config_button_restraints.configure(state=ACTIVE)
 	else:
 		progress = Progress_status(dir_path_project)
 		if os.path.isfile(dir_path_dynamics + "em.mdp"):
@@ -1014,9 +1012,9 @@ def set_config_files(name, v2_group="", v3_field="", v4_water="", water_v="", ch
 			main_status_bar(check_var.get(), main_bar)
 	except:
 		pass
+	save1()
 	if from_pymol == 1:
 		print "cmd saved"
-		save1()
 		cmd.save(dir_path_project+name+".pdb", name) #PyMOL API
 
 #This function will create the window with configuration files based on MDP class
@@ -1249,21 +1247,16 @@ def dynamics(name = "h"):
 	elif clean_name.count(name) == 1:
 		clean_option()
 		status = ["fail", "Cleaned"]
-	else:
-		pass
 	
 	##Starting real calculations
 	##Preprocess
 	if status[0] == "ok":
 		preproces(name, file_path)
-	elif status[0] == "fail":
-		pass
+		save1()
 	
 	##Checking GROMACS
 	if status[0] == "ok":
 		status = gromacs.status
-	elif status[0] == "fail":
-		pass
 	
 	##Checking mdp files
 	if status[0] == "ok" and stop == 0 and progress.to_do[0] == 1:
@@ -1355,7 +1348,6 @@ def preproces(name, file_path):
 	if os.path.isdir(dir_path_project) == False:
 		os.makedirs(dir_path_project)
 	os.chdir(dir_path_project)
-	save1()
 
 ##Checking if given varaibles are correct - depreciated
 def check_variable(name, field1, field2, group):
@@ -1424,9 +1416,9 @@ def save1():
 	if os.path.isdir(dir_path_project) == False:
 		os.makedirs(dir_path_project)
 	destination_option = file(dir_path_project + "options.pickle", "w")
-	pickle.dump([gromacs.version, gromacs2, em_file, pr_file, md_file, progress, restraints_var], destination_option)
+	pickle.dump([plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress, restraints_var], destination_option)
 	del destination_option
-	print "options saved"
+	#print "options saved"
 
 ##Load all settings from options.pickle file	
 def load1():
@@ -1435,14 +1427,19 @@ def load1():
 	pickle_file = file(dir_path_project +"options.pickle")
 	options = pickle.load(pickle_file)
 	
-	gromacs.version = options[0]
-	gromacs2 = options[1]
-	em_file = options[2]
-	pr_file = options[3]
-	md_file = options[4]
-	progress = options[5]
-	restraints_var = options[6]
-	print "options loaded"
+	print "Project was created for Dynamics PyMOL Plugin"+options[0]+" and "+options[1]
+	if gromacs.version != options[1]:
+		print "GROMACS versions not identical."
+	if options[0][1:4] == "1.0":
+		print "1.0 compatibility layer"
+		#gromacs.version = options[1]
+		gromacs2 = options[2]
+		em_file = options[3]
+		pr_file = options[4]
+		md_file = options[5]
+		progress = options[6]
+		restraints_var = options[7]
+		#print "options loaded"
 
 ##Text for "Help"
 def help_option():
