@@ -138,9 +138,9 @@ class Gromacs_output:
 			print "GROMACS not detected."
 			import platform
 			print "System: "+platform.platform()
-			if platform.system() == "CHLinux": #CH addet to turn it off for a while (need to build and upload new GROMACS).
-				if platform.machine() == "i686":
-					gromacs_path = "export PATH="+dir_path_dynamics+'gromacs-4.5.5-linux-32/bin:"${PATH}"; export LD_LIBRARY_PATH='+dir_path1+"/gromacs-4.5.5-linux-32/lib; "
+			if platform.system() == "Linux":
+				if platform.machine() == "CHi686": #CH addet to turn it off for a while (need to build and upload new GROMACS)
+					gromacs_path = "export PATH="+dir_path_dynamics+'gromacs-4.5.5-linux-32/bin:"${PATH}"; export LD_LIBRARY_PATH='+dir_path_dynamics+"/gromacs-4.5.5-linux-32/lib; "
 					gromacs_version = "GROMACS 4.5.5"
 					if os.path.isdir(dir_path_dynamics+"gromacs-4.5.5-linux-32/") == False:
 						import urllib, tarfile
@@ -153,7 +153,7 @@ class Gromacs_output:
 					if os.path.isdir(dir_path_dynamics+"gromacs-4.5.5-linux-64/") == False:
 						import urllib, tarfile
 						print "Downloading GROMACS 4.5.5 for your platform"
-						urllib.urlretrieve("http://ubuntuone.com/2gxUkoL4xiAtjwX96ZTcAJ", dir_path_dynamics+"gromacs-4.5.5-linux-64.tar.bz2")
+						urllib.urlretrieve("http://ubuntuone.com/27vlaNtNV6mDHs7qu7qXYv", dir_path_dynamics+"gromacs-4.5.5-linux-64.tar.bz2")
 						tarfile.open(dir_path_dynamics+"gromacs-4.5.5-linux-64.tar.bz2").extractall(dir_path_dynamics+"gromacs-4.5.5-linux-64/")
 				else:
 					print "Please install and setup correctly GROMACS for your platform. Aborting."
@@ -165,7 +165,11 @@ class Gromacs_output:
 		self.path = gromacs_path
 		if status[0] == "ok":
 			self.version = gromacs_version
-	
+
+		subprocess.call(self.path+"echo -e '"+for_water+"\n1' | pdb2gmx &> "+dir_path_dynamics+"test_gromacs.txt", executable="/bin/bash", shell=True)
+		test_gromacs = open(dir_path_dynamics+"test_gromacs.txt","r")
+		lista_gromacs = test_gromacs.readlines()
+
 		print "Reading available force fields"	
 		force_field_start_line = 0
 		while lista_gromacs[force_field_start_line] != "Select the Force Field:\n":
@@ -212,7 +216,7 @@ class Gromacs_output:
 	##This function will update water list if force field is changed.
 	def water_update(self, force_field_number):
 		print "Updateing available water models"
-		subprocess.call(self.path + "echo -e '"+str(force_field_number)+"\n1' | pdb2gmx &> "+dir_path_dynamics+"test_gromacs.txt", executable="/bin/bash", shell=True)
+		subprocess.call(self.path+"echo -e '"+str(force_field_number)+"\n1' | pdb2gmx &> "+dir_path_dynamics+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dir_path_dynamics+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
 
@@ -243,7 +247,7 @@ class Gromacs_output:
 		os.chdir(dir_path_project)
 		name = dir_path_project.split("/")
 		name = name[-2]
-		subprocess.call("echo q | make_ndx -f "+name+".pdb -o index.ndx &> restraints.log", executable="/bin/bash", shell=True)	
+		subprocess.call(self.path+"echo q | make_ndx -f "+name+".pdb -o index.ndx &> restraints.log", executable="/bin/bash", shell=True)	
 		index = open("index.ndx","r")
 		index_list = index.readlines()
 		index_position = 0
