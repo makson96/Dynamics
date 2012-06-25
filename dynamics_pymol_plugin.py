@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 #-*- coding: utf-8 -*-
 
 ##This software (including its Debian packaging) is available to you under the terms of the GPL-3, see "/usr/share/common-licenses/GPL-3".
@@ -100,7 +100,7 @@ gen_temp = 300.0
 gen_seed = 173529"""
 
 dir_path_dynamics = os.getenv("HOME")+'/.dynamics/'
-dir_path_project = dir_path_dynamics+'nothing/'
+dir_path_project = dir_path_dynamics+'nothing'
 ##Clean "nothing" temporary directory if present.
 try:
 	shutil.rmtree(dir_path_project)
@@ -211,7 +211,6 @@ class Gromacs_output:
 	##This function will update water list if force field is changed.
 	def water_update(self, force_field_number):
 		print "Updateing available water models"
-		#print force_field_number
 		subprocess.call(self.path + "echo -e '"+str(force_field_number)+"\n1' | pdb2gmx &> "+dir_path_dynamics+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dir_path_dynamics+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
@@ -226,7 +225,6 @@ class Gromacs_output:
 		water_list = lista_gromacs[water_start_line:water_end_line]
 		water_list2 = []
 		number = 1
-		#print water_list
 		for water in water_list:
 			water_list2.append([number, water[:-1]])
 			number = number + 1
@@ -245,8 +243,6 @@ class Gromacs_output:
 		os.chdir(dir_path_project)
 		name = dir_path_project.split("/")
 		name = name[-2]
-		#print name
-		#print os.getcwd()
 		subprocess.call("echo q | make_ndx -f "+name+".pdb -o index.ndx &> restraints.log", executable="/bin/bash", shell=True)	
 		index = open("index.ndx","r")
 		index_list = index.readlines()
@@ -263,7 +259,6 @@ class Gromacs_output:
 			else:
 				atoms = atoms + line
 		self.restraints[index_position-1].append(atoms)
-		#print self.restraints
 
 gromacs = Gromacs_output()
 
@@ -321,7 +316,6 @@ class Gromacs_input:
 			status = ["fail", "Force field unable to create topology file"]
 		
 		self.status = status
-		progres.status_update(1,1)
 	
 	##This function will create and add waterbox.
 	def waterbox(self, name, file_path):
@@ -347,7 +341,6 @@ class Gromacs_input:
 		else:
 			status = ["fail", "Unable to add waterbox"]
 		self.status = status
-		progres.status_update(2,1)
 	
 	##This function will perform energy minimalization	
 	def em(self, name, file_path):
@@ -370,7 +363,6 @@ class Gromacs_input:
 		else:
 			status = ["fail", "Unable to perform Energy Minimalization"]
 		self.status = status
-		progres.status_update(3,1)
 	
 	##This function will perform position restrained MD
 	def pr(self, name, file_path):
@@ -392,7 +384,6 @@ class Gromacs_input:
 		else:
 			status = ["fail", "Unable to perform Position Restrained"]
 		self.status = status
-		progres.status_update(4,1)
 	
 	##This function will create posre.itp file for molecular dynamics simulation with choosen atoms if restraints were selected
 	def restraints(self, name):
@@ -434,7 +425,6 @@ class Gromacs_input:
 		else:
 			status = ["fail", "Unable to perform Molecular Dynamics Simulation"]
 		self.status = status
-		progres.status_update(5,1)
 	
 	##This function will convert final results to multimodel pdb file
 	def trjconv(self, name, file_path, group):
@@ -455,7 +445,6 @@ class Gromacs_input:
 		else:
 			status = ["fail", "Unable to generate multimodel PDB file"]
 		self.status = status
-		progres.status_update(6,1)
 
 gromacs2 = Gromacs_input()
 
@@ -494,7 +483,7 @@ class Mdp_config:
 		mdp.close() 
 
 ##Status and to_do maintaining class
-class Progres_status:
+class Progress_status:
 	
 	status= []
 	to_do = []
@@ -509,24 +498,9 @@ class Progres_status:
 		self.pickle_file = dir_path+"/status.pickle"
 		self.to_do = [1,1,1,1,1,1,1]
 	
-	def status_update(self, position, value):
-		if type(position) == type(1):
-			self.status[position] = value
-		elif position == "all":
-			self.status = [value,value,value,value,value,value,value]
-		self.save()
-	
 	def to_do_update(self, position, value):
 		if type(position) == type(1):
 			self.to_do[position] = value
-		elif position == "all":
-			self.to_do = [value,value,value,value,value,value,value]
-		save1()
-	
-	def save(self):
-		destination = file(self.pickle_file, "w")
-		pickle.dump(self.status, destination)
-		del destination
 	
 	def to_do_status(self):
 		to_do = []
@@ -536,12 +510,6 @@ class Progres_status:
 			elif work == 1:
 				to_do.append(0)
 		self.to_do = to_do
-		save1()
-	
-	def from_begining_update(self, value):
-		self.from_begining = value
-		save1()
-		
 
 ##init function - puts plugin into menu and starts it () after clicking.
 def __init__(self):
@@ -646,7 +614,6 @@ class MasterWindow:
 		else:
 			projects = []
 		if projects != ['test_gromacs.txt'] and projects != []:
-			#print projects
 			w1_2 = Label(frame1_1, text="Previous Projects")
 			w1_2.pack(side=TOP)
 		
@@ -745,6 +712,7 @@ class MasterWindow:
 		
 		#Set configure if PDB file was loaded in PyMOL
 		if allNames[0] != "nothing":
+			save1()
 			set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var, p, 1)
 
 		c = Checkbutton(frame1_3_2, text="Molecular Dynamics Simulation from the beginning", variable=check_var, command=lambda: main_status_bar(check_var.get(), p))
@@ -818,7 +786,7 @@ def startMessage(moleculeName, group_nr, force_field_nr, water_nr, master):
 	start_button.pack(side=LEFT)
 	#Updateing status bar
 	tasks_nr = 0.0
-	for task in progres.to_do:
+	for task in progress.to_do:
 		tasks_nr = tasks_nr + task
 	thread.start_new_thread(bar_update, (bar_v, p, tasks_nr, moleculeName))
 	
@@ -830,7 +798,7 @@ def bar_update(bar_var, bar_widget, tasks, name):
 	global stop, error
 	while bar_var.get() != "Finished" and error == "":
 		percent = 0.0
-		for job in progres.to_do:
+		for job in progress.to_do:
 			percent = percent + job
 		if tasks != 0:
 			percent = (tasks - percent) / tasks
@@ -839,7 +807,7 @@ def bar_update(bar_var, bar_widget, tasks, name):
 		bar_widget.configure(value=percent)
 		bar_widget.update_idletasks()
 		bar_var.set("Working")
-		if progres.to_do == [0,0,0,0,0,0,0]:
+		if progress.to_do == [0,0,0,0,0,0,0]:
 			bar_var.set("Finished")
 		if stop == 1:
 			bar_var.set("User Stoped")
@@ -868,23 +836,23 @@ def bar_update(bar_var, bar_widget, tasks, name):
 		ok_button.pack()
 		root.mainloop()
 
-##This function will show current progres in main window if "Jobs from the begining" is unchecked
+##This function will show current progress in main window if "Jobs from the begining" is unchecked
 def main_status_bar(var, bar):
 	percent = 0.0
-	for job in progres.status:
+	for job in progress.status:
 		percent = percent + job
 	percent = percent / 7
 	if var == 0:
 		bar.configure(value=percent)
 		bar.update_idletasks()
-		if progres.to_do == [1,1,1,1,1,1,1]:
-			progres.to_do_status()
-		progres.from_begining_update(0)
+		if progress.to_do == [1,1,1,1,1,1,1]:
+			progress.to_do_status()
+		progress.from_begining = 0
 	elif var == 1:
 		bar.configure(value=(0.0))
 		bar.update_idletasks()
-		progres.to_do_update("all", 1)
-		progres.from_begining_update(1)
+		progress.to_do = [1,1,1,1,1,1,1]
+		progress.from_begining = 1
 
 ##This function will change global value if stop is clicked during simulation
 def stop_counting(value):
@@ -921,7 +889,7 @@ def select_file(entry, project_name):
 
 def select_file_save(moleculeName, rest_of_work=0):
 	if rest_of_work == 1:
-		progres.to_do_status()
+		progress.to_do_status()
 	root = Tk()
 	file = tkFileDialog.asksaveasfile(parent=root, mode='w' ,title='Choose save file')
 	if file != None:
@@ -938,7 +906,7 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
 		v3_force.set(gromacs.force_field_list[gromacs2.field-1][0])
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
-		check_var.set(progres.from_begining)
+		check_var.set(progress.from_begining)
 		radio_button1 = Radiobutton(frame1_1a, text=new_name, value=new_name, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var, p))
 		radio_button1.pack(side=TOP, anchor=W)
 	root.destroy()
@@ -999,7 +967,7 @@ def waterBox(master):
 
 ##This is very important function, which sets all necessary configuration files
 def set_config_files(name, v2_group="", v3_field="", v4_water="", water_v="", check_var="", main_bar=0, from_pymol=0):
-	global em_file, pr_file, md_file, progres, dir_path_project
+	global em_file, pr_file, md_file, progress, dir_path_project
 	name = name.lower()
 	dir_path_project = dir_path_dynamics + name + "/"
 
@@ -1010,18 +978,19 @@ def set_config_files(name, v2_group="", v3_field="", v4_water="", water_v="", ch
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
 	else:
-		progres = Progres_status(dir_path_project)
+		progress = Progress_status(dir_path_project)
 		em_file = Mdp_config("em.mdp",name,em_init_config)
 		pr_file = Mdp_config("pr.mdp",name,pr_init_config)
 		md_file = Mdp_config("md.mdp",name,md_init_config)
 	try:
-		check_var.set(progres.from_begining)
+		check_var.set(progress.from_begining)
 		if main_bar != 0:
 			main_status_bar(check_var.get(), main_bar)
 	except:
 		pass
 	if from_pymol == 1:
 		print "cmd saved"
+		save1()
 		cmd.save(dir_path_project+name+".pdb", name) #PyMOL API
 
 #This function will create the window with configuration files based on MDP class
@@ -1044,7 +1013,6 @@ def mdp_configure(config_name, master):
 		root2.wm_title("Molecular Dynamics Simulation Options")
 
 	values_list = []
-	#print options
 	for option, value in options:
 		frame1 = Frame(root2)
 		frame1.pack(side=TOP)
@@ -1060,12 +1028,13 @@ def mdp_configure(config_name, master):
 		elif option == "gen_vel":
 			l1 = Label(frame1, text="Generate velocites temperature")
 			l1.pack(side=TOP)
-		values_list.append(StringVar(root2)) #genitalne
+		values_list.append(StringVar(root2)) #brilliant
 		values_list[-1].set(value)
-		l = Label(frame1, text=option, width=25, anchor=W)
-		l.pack(side=LEFT)
-		e = Entry(frame1, textvariable=values_list[-1])
-		e.pack(side=LEFT)
+		if option[0] != ";":
+			l = Label(frame1, text=option, width=25, anchor=W)
+			l.pack(side=LEFT)
+			e = Entry(frame1, textvariable=values_list[-1])
+			e.pack(side=LEFT)
 	if config_name == "em":
 		b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "em", root2))
 		b.pack(side=TOP)
@@ -1097,29 +1066,29 @@ def jobs_configure(master):
 	root5 = Toplevel(master)
 	root5.wm_title("Jobs configuration")
 	check_var1 = IntVar(root5)
-	check_var1.set(progres.to_do[0])
+	check_var1.set(progress.to_do[0])
 	check_var2 = IntVar(root5)
-	check_var2.set(progres.to_do[1])
+	check_var2.set(progress.to_do[1])
 	v1 = IntVar(root5)
 	v1.set(1)
 	check_var3 = IntVar(root5)
-	check_var3.set(progres.to_do[2])
+	check_var3.set(progress.to_do[2])
 	check_var4 = IntVar(root5)
-	check_var4.set(progres.to_do[3])
+	check_var4.set(progress.to_do[3])
 	check_var5 = IntVar(root5)
-	check_var5.set(progres.to_do[4])
+	check_var5.set(progress.to_do[4])
 	check_var6 = IntVar(root5)
-	check_var6.set(progres.to_do[5])
+	check_var6.set(progress.to_do[5])
 	check_var7 = IntVar(root5)
-	check_var7.set(progres.to_do[6])
+	check_var7.set(progress.to_do[6])
 	
 	frame1 = Frame(root5)
 	frame1.pack(side=TOP)
 
-	c1 = Checkbutton(frame1, text="Save configuration files", variable=check_var1, command=lambda: progres.to_do_update(0, check_var1.get()))
+	c1 = Checkbutton(frame1, text="Save configuration files", variable=check_var1, command=lambda: progress.to_do_update(0, check_var1.get()))
 	c1.pack(side=TOP, anchor=W)
 	
-	c2 = Checkbutton(frame1, text="Generate topology file from pdb", variable=check_var2, command=lambda: progres.to_do_update(1, check_var2.get()))
+	c2 = Checkbutton(frame1, text="Generate topology file from pdb", variable=check_var2, command=lambda: progress.to_do_update(1, check_var2.get()))
 	c2.pack(side=TOP, anchor=W)
 	
 	r1 = Radiobutton(frame1, text="Use pdb2gmx tool", value=1, variable=v1, command=lambda: test(v1.get()))
@@ -1129,19 +1098,19 @@ def jobs_configure(master):
 	r2.pack(side=TOP, anchor=W)
 	r2.configure(state=DISABLED)
 	
-	c3 = Checkbutton(frame1, text="Adding Water Box", variable=check_var3, command=lambda: progres.to_do_update(2, check_var3.get()))
+	c3 = Checkbutton(frame1, text="Adding Water Box", variable=check_var3, command=lambda: progress.to_do_update(2, check_var3.get()))
 	c3.pack(side=TOP, anchor=W)
 	
-	c4 = Checkbutton(frame1, text="Energy minimalization", variable=check_var4, command=lambda: progres.to_do_update(3, check_var4.get()))
+	c4 = Checkbutton(frame1, text="Energy minimalization", variable=check_var4, command=lambda: progress.to_do_update(3, check_var4.get()))
 	c4.pack(side=TOP, anchor=W)
 	
-	c5 = Checkbutton(frame1, text="Position Restrained MD", variable=check_var5, command=lambda: progres.to_do_update(4, check_var5.get()))
+	c5 = Checkbutton(frame1, text="Position Restrained MD", variable=check_var5, command=lambda: progress.to_do_update(4, check_var5.get()))
 	c5.pack(side=TOP, anchor=W)
 	
-	c6 = Checkbutton(frame1, text="Molecular Dynamics Simulation", variable=check_var6, command=lambda: progres.to_do_update(5, check_var6.get()))
+	c6 = Checkbutton(frame1, text="Molecular Dynamics Simulation", variable=check_var6, command=lambda: progress.to_do_update(5, check_var6.get()))
 	c6.pack(side=TOP, anchor=W)
 	
-	c7 = Checkbutton(frame1, text="Generate multimodel PDB", variable=check_var7, command=lambda: progres.to_do_update(6, check_var7.get()))
+	c7 = Checkbutton(frame1, text="Generate multimodel PDB", variable=check_var7, command=lambda: progress.to_do_update(6, check_var7.get()))
 	c7.pack(side=TOP, anchor=W)
 	
 	b1 = Button(root5, text="OK", command=root5.destroy)
@@ -1176,7 +1145,6 @@ def restraints_window(master):
 	number = 0
 	
 	for group in gromacs.restraints:
-		#print group
 		select = Radiobutton(sw.window, text=group[0], value=number, variable=check_var, command=lambda : modify_index(check_var.get(), atom_list[check_var.get()]))
 		select.pack()
 		text = Text(sw.window)
@@ -1192,7 +1160,6 @@ def restraints_window(master):
 		
 		stored.list=[]
 		cmd.iterate("(sele)","stored.list.append(ID)") #PyMOL API
-		#print stored.list
 		
 		stored_string = ""
 		for atom in stored.list:
@@ -1215,7 +1182,6 @@ def modify_index(index_nr, text, root_to_kill=""):
 	if root1 != "":
 		root.destroy()
 	gromacs2.restraints_nr = index_nr
-	#print text.get(1.0, END)
 	if index_nr < len(gromacs.restraints):
 		gromacs.restraints[index_nr][1] = text.get(1.0, END)
 	index_file = open("index_dynamics.ndx", "w")
@@ -1248,7 +1214,6 @@ def dynamics(name = "h"):
 	global status, stop
 	stop = 0
 	print "Starting PyMOL plugin 'dynamics' ver."+plugin_ver+" by Tomasz Makarewicz"
-	#print progres.to_do
 	
 	##If help is called
 	if help_name.count(name) == 1:
@@ -1275,10 +1240,13 @@ def dynamics(name = "h"):
 		pass
 	
 	##Checking mdp files
-	if status[0] == "ok" and stop == 0 and progres.to_do[0] == 1:
+	if status[0] == "ok" and stop == 0 and progress.to_do[0] == 1:
 		mdp_files(name)
-	elif status[0] == "fail":
-		pass
+		if status[0] == "ok":
+			progress.status[0] = 1
+			progress.to_do[0] = 0
+			save1()
+
 	
 	##Checking variables - temporary disabled
 	#if status[0] == "ok":
@@ -1287,75 +1255,66 @@ def dynamics(name = "h"):
 	#	pass
 	
 	##Counting topology
-	if status[0] == "ok" and stop == 0:
-		progres.status_update(0,1)
-		progres.to_do_update(0,0)
-		if progres.to_do[1] == 1:
-			gromacs2.pdb2top(name, file_path, field)
-			status = gromacs2.status
-	elif status[0] == "fail":
-		pass
+	if status[0] == "ok" and stop == 0 and progress.to_do[1] == 1:
+		gromacs2.pdb2top(name, file_path, field)
+		status = gromacs2.status
+		if status[0] == "ok":
+			progress.status[1] = 1
+			progress.to_do[1] = 0
+			save1()
 
 	##Adding water box
-	if status[0] == "ok" and stop == 0:
-		progres.status_update(1,1)
-		progres.to_do_update(1,0)
-		if progres.to_do[2] == 1:
-			gromacs2.waterbox(name, file_path)
-			status = gromacs2.status
-	elif status[0] == "fail":
-		pass
+	if status[0] == "ok" and stop == 0 and progress.to_do[2] == 1:
+		gromacs2.waterbox(name, file_path)
+		status = gromacs2.status
+		if status[0] == "ok":
+			progress.status[2] = 1
+			progress.to_do[2] = 0
+			save1()
 	
-	##EM
-	if status[0] == "ok" and stop == 0:
-		progres.status_update(2,1)
-		progres.to_do_update(2,0)
-		if progres.to_do[3] == 1:
-			gromacs2.em(name, file_path)
-			status = gromacs2.status
-	elif status[0] == "fail":
-		pass
+	##EM	
+	if status[0] == "ok" and stop == 0 and progress.to_do[3] == 1:
+		gromacs2.em(name, file_path)
+		status = gromacs2.status
+		if status[0] == "ok":
+			progress.status[3] = 1
+			progress.to_do[3] = 0
+			save1()
 	
 	##PR
-	if status[0] == "ok" and stop == 0:
-		progres.status_update(3,1)
-		progres.to_do_update(3,0)
-		if progres.to_do[4] == 1:
-			gromacs2.pr(name, file_path)
-			status = gromacs2.status
-	elif status[0] == "fail":
-		pass
+	if status[0] == "ok" and stop == 0 and progress.to_do[4] == 1:
+		gromacs2.pr(name, file_path)
+		status = gromacs2.status
+		if status[0] == "ok":
+			progress.status[4] = 1
+			progress.to_do[4] = 0
+			save1()
 	
 	##Restraints
-	if status[0] == "ok" and stop == 0 and restraints_var == 1:
+	if status[0] == "ok" and stop == 0 and restraints_var == 1 and progress.to_do[5] == 1:
 		gromacs2.restraints(name)
 		status = gromacs2.status
 	
 	##MD
-	if status[0] == "ok" and stop == 0:
-		progres.status_update(4,1)
-		progres.to_do_update(4,0)
-		if progres.to_do[5] == 1:
-			gromacs2.md(name, file_path)
-			status = gromacs2.status
-	elif status[0] == "fail":
-		pass
+	if status[0] == "ok" and stop == 0 and progress.to_do[5] == 1:
+		gromacs2.md(name, file_path)
+		status = gromacs2.status
+		if status[0] == "ok":
+			progress.status[5] = 1
+			progress.to_do[5] = 0
+			save1()
 	
 	##Trjconv
-	if status[0] == "ok" and stop == 0:
-		progres.status_update(5,1)
-		progres.to_do_update(5,0)
-		if progres.to_do[6] == 1:
-			gromacs2.trjconv(name, file_path, group)
-			status = gromacs2.status
-	elif status[0] == "fail":
-		pass
+	if status[0] == "ok" and stop == 0 and progress.to_do[6] == 1:
+		gromacs2.trjconv(name, file_path, group)
+		status = gromacs2.status
 	
 	##Showing multimodel
-	if status[0] == "ok":
+	if status[0] == "ok" and progress.to_do[6] == 1:
 		show_multipdb(name)
-		progres.status_update(6,1)
-		progres.to_do_update(6,0)
+		progress.status[6] = 1
+		progress.to_do[6] = 0
+		save1()
 	elif status[0] == "fail":
 		print status[1]
 		if help_name.count(name) != 1 and clean_name.count(name) != 1:
@@ -1448,13 +1407,13 @@ def save1():
 	if os.path.isdir(dir_path_project) == False:
 		os.makedirs(dir_path_project)
 	destination_option = file(dir_path_project + "options.pickle", "w")
-	pickle.dump([gromacs.version, gromacs2, em_file, pr_file, md_file, progres], destination_option)
+	pickle.dump([gromacs.version, gromacs2, em_file, pr_file, md_file, progress], destination_option)
 	del destination_option
 	print "options saved"
 
 ##Load all settings from options.pickle file	
 def load1():
-	global gromacs, gromacs2, em_file, pr_file, md_file, progres
+	global gromacs, gromacs2, em_file, pr_file, md_file, progress
 	
 	pickle_file = file(dir_path_project +"options.pickle")
 	options = pickle.load(pickle_file)
@@ -1464,7 +1423,7 @@ def load1():
 	em_file = options[2]
 	pr_file = options[3]
 	md_file = options[4]
-	progres = options[5]
+	progress = options[5]
 	print "options loaded"
 
 ##Text for "Help"
