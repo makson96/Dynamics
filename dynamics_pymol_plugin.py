@@ -106,6 +106,9 @@ try:
 	shutil.rmtree(dir_path_project)
 except:
 	pass
+##Creating new directories
+if os.path.isdir(dir_path_project) == False:
+	os.makedirs(dir_path_project)
 
 ##This class is responsible for interface to GROMACS. It will read all important data from GROMACS tools.
 class Gromacs_output:
@@ -122,8 +125,6 @@ class Gromacs_output:
 		for_water = "1"
 		status = ["ok", ""]
 		gromacs_path = ""
-		if os.path.isdir(dir_path_dynamics) == False:
-			os.makedirs(dir_path_dynamics)
 		print "Testing GROMACS installation and version"
 		subprocess.call("echo -e '"+for_water+"\n1' | pdb2gmx &> "+dir_path_dynamics+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dir_path_dynamics+"test_gromacs.txt","r")
@@ -228,7 +229,6 @@ class Gromacs_output:
 		for water in water_list:
 			water_list2.append([number, water[:-1]])
 			number = number + 1
-			
 			
 		self.water_list = water_list2
 		if os.path.isdir(dir_path_project) == True:
@@ -355,7 +355,6 @@ class Gromacs_input:
 		print "Energy Minimalization"		
 		Grompp = subprocess.call(gromacs.path+"grompp -f em -c "+name+"_b4em -p "+name+" -o "+name+"_em &>> log.txt", executable="/bin/bash", shell=True)
 
-
 		Mdrun = subprocess.call(gromacs.path+"mdrun -nice 4 -s "+name+"_em -o "+name+"_em -c "+name+"_b4pr -v &>> log.txt", executable="/bin/bash", shell=True)
 		
 		if os.path.isfile(file_path+"_em.tpr") == True:
@@ -455,9 +454,11 @@ class Mdp_config:
 	options = [[]]
 	file_name = ""
 	
-	
-	def __init__(self, file_name, name, init_config):
-		self.config = """title = """+name+"_"+file_name+"\n"+init_config
+	def __init__(self, file_name, name, init_config, external_file=0):
+		if external_file == 0:
+			self.config = """title = """+name+"_"+file_name+"\n"+init_config
+		elif external_file == 1:
+			self.config = init_config
 		self.file_name = file_name
 		list1 = self.config.split("\n")
 		list2 = []
@@ -617,7 +618,6 @@ class MasterWindow:
 			w1_2 = Label(frame1_1, text="Previous Projects")
 			w1_2.pack(side=TOP)
 		
-
 			for molecule in projects:
 				if os.path.isdir(dir_path_dynamics + molecule) == True and molecule != "nothing":
 					projects1 = []
@@ -679,16 +679,22 @@ class MasterWindow:
 		em_label.pack(side=TOP)
 		em_button2 = Button(frame1_3_1, text = "Configure", command=lambda: mdp_configure("em", master))
 		em_button2.pack(side=TOP)
+		if os.path.isfile(dir_path_dynamics + "em.mdp"):
+			em_button2.configure(state=DISABLED)
 		
 		pr_label = Label(frame1_3_1, text="Position Restrained MD")
 		pr_label.pack(side=TOP)
 		pr_button2 = Button(frame1_3_1, text = "Configure", command=lambda: mdp_configure("pr", master))
 		pr_button2.pack(side=TOP)
+		if os.path.isfile(dir_path_dynamics + "pr.mdp"):
+			pr_button2.configure(state=DISABLED)
 		
 		md_label = Label(frame1_3_1, text="Molecular Dynamics Simulation")
 		md_label.pack(side=TOP)
 		md_button2 = Button(frame1_3_1, text = "Configure", command=lambda: mdp_configure("md", master))
 		md_button2.pack(side=TOP)
+		if os.path.isfile(dir_path_dynamics + "md.mdp"):
+			md_button2.configure(state=DISABLED)
 		
 		#Check-box and button for position restraints configuration
 		check1 = Checkbutton(frame1_3_1, text="Position Restraints", variable=check_var2, command=lambda: restraints(check_var2.get(), check1_button))
@@ -873,8 +879,6 @@ def select_file(entry, project_name):
 		##Checking directories
 		global dir_path_project
 		dir_path_project = dir_path_dynamics + name2[0] + "/"
-		if os.path.isdir(dir_path_dynamics) == False:
-			os.makedirs(dir_path_dynamics)
 		if os.path.isdir(dir_path_project) == False:
 			os.makedirs(dir_path_project)
 			shutil.copyfile(file.name, dir_path_project + name2[0] + ".pdb")
@@ -934,7 +938,6 @@ def waterSet(v4_water, water_v, water_nr, force = ""):
 	gromacs2.update(force, water_nr, gromacs2.group, gromacs2.box_type, gromacs2.box_distance, gromacs2.box_density)
 	save1()
 
-
 ##Water box configuration window
 def waterBox(master):
 	root1 = Toplevel(master)
@@ -984,9 +987,27 @@ def set_config_files(name, v2_group="", v3_field="", v4_water="", water_v="", ch
 				config_button_restraints.configure(state=ACTIVE)
 	else:
 		progress = Progress_status(dir_path_project)
-		em_file = Mdp_config("em.mdp",name,em_init_config)
-		pr_file = Mdp_config("pr.mdp",name,pr_init_config)
-		md_file = Mdp_config("md.mdp",name,md_init_config)
+		if os.path.isfile(dir_path_dynamics + "em.mdp"):
+			shutil.copy(dir_path_dynamics + "em.mdp", dir_path_project + "em.mdp")
+			em_file_config = open(dir_path_dynamics + "em.mdp", "r").read()
+			em_file = Mdp_config("em.mdp",name, em_file_config, 1)
+			print "Found em.mdp file. Using it instead of local configuration."
+		else:
+			em_file = Mdp_config("em.mdp",name,em_init_config, 0)
+		if os.path.isfile(dir_path_dynamics + "pr.mdp"):
+			shutil.copy(dir_path_dynamics + "pr.mdp", dir_path_project + "pr.mdp")
+			pr_file_config = open(dir_path_dynamics + "pr.mdp", "r").read()
+			pr_file = Mdp_config("pr.mdp",name, pr_file_config, 1)
+			print "Found pr.mdp file. Using it instead of local configuration."
+		else:
+			pr_file = Mdp_config("pr.mdp",name,pr_init_config, 0)
+		if os.path.isfile(dir_path_dynamics + "md.mdp"):
+			shutil.copy(dir_path_dynamics + "md.mdp", dir_path_project + "md.mdp")
+			md_file_config = open(dir_path_dynamics + "md.mdp", "r").read()
+			md_file = Mdp_config("md.mdp",name, md_file_config, 1)
+			print "Found md.mdp file. Using it instead of local configuration."
+		else:
+			md_file = Mdp_config("md.mdp",name,md_init_config, 0)
 	try:
 		check_var.set(progress.from_begining)
 		if main_bar != 0:
@@ -1252,7 +1273,6 @@ def dynamics(name = "h"):
 			progress.to_do[0] = 0
 			save1()
 
-	
 	##Checking variables - temporary disabled
 	#if status[0] == "ok":
 	#	status = check_variable(name, field1, field2, group)
@@ -1332,10 +1352,6 @@ def dynamics(name = "h"):
 def preproces(name, file_path):
 	status = ["ok", ""]
 	##Checking directories
-	if os.path.isdir(dir_path_dynamics) == False:
-		os.makedirs(dir_path_dynamics)
-	else:
-		pass
 	if os.path.isdir(dir_path_project) == False:
 		os.makedirs(dir_path_project)
 	os.chdir(dir_path_project)
@@ -1361,11 +1377,7 @@ def check_variable(name, field1, field2, group):
 
 ##Saveing configuration files
 def mdp_files(name):
-	try:
-		em_file.save_file(dir_path_project)
-	except:
-		set_config_files(name)
-		em_file.save_file(dir_path_project)
+	em_file.save_file(dir_path_project)
 	pr_file.save_file(dir_path_project)
 	md_file.save_file(dir_path_project)
 
