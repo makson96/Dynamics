@@ -564,7 +564,7 @@ class MasterWindow:
 		check_var = IntVar(master)
 		
 		check_var2 = IntVar(master)
-		check_var2.set(0)
+		check_var2.set(restraints_var)
 		
 		#Initial configuration
 		set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var)
@@ -629,7 +629,7 @@ class MasterWindow:
 						if molecule1[0] == "gromacs":
 							pass
 						else:
-							radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var, p))
+							radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var, p, 0, check1_button, check_var2))
 							radio_button1.pack(side=TOP, anchor=W)
 		
 		#List of group for final model
@@ -966,7 +966,7 @@ def waterBox(master):
 	ok_button.pack(side=TOP)
 
 ##This is very important function, which sets all necessary configuration files
-def set_config_files(name, v2_group="", v3_field="", v4_water="", water_v="", check_var="", main_bar=0, from_pymol=0):
+def set_config_files(name, v2_group="", v3_field="", v4_water="", water_v="", check_var="", main_bar=0, from_pymol=0, config_button_restraints = "", checkbox_restraints=""):
 	global em_file, pr_file, md_file, progress, dir_path_project
 	name = name.lower()
 	dir_path_project = dir_path_dynamics + name + "/"
@@ -977,6 +977,11 @@ def set_config_files(name, v2_group="", v3_field="", v4_water="", water_v="", ch
 		v3_field.set(gromacs.force_field_list[gromacs2.field-1][0])
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
+		checkbox_restraints.set(restraints_var)
+		if restraints_var == 0 and config_button_restraints != "":
+			config_button_restraints.configure(state=DISABLED)
+		elif restraints_var == 1 and config_button_restraints != "":
+				config_button_restraints.configure(state=ACTIVE)
 	else:
 		progress = Progress_status(dir_path_project)
 		em_file = Mdp_config("em.mdp",name,em_init_config)
@@ -1179,14 +1184,14 @@ def restraints_window(master):
 
 ##This function will modyfie index_dynamics.ndx file based on user choosed restraints		
 def modify_index(index_nr, text, root_to_kill=""):
-	if root1 != "":
-		root.destroy()
 	gromacs2.restraints_nr = index_nr
 	if index_nr < len(gromacs.restraints):
 		gromacs.restraints[index_nr][1] = text.get(1.0, END)
 	index_file = open("index_dynamics.ndx", "w")
 	index_file.write("[ Dynamics Selected ]\n"+text.get(1.0, END))
 	index_file.close()
+	if root_to_kill != "":
+		root_to_kill.destroy()
 
 ##Help window
 def helpWindow(master):
@@ -1407,13 +1412,13 @@ def save1():
 	if os.path.isdir(dir_path_project) == False:
 		os.makedirs(dir_path_project)
 	destination_option = file(dir_path_project + "options.pickle", "w")
-	pickle.dump([gromacs.version, gromacs2, em_file, pr_file, md_file, progress], destination_option)
+	pickle.dump([gromacs.version, gromacs2, em_file, pr_file, md_file, progress, restraints_var], destination_option)
 	del destination_option
 	print "options saved"
 
 ##Load all settings from options.pickle file	
 def load1():
-	global gromacs, gromacs2, em_file, pr_file, md_file, progress
+	global gromacs, gromacs2, em_file, pr_file, md_file, progress, restraints_var
 	
 	pickle_file = file(dir_path_project +"options.pickle")
 	options = pickle.load(pickle_file)
@@ -1424,6 +1429,7 @@ def load1():
 	pr_file = options[3]
 	md_file = options[4]
 	progress = options[5]
+	restraints_var = options[6]
 	print "options loaded"
 
 ##Text for "Help"
