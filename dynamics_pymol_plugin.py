@@ -269,7 +269,7 @@ gromacs = Gromacs_output()
 ##This class is responsible for performing molecular dynamics simulation with GROMACS tools.
 class Gromacs_input:
 	
-	status = ["ok", ""]
+	status = ["ok", "Waiting to start"]
 	field = 1
 	water = 1
 	group = 1
@@ -297,6 +297,8 @@ class Gromacs_input:
 	
 	##This function will create initial topology and triectory using pdb file and choosen force field
 	def pdb2top(self, name, file_path, field):
+		status = ["ok", "Calculating topology using Force Fields"]
+		self.status = status
 		try:
 			os.remove(name+".gro")
 			os.remove(name+".top")
@@ -315,7 +317,7 @@ class Gromacs_input:
 			executable="/bin/bash", shell=True)
 
 		if os.path.isfile(file_path+".gro") == True:
-			status = ["ok", ""]
+			status = ["ok", "Calculated topology using Force Fields"]
 		else:
 			status = ["fail", "Force field unable to create topology file"]
 		
@@ -323,7 +325,8 @@ class Gromacs_input:
 	
 	##This function will create and add waterbox.
 	def waterbox(self, name, file_path):
-		status = ["ok", ""]
+		status = ["ok", "Adding Water Box"]
+		self.status = status
 		box_type = "-bt "+self.box_type+" "
 		distance = "-d "+self.box_distance+" "
 		density = "-density "+self.box_density
@@ -341,14 +344,15 @@ class Gromacs_input:
 		Genbox = subprocess.call(gromacs.path+"genbox -cp "+name+"1.gro -cs -o "+name+"_b4em.gro -p "+name+".top &>> log.txt", executable="/bin/bash", shell=True)
 		
 		if os.path.isfile(file_path+"1.gro") == True:
-			status = ["ok", ""]
+			status = ["ok", "Added Water Box"]
 		else:
 			status = ["fail", "Unable to add waterbox"]
 		self.status = status
 	
 	##This function will perform energy minimalization	
 	def em(self, name, file_path):
-		status = ["ok", ""]
+		status = ["ok", "Energy Minimalization"]
+		self.status = status
 		
 		try:
 			os.remove(name+"_em.tpr")
@@ -362,14 +366,15 @@ class Gromacs_input:
 		Mdrun = subprocess.call(gromacs.path+"mdrun -nice 4 -s "+name+"_em -o "+name+"_em -c "+name+"_b4pr -v &>> log.txt", executable="/bin/bash", shell=True)
 		
 		if os.path.isfile(file_path+"_em.tpr") == True:
-			status = ["ok", ""]
+			status = ["ok", "Energy Minimalized"]
 		else:
 			status = ["fail", "Unable to perform Energy Minimalization"]
 		self.status = status
 	
 	##This function will perform position restrained MD
 	def pr(self, name, file_path):
-		status = ["ok", ""]
+		status = ["ok", "Position Restrained MD"]
+		self.status = status
 		
 		try:
 			os.remove(name+"_pr.tpr")
@@ -383,14 +388,15 @@ class Gromacs_input:
 		Mdrun = subprocess.call(gromacs.path+"mdrun -nice 4 -s "+name+"_pr -o "+name+"_pr -c "+name+"_b4md -v &>> log.txt", executable="/bin/bash", shell=True)
 		
 		if os.path.isfile(file_path+"_pr.tpr") == True:
-			status = ["ok", ""]
+			status = ["ok", "Position Restrained MD finished"]
 		else:
 			status = ["fail", "Unable to perform Position Restrained"]
 		self.status = status
 	
 	##This function will create posre.itp file for molecular dynamics simulation with choosen atoms if restraints were selected
 	def restraints(self, name):
-		status = ["ok", ""]
+		status = ["ok", "Adding Restraints"]
+		self.status = status
 		
 		try:
 			os.remove("posre_2.itp")
@@ -401,7 +407,7 @@ class Gromacs_input:
 		Genrestr = subprocess.call("echo 0 | genrestr -f "+name+".pdb -o posre_2.itp -n index_dynamics.ndx &>> log.txt", executable="/bin/bash", shell=True)
 		
 		if os.path.isfile("posre_2.itp") == True:
-			status = ["ok", ""]
+			status = ["ok", "Added Restraints"]
 			os.remove("posre.itp")
 			shutil.copy("posre_2.itp", "posre.itp")
 		else:
@@ -410,7 +416,8 @@ class Gromacs_input:
 	
 	##This function will perform position final molecular dynamics simulation
 	def md(self, name, file_path):
-		status = ["ok", ""]
+		status = ["ok", "Molecular Dynamics Simulation"]
+		self.status = status
 		
 		try:
 			os.remove(name+"_md.tpr")
@@ -424,14 +431,15 @@ class Gromacs_input:
 		Mdrun = subprocess.call(gromacs.path+"mdrun -nice 4 -s "+name+"_md -o "+name+"_md -c "+name+"_after_md -v &>> log.txt", executable="/bin/bash", shell=True)
 	
 		if os.path.isfile(file_path+"_md.tpr") == True:
-			status = ["ok", ""]
+			status = ["ok", "Molecular Dynamics Simulation finished"]
 		else:
 			status = ["fail", "Unable to perform Molecular Dynamics Simulation"]
 		self.status = status
 	
 	##This function will convert final results to multimodel pdb file
 	def trjconv(self, name, file_path, group):
-		status = ["ok", ""]
+		status = ["ok", "Creating Multimodel PDB"]
+		self.status = status
 		
 		try:
 			os.remove(name+"_multimodel.pdb")
@@ -444,7 +452,7 @@ class Gromacs_input:
 		Trjconv = subprocess.call(gromacs.path+"echo "+group+" | trjconv -f "+name+"_md.trr -s "+name+"_md.tpr -app -o "+name+"_multimodel.pdb &>> log.txt", executable="/bin/bash", shell=True)
 		
 		if os.path.isfile(file_path+"_multimodel.pdb") == True:
-			status = ["ok", ""]
+			status = ["ok", "Finished!"]
 		else:
 			status = ["fail", "Unable to generate multimodel PDB file"]
 		self.status = status
@@ -767,6 +775,7 @@ def startMessage(moleculeName, group_nr, force_field_nr, water_nr, master):
 	gromacs2.group = group_nr
 	gromacs2.field = force_field_nr
 	gromacs2.water = water_nr
+	gromacs2.status = ["ok", "Waiting to start"]
 	
 	root = Tk()
 	root.wm_title("Counting")
@@ -804,9 +813,7 @@ def startMessage(moleculeName, group_nr, force_field_nr, water_nr, master):
 
 ##This function will update status bar during molecular dynamics simulation
 def bar_update(bar_var, bar_widget, tasks, name):
-	#Needs review
-	global stop, error
-	while bar_var.get() != "Finished" and error == "":
+	while bar_var.get() != "Finished!" and error == "":
 		percent = 0.0
 		for job in progress.to_do:
 			percent = percent + job
@@ -816,13 +823,11 @@ def bar_update(bar_var, bar_widget, tasks, name):
 			percent = 1
 		bar_widget.configure(value=percent)
 		bar_widget.update_idletasks()
-		bar_var.set("Working")
-		if progress.to_do == [0,0,0,0,0,0,0]:
-			bar_var.set("Finished")
+		bar_var.set(gromacs2.status[1])
 		if stop == 1:
 			bar_var.set("User Stoped")
 		time.sleep(1)
-	if bar_var.get() == "Finished":
+	if bar_var.get() == "Finished!":
 		print "Finished!"
 		if plugin == 0:
 			root = Tk()
@@ -839,7 +844,6 @@ def bar_update(bar_var, bar_widget, tasks, name):
 		root.wm_title("GROMACS Error Message")
 		frame = Frame(root)
 		frame.pack()
-		
 		w = Label(frame, text=error)
 		w.pack()
 		ok_button = Button(frame, text = "OK", command=root.destroy)
@@ -1262,7 +1266,7 @@ def dynamics(name = "h"):
 	if status[0] == "ok":
 		status = gromacs.status
 	
-	##Checking mdp files
+	##Saving configuration files
 	if status[0] == "ok" and stop == 0 and progress.to_do[0] == 1:
 		mdp_files(name)
 		if status[0] == "ok":
@@ -1332,7 +1336,7 @@ def dynamics(name = "h"):
 		status = gromacs2.status
 	
 	##Showing multimodel
-	if status[0] == "ok" and progress.to_do[6] == 1:
+	if status[0] == "ok" and stop == 0 and progress.to_do[6] == 1:
 		show_multipdb(name)
 		progress.status[6] = 1
 		progress.to_do[6] = 0
@@ -1371,7 +1375,7 @@ def check_variable(name, field1, field2, group):
 		status = ["fail", "Wrong Group"]
 	return status
 
-##Saveing configuration files
+##Saving configuration files
 def mdp_files(name):
 	em_file.save_file(dir_path_project)
 	pr_file.save_file(dir_path_project)
