@@ -139,13 +139,13 @@ class Gromacs_output:
 			import platform
 			print "System: "+platform.platform()
 			if platform.system() == "Linux":
-				if platform.machine() == "CHi686": #CH addet to turn it off for a while (need to build and upload new GROMACS)
+				if platform.machine() == "i686":
 					gromacs_path = "export PATH="+dir_path_dynamics+'gromacs-4.5.5-linux-32/bin:"${PATH}"; export LD_LIBRARY_PATH='+dir_path_dynamics+"/gromacs-4.5.5-linux-32/lib; "
 					gromacs_version = "GROMACS 4.5.5"
 					if os.path.isdir(dir_path_dynamics+"gromacs-4.5.5-linux-32/") == False:
 						import urllib, tarfile
 						print "Downloading GROMACS 4.5.5 for your platform"
-						urllib.urlretrieve("http://ubuntuone.com/2PYbIvmVWeaOHMywC4ODbc", dir_path_dynamics+"gromacs-4.5.5-linux-32.tar.bz2")
+						urllib.urlretrieve("http://ubuntuone.com/3MhyjK4mfavbCqdAzCbjA9", dir_path_dynamics+"gromacs-4.5.5-linux-32.tar.bz2")
 						tarfile.open(dir_path1+"gromacs-4.5.5-linux-32.tar.bz2").extractall(dir_path_dynamics+"gromacs-4.5.5-linux-32/")
 				elif platform.machine() == "x86_64":
 					gromacs_path = "export PATH="+dir_path_dynamics+'gromacs-4.5.5-linux-64/bin:"${PATH}"; export LD_LIBRARY_PATH='+dir_path_dynamics+"/gromacs-4.5.5-linux-64/lib; "
