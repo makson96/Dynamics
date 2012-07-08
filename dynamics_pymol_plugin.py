@@ -553,6 +553,9 @@ class MasterWindow:
 			
 		elif plugin == 0:
 			allNames = ["nothing"]
+			
+		if allNames == []:
+			allNames = ["nothing"]
 		
 		##TkInter variables
 		moleculeName = allNames[0]
