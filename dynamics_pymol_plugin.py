@@ -23,7 +23,7 @@ except:
 ##Globals variables
 help_name = ["-h", "h", "-help", "help"]
 clean_name = ["-c", "c", "clean", "-clean"]
-plugin_ver = " 1.0.2"
+plugin_ver = " 1.0.3pre"
 
 stop = 0
 restraints_var = 0
@@ -599,7 +599,7 @@ class MasterWindow:
 		w1.pack(side=TOP)
 		
 		global dir_path_project
-		dir_path_project = dir_path_dynamics + v1_name.get() + "/"
+		dir_path_project = dir_path_dynamics + v1_name.get().lower() + "/"
 		
 		frame1_1a = Frame(frame1_1)
 		frame1_1a.pack(side=TOP)
@@ -886,7 +886,7 @@ def select_file(entry, project_name):
 		project_name.set(name2[0])
 		##Checking directories
 		global dir_path_project
-		dir_path_project = dir_path_dynamics + name2[0] + "/"
+		dir_path_project = dir_path_dynamics + name2[0].lower() + "/"
 		if os.path.isdir(dir_path_project) == False:
 			os.makedirs(dir_path_project)
 			shutil.copyfile(file.name, dir_path_project + name2[0] + ".pdb")
