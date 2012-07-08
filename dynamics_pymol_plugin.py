@@ -830,6 +830,8 @@ def bar_update(bar_var, bar_widget, tasks, name):
 		time.sleep(1)
 	if bar_var.get() == "Finished!":
 		print "Finished!"
+		bar_widget.configure(value=1)
+		bar_widget.update_idletasks()
 		if plugin == 0:
 			root = Tk()
 			file = tkFileDialog.asksaveasfile(parent=root, mode='w' ,title='Choose final multimodel file to save')
