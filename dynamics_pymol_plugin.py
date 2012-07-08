@@ -813,6 +813,7 @@ def startMessage(moleculeName, group_nr, force_field_nr, water_nr, master):
 
 ##This function will update status bar during molecular dynamics simulation
 def bar_update(bar_var, bar_widget, tasks, name):
+	global error
 	while bar_var.get() != "Finished!" and error == "":
 		percent = 0.0
 		for job in progress.to_do:
@@ -849,6 +850,7 @@ def bar_update(bar_var, bar_widget, tasks, name):
 		ok_button = Button(frame, text = "OK", command=root.destroy)
 		ok_button.pack()
 		root.mainloop()
+		error = ""
 
 ##This function will show current progress in main window if "Jobs from the begining" is unchecked
 def main_status_bar(var, bar):
@@ -1345,6 +1347,7 @@ def dynamics(name = "h"):
 		print status[1]
 		if help_name.count(name) != 1 and clean_name.count(name) != 1:
 			error_message()
+		status = ["ok", ""]
 	#This should be removed
 	if plugin == 0:
 		return dir_path_project
