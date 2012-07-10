@@ -169,10 +169,9 @@ class Gromacs_output:
 		subprocess.call(self.path+"echo -e '"+for_water+"\n1' | pdb2gmx &> "+dir_path_dynamics+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dir_path_dynamics+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
-
 		print "Reading available force forces"	
 		force_start_line = 0
-		while lista_gromacs[force_start_line] != "Select the Force force:\n":
+		while lista_gromacs[force_start_line] != "Select the Force Field:\n":
 			force_start_line = force_start_line + 1
 		force_start_line = force_start_line + 2
 		force_end_line = force_start_line
