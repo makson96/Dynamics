@@ -23,7 +23,7 @@ except:
 ##Globals variables
 help_name = ["-h", "h", "-help", "help"]
 clean_name = ["-c", "c", "clean", "-clean"]
-plugin_ver = " 1.0.2"
+plugin_ver = " 1.1.0pre"
 
 stop = 0
 restraints_var = 0
@@ -116,7 +116,7 @@ class Gromacs_output:
 	version = "GROMACS not found"
 	status = ["ok", ""]
 	gromacs_path = ""
-	force_field_list = []
+	force_list = []
 	water_list = []
 	group_list = []
 	restraints = []
@@ -170,19 +170,19 @@ class Gromacs_output:
 		test_gromacs = open(dir_path_dynamics+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
 
-		print "Reading available force fields"	
-		force_field_start_line = 0
-		while lista_gromacs[force_field_start_line] != "Select the Force Field:\n":
-			force_field_start_line = force_field_start_line + 1
-		force_field_start_line = force_field_start_line + 2
-		force_field_end_line = force_field_start_line
-		while lista_gromacs[force_field_end_line] != "\n":
-			force_field_end_line = force_field_end_line + 1
-		force_field_list = lista_gromacs[force_field_start_line:force_field_end_line]
-		force_field_list2 = []
+		print "Reading available force forces"	
+		force_start_line = 0
+		while lista_gromacs[force_start_line] != "Select the Force force:\n":
+			force_start_line = force_start_line + 1
+		force_start_line = force_start_line + 2
+		force_end_line = force_start_line
+		while lista_gromacs[force_end_line] != "\n":
+			force_end_line = force_end_line + 1
+		force_list = lista_gromacs[force_start_line:force_end_line]
+		force_list2 = []
 		number = 1
-		for force in force_field_list:
-			force_field_list2.append([number, force[:-1]])
+		for force in force_list:
+			force_list2.append([number, force[:-1]])
 			number = number + 1
 
 		print "Reading available water models"
@@ -209,14 +209,14 @@ class Gromacs_output:
 			group_list2.append([number, group])
 			number = number + 1
 		
-		self.force_field_list = force_field_list2
+		self.force_list = force_list2
 		self.water_list = water_list2
 		self.group_list = group_list2
 	
 	##This function will update water list if force field is changed.
-	def water_update(self, force_field_number):
+	def water_update(self, force_number):
 		print "Updateing available water models"
-		subprocess.call(self.path+"echo -e '"+str(force_field_number)+"\n1' | pdb2gmx &> "+dir_path_dynamics+"test_gromacs.txt", executable="/bin/bash", shell=True)
+		subprocess.call(self.path+"echo -e '"+str(force_number)+"\n1' | pdb2gmx &> "+dir_path_dynamics+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dir_path_dynamics+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
 
@@ -270,7 +270,7 @@ gromacs = Gromacs_output()
 class Gromacs_input:
 	
 	status = ["ok", "Waiting to start"]
-	field = 1
+	force = 1
 	water = 1
 	group = 1
 	box_type = "triclinic"
@@ -278,16 +278,14 @@ class Gromacs_input:
 	box_density = "1000"
 	restraints_nr = 1
 
-	##This function will change given variabless stored by the class (unnecesary - only for backward compatybility, need to be removed)
-	def update(self, field, water, group, box_type, box_distance, box_density, root=""):
+	##This function will change given variabless stored by the class (needed for lambda statements)
+	def update(self, group, box_type, box_distance, box_density, root=""):
 		#Close mother window if present
 		try:
 			root.destroy()
 		except:
 			pass
 		
-		self.field = field
-		self.water = water
 		self.group = group
 		self.box_type = box_type
 		self.box_distance = box_distance
@@ -295,17 +293,17 @@ class Gromacs_input:
 		save1()
 		print "gromacs update"
 	
-	##This function will create initial topology and triectory using pdb file and choosen force field
-	def pdb2top(self, name, file_path, field):
-		status = ["ok", "Calculating topology using Force Fields"]
+	##This function will create initial topology and triectory using pdb file and choosen force force
+	def pdb2top(self, name, file_path, force):
+		status = ["ok", "Calculating topology using Force forces"]
 		self.status = status
 		try:
 			os.remove(name+".gro")
 			os.remove(name+".top")
 		except:
 			pass
-		print "Calculating topology using Force Fields"
-		Pdb2gmx = subprocess.call(gromacs.path+"echo -e '"+field+"' | pdb2gmx -f "+name+".pdb -o "+name+".gro -p "+name+".top &> log.txt",
+		print "Calculating topology using Force forces"
+		Pdb2gmx = subprocess.call(gromacs.path+"echo -e '"+force+"' | pdb2gmx -f "+name+".pdb -o "+name+".gro -p "+name+".top &> log.txt",
 		executable="/bin/bash", shell=True)
 
 		if os.path.isfile(file_path+".gro") == True:
@@ -313,13 +311,13 @@ class Gromacs_input:
 		else:
 			status = ["fail", "Warning. Trying to ignore unnecessary hydrogen atoms."]
 			print status[1]
-			Pdb2gmx = subprocess.call(gromacs.path+"echo -e '"+field+"' | pdb2gmx -ignh -f "+name+".pdb -o "+name+".gro -p "+name+".top &> log.txt",
+			Pdb2gmx = subprocess.call(gromacs.path+"echo -e '"+force+"' | pdb2gmx -ignh -f "+name+".pdb -o "+name+".gro -p "+name+".top &> log.txt",
 			executable="/bin/bash", shell=True)
 
 		if os.path.isfile(file_path+".gro") == True:
-			status = ["ok", "Calculated topology using Force Fields"]
+			status = ["ok", "Calculated topology using Force forces"]
 		else:
-			status = ["fail", "Force field unable to create topology file"]
+			status = ["fail", "Force force unable to create topology file"]
 		
 		self.status = status
 	
@@ -524,331 +522,350 @@ class Progress_status:
 				to_do.append(0)
 		self.to_do = to_do
 
-##init function - puts plugin into menu and starts it () after clicking.
+##init function - puts plugin into menu and starts 'dynamicsDialog' after clicking.
 def __init__(self):
 	self.menuBar.addmenuitem("Plugin", "command", "dynamics"+plugin_ver, label = "dynamics"+plugin_ver,
-	command = lambda s=self: dynamicsDialog(s))
-	
-##Master menu window
-class MasterWindow:
-	
-	def __init__(self, master):
-		
-		##Detect list of PyMOL loaded PDB files if no files than list "nothing"
-		if plugin == 1:
-			allNames = cmd.get_names("objects") #PyMOL API
-			e1 = StringVar(master)
-			e1.set("")
-			if allNames == []:
-				allNames = ["nothing"]
-			else:
-				allNames1 = []
-				for name in allNames:
-					name1 = name.split("_")
-					if name1[-1] == "multimodel" or name1[-1] == "(sele)":
-						pass
-					else:
-						allNames1.append(name)
-				allNames = allNames1
-			
-		elif plugin == 0:
-			allNames = ["nothing"]
-		
-		##TkInter variables
-		moleculeName = allNames[0]
-		v1_name = StringVar(master)
-		v1_name.set(moleculeName)
-		
-		groupName = gromacs.group_list[1][0]
-		v2_group = IntVar(master)
-		v2_group.set(groupName)
-		
-		force_fieldName = gromacs.force_field_list[0][0]
-		v3_force = IntVar(master)
-		v3_force.set(force_fieldName)
-		
-		waterName = gromacs.water_list[0][0]
-		v4_water = IntVar(master)
-		v4_water.set(waterName)
-
-		water_v = StringVar(master)
-		water_v.set(gromacs.water_list[v4_water.get()-1][1])
-		
-		check_var = IntVar(master)
-		
-		check_var2 = IntVar(master)
-		check_var2.set(restraints_var)
-		
-		#Initial configuration
-		set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var)
-		
-		##Start drawing interface
-		frame0 = Frame(master)
-		frame0.pack(side=TOP)
-		
-		w_version = Label(frame0, text=gromacs.version)
-		w_version.pack(side=TOP)
-		
-		frame1 = Frame(master)
-		frame1.pack(side=TOP)
-		
-		frame1_1 = Frame(frame1, borderwidth=1, relief=RAISED)
-		frame1_1.pack(side=LEFT)
-		
-		w1 = Label(frame1_1, text="Molecules")
-		w1.pack(side=TOP)
-		
-		global dir_path_project
-		dir_path_project = dir_path_dynamics + v1_name.get() + "/"
-		
-		frame1_1a = Frame(frame1_1)
-		frame1_1a.pack(side=TOP)
-		
-		#List of PyMOL loaded PDB files
-		if allNames[0] != "nothing":
-			for molecule in allNames:
-				radio_button1 = Radiobutton(frame1_1a, text=molecule, value=molecule, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var, p, 1))
-				radio_button1.pack(side=TOP, anchor=W)
-		#If no loaded PDB files, than add button to choose one
-		else:
-			#Change entry to label
-			w1_1 = Label(frame1_1a, text="Choose PDB file")
-			w1_1.pack(side=TOP)
-			frame1_1_1 = Frame(frame1_1a)
-			frame1_1_1.pack(side=TOP)
-			e1 = Entry(frame1_1_1)
-			e1.pack(side=LEFT)
-			button_e1 = Button(frame1_1_1, text = "Browse", command=lambda: select_file(e1, v1_name))
-			button_e1.pack(side=LEFT)
-		
-		#List of previous projects
-		if os.path.isdir(dir_path_dynamics) == True:
-			projects = os.listdir(dir_path_dynamics)
-		else:
-			projects = []
-		if projects != ['test_gromacs.txt'] and projects != []:
-			w1_2 = Label(frame1_1, text="Previous Projects")
-			w1_2.pack(side=TOP)
-		
-			for molecule in projects:
-				if os.path.isdir(dir_path_dynamics + molecule) == True and molecule != "nothing":
-					projects1 = []
-					molecule1 = molecule.split("_")
-					if molecule1[-1] == "multimodel":
-						pass
-					else:
-						molecule1 = molecule.split("-")
-						if molecule1[0] == "gromacs":
-							pass
-						else:
-							radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var, p, 0, check1_button, check_var2))
-							radio_button1.pack(side=TOP, anchor=W)
-		
-		#List of group for final model
-		w2 = Label(frame1_1, text="Group")
-		w2.pack(side=TOP)
-		for group in gromacs.group_list:
-			radio_button2 = Radiobutton(frame1_1, text=group[1], value=group[0], variable=v2_group, command=lambda: gromacs2.update(v3_force.get(), v4_water.get(), v2_group.get(), gromacs2.box_type, gromacs2.box_distance, gromacs2.box_density))
-			radio_button2.pack(side=TOP, anchor=W)
-		
-		frame1_2 = Frame(frame1, borderwidth=1, relief=RAISED)
-		frame1_2.pack(side=LEFT)
-		
-		#List of available force fields
-		w3 = Label(frame1_2, text="Force Field", anchor=E)
-		w3.pack(side=TOP)
-
-		for force_field in gromacs.force_field_list:
-			radio_button3 = Radiobutton(frame1_2, text=force_field[1], value=force_field[0], variable=v3_force, command=lambda : waterSet(v4_water, water_v, 1, v3_force.get()))
-			radio_button3.pack(side=TOP, anchor=W)
-
-		#Label of choosen water model
-		w4 = Label(frame1_2, text="Water Model", anchor=E)
-		w4.pack(side=TOP)
-		
-		frame1_2_1 = Frame(frame1_2)
-		frame1_2_1.pack(side=TOP)
-
-		#Buttons to choose water model and configure water box
-		water_label = Label(frame1_2_1, textvariable=water_v)
-		water_label.pack(side=LEFT)
-		water_button = Button(frame1_2_1, text = "Choose...", command=lambda : waterChoose(v4_water, water_v, master)) #!!!
-		water_button.pack(side=LEFT)
-		waterbox_button = Button(frame1_2_1, text = "Configure", command=lambda: waterBox(master))
-		waterbox_button.pack(side=LEFT)
-		
-		frame1_3 = Frame(frame1)
-		frame1_3.pack(side=LEFT)
-		
-		frame1_3_1 = Frame(frame1_3, borderwidth=1, relief=RAISED)
-		frame1_3_1.pack(side=TOP)
-		
-		w4 = Label(frame1_3_1, text="Configuration")
-		w4.pack(side=TOP)
-		
-		#Buttonf for configuration of MDP files
-		em_label = Label(frame1_3_1, text="Energy Minimisation")
-		em_label.pack(side=TOP)
-		em_button2 = Button(frame1_3_1, text = "Configure", command=lambda: mdp_configure("em", master))
-		em_button2.pack(side=TOP)
-		if os.path.isfile(dir_path_dynamics + "em.mdp"):
-			em_button2.configure(state=DISABLED)
-		
-		pr_label = Label(frame1_3_1, text="Position Restrained MD")
-		pr_label.pack(side=TOP)
-		pr_button2 = Button(frame1_3_1, text = "Configure", command=lambda: mdp_configure("pr", master))
-		pr_button2.pack(side=TOP)
-		if os.path.isfile(dir_path_dynamics + "pr.mdp"):
-			pr_button2.configure(state=DISABLED)
-		
-		md_label = Label(frame1_3_1, text="Molecular Dynamics Simulation")
-		md_label.pack(side=TOP)
-		md_button2 = Button(frame1_3_1, text = "Configure", command=lambda: mdp_configure("md", master))
-		md_button2.pack(side=TOP)
-		if os.path.isfile(dir_path_dynamics + "md.mdp"):
-			md_button2.configure(state=DISABLED)
-		
-		#Check-box and button for position restraints configuration
-		check1 = Checkbutton(frame1_3_1, text="Position Restraints", variable=check_var2, command=lambda: restraints(check_var2.get(), check1_button))
-		check1.pack(side=TOP)
-		
-		check1_button = Button(frame1_3_1, text = "Configure", command=lambda: restraints_window(master))
-		check1_button.pack(side=TOP)
-		check1_button.configure(state=DISABLED)
-
-		frame1_3_2 = Frame(frame1_3, borderwidth=1, relief=RAISED)
-		frame1_3_2.pack(side=TOP)
-		
-		#Jobs configuration button, progress bar and check box
-		job_button = Button(frame1_3_2, text = "Jobs to do", command=lambda: jobs_configure(master))
-		job_button.pack(side=TOP)
-		
-		w5 = Label(frame1_3_2, text="Progress Bar")
-		w5.pack(side=TOP)
-		p = Meter(frame1_3_2, value=0.0)
-		p.pack(side=TOP)
-		
-		#Set configure if PDB file was loaded in PyMOL
-		if allNames[0] != "nothing":
-			save1()
-			set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var, p, 1)
-
-		c = Checkbutton(frame1_3_2, text="Molecular Dynamics Simulation from the beginning", variable=check_var, command=lambda: main_status_bar(check_var.get(), p))
-		c.pack(side=TOP)
-		
-		main_status_bar(check_var.get(), p)
-		
-		frame2 = Frame(master)
-		frame2.pack(side=TOP)
-		
-		#Additional Buttons
-		quit_button = Button(frame2, text = "Cancel", command=master.destroy)
-		quit_button.pack(side=LEFT)
-		
-		clean_button = Button(frame2, text = "Clean", command=cleanMessage)
-		clean_button.pack(side=LEFT)
-		
-		help_button = Button(frame2, text = "Help", command=lambda: helpWindow(master))
-		help_button.pack(side=LEFT)
-		
-		save_button = Button(frame2, text = "Save", command=lambda: select_file_save(v1_name.get()))
-		save_button.pack(side=LEFT)
-		
-		load_button = Button(frame2, text = "Load", command=lambda: select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, check_var))
-		load_button.pack(side=LEFT)
-	
-		count_button = Button(frame2, text = "OK", command=lambda: startMessage(v1_name.get(), v2_group.get(), v3_force.get(), v4_water.get(), master))
-		count_button.pack(side=LEFT)
+	command = rootWindow)
 
 ##--Graphic Interface--
-def dynamicsDialog(app):
+##Master menu window
+def rootWindow():
+
 	root = Tk()
 	root.wm_title("Dynamics"+plugin_ver)
-	app = MasterWindow(root)
-	root.mainloop()
+	
+	##Creating objects
+	global calculationW, restraintsW
+	calculationW = CalculationWindow()
+	restrainstsW = RestraintsWindow()
+	
+	##Detect list of PyMOL loaded PDB files if no files than list "nothing"
+	if plugin == 1:
+		allNames = cmd.get_names("objects") #PyMOL API
+		e1 = StringVar(root)
+		e1.set("")
+		if allNames == []:
+			allNames = ["nothing"]
+		else:
+			allNames1 = []
+			for name in allNames:
+				name1 = name.split("_")
+				if name1[-1] == "multimodel" or name1[-1] == "(sele)":
+					pass
+				else:
+					allNames1.append(name)
+			allNames = allNames1
+		
+	elif plugin == 0:
+		allNames = ["nothing"]
+	if allNames == []:
+		allNames = ["nothing"]
+	
+	##TkInter variables
+	moleculeName = allNames[0]
+	v1_name = StringVar(root)
+	v1_name.set(moleculeName)
+	
+	groupNr = gromacs.group_list[1][0]
+	v2_group = IntVar(root)
+	v2_group.set(groupNr)
+	
+	forceNr = gromacs.force_list[0][0]
+	v3_force = IntVar(root)
+	v3_force.set(forceNr)
+	
+	waterNr = gromacs.water_list[0][0]
+	v4_water = IntVar(root)
+	v4_water.set(waterNr)
 
-##Molecular Dynamics Performing window
-def startMessage(moleculeName, group_nr, force_field_nr, water_nr, master):
-	print moleculeName
-	master.destroy()
+	water_v = StringVar(root)
+	water_v.set(gromacs.water_list[v4_water.get()-1][1])
 	
-	gromacs2.group = group_nr
-	gromacs2.field = force_field_nr
-	gromacs2.water = water_nr
-	gromacs2.status = ["ok", "Waiting to start"]
+	check_var = IntVar(root)
 	
-	root = Tk()
-	root.wm_title("Counting")
+	check_var2 = IntVar(root)
+	check_var2.set(restraints_var)
+	
+	#Initial configuration
+	set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var)
+	
+	##Start drawing interface
+	frame0 = Frame(root)
+	frame0.pack(side=TOP)
+	
+	w_version = Label(frame0, text=gromacs.version)
+	w_version.pack(side=TOP)
+	
 	frame1 = Frame(root)
 	frame1.pack(side=TOP)
+	
+	frame1_1 = Frame(frame1, borderwidth=1, relief=RAISED)
+	frame1_1.pack(side=LEFT)
+	
+	w1 = Label(frame1_1, text="Molecules")
+	w1.pack(side=TOP)
+	
+	global dir_path_project
+	dir_path_project = dir_path_dynamics + v1_name.get().lower() + "/"
+	
+	frame1_1a = Frame(frame1_1)
+	frame1_1a.pack(side=TOP)
+	
+	#List of PyMOL loaded PDB files
+	if allNames[0] != "nothing":
+		for molecule in allNames:
+			radio_button1 = Radiobutton(frame1_1a, text=molecule, value=molecule, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var, p, 1))
+			radio_button1.pack(side=TOP, anchor=W)
+	#If no loaded PDB files, than add button to choose one
+	else:
+		w1_1 = Label(frame1_1a, text="Choose PDB file")
+		w1_1.pack(side=TOP)
+		frame1_1_1 = Frame(frame1_1a)
+		frame1_1_1.pack(side=TOP)
+		label1 = Label(frame1_1_1, textvariable=v1_name)
+		label1.pack(side=LEFT)
+		button_e1 = Button(frame1_1_1, text = "Browse", command=lambda: select_file(v1_name))
+		button_e1.pack(side=LEFT)
+	
+	#List of previous projects
+	if os.path.isdir(dir_path_dynamics) == True:
+		projects = os.listdir(dir_path_dynamics)
+	else:
+		projects = []
+	if projects != ['test_gromacs.txt'] and projects != []:
+		w1_2 = Label(frame1_1, text="Previous Projects")
+		w1_2.pack(side=TOP)
+	
+		for molecule in projects:
+			if os.path.isdir(dir_path_dynamics + molecule) == True and molecule != "nothing":
+				projects1 = []
+				molecule1 = molecule.split("_")
+				if molecule1[-1] == "multimodel":
+					pass
+				else:
+					molecule1 = molecule.split("-")
+					if molecule1[0] == "gromacs":
+						pass
+					else:
+						radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var, p, 0, check1_button, check_var2))
+						radio_button1.pack(side=TOP, anchor=W)
+	
+	#List of group for final model
+	w2 = Label(frame1_1, text="Group")
+	w2.pack(side=TOP)
+	for group in gromacs.group_list:
+		radio_button2 = Radiobutton(frame1_1, text=group[1], value=group[0], variable=v2_group, command=lambda: gromacs2.update(v2_group.get(), gromacs2.box_type, gromacs2.box_distance, gromacs2.box_density))
+		radio_button2.pack(side=TOP, anchor=W)
+	
+	frame1_2 = Frame(frame1, borderwidth=1, relief=RAISED)
+	frame1_2.pack(side=LEFT)
+	
+	#List of available force forces
+	w3 = Label(frame1_2, text="Force force", anchor=E)
+	w3.pack(side=TOP)
+
+	for force in gromacs.force_list:
+		radio_button3 = Radiobutton(frame1_2, text=force[1], value=force[0], variable=v3_force, command=lambda : waterSet(v4_water, water_v, v3_force.get()))
+		radio_button3.pack(side=TOP, anchor=W)
+
+	#Label of choosen water model
+	w4 = Label(frame1_2, text="Water Model", anchor=E)
+	w4.pack(side=TOP)
+	
+	frame1_2_1 = Frame(frame1_2)
+	frame1_2_1.pack(side=TOP)
+
+	#Buttons to choose water model and configure water box
+	water_label = Label(frame1_2_1, textvariable=water_v)
+	water_label.pack(side=LEFT)
+	water_button = Button(frame1_2_1, text = "Choose...", command=lambda : waterChoose(v4_water, water_v, root))
+	water_button.pack(side=LEFT)
+	waterbox_button = Button(frame1_2_1, text = "Configure", command=lambda: waterBox(root))
+	waterbox_button.pack(side=LEFT)
+	
+	frame1_3 = Frame(frame1)
+	frame1_3.pack(side=LEFT)
+	
+	frame1_3_1 = Frame(frame1_3, borderwidth=1, relief=RAISED)
+	frame1_3_1.pack(side=TOP)
+	
+	w4 = Label(frame1_3_1, text="Configuration")
+	w4.pack(side=TOP)
+	
+	#Button for configuration of MDP files
+	em_label = Label(frame1_3_1, text="Energy Minimisation")
+	em_label.pack(side=TOP)
+	em_button2 = Button(frame1_3_1, text = "Configure", command=lambda: mdp_configure("em", root))
+	em_button2.pack(side=TOP)
+	if os.path.isfile(dir_path_dynamics + "em.mdp"):
+		em_button2.configure(state=DISABLED)
+	
+	pr_label = Label(frame1_3_1, text="Position Restrained MD")
+	pr_label.pack(side=TOP)
+	pr_button2 = Button(frame1_3_1, text = "Configure", command=lambda: mdp_configure("pr", root))
+	pr_button2.pack(side=TOP)
+	if os.path.isfile(dir_path_dynamics + "pr.mdp"):
+		pr_button2.configure(state=DISABLED)
+	
+	md_label = Label(frame1_3_1, text="Molecular Dynamics Simulation")
+	md_label.pack(side=TOP)
+	md_button2 = Button(frame1_3_1, text = "Configure", command=lambda: mdp_configure("md", root))
+	md_button2.pack(side=TOP)
+	if os.path.isfile(dir_path_dynamics + "md.mdp"):
+		md_button2.configure(state=DISABLED)
+	
+	#Checkbox and button for position restraints configuration
+	check1 = Checkbutton(frame1_3_1, text="Position Restraints", variable=check_var2, command=lambda: RestraintsWindow.check(check_var2.get(), check1_button))
+	check1.pack(side=TOP)
+	
+	check1_button = Button(frame1_3_1, text = "Configure", command=lambda: RestraintsWindow.window(root))
+	check1_button.pack(side=TOP)
+	check1_button.configure(state=DISABLED)
+
+	frame1_3_2 = Frame(frame1_3, borderwidth=1, relief=RAISED)
+	frame1_3_2.pack(side=TOP)
+		
+	#Jobs configuration button, progress bar and check box
+	job_button = Button(frame1_3_2, text = "Jobs to do", command=lambda: jobs_configure(root))
+	job_button.pack(side=TOP)
+	
+	w5 = Label(frame1_3_2, text="Progress Bar")
+	w5.pack(side=TOP)
+	p = Meter(frame1_3_2, value=0.0)
+	p.pack(side=TOP)
+	
+	#Set configure if PDB file was loaded in PyMOL
+	if allNames[0] != "nothing":
+		save1()
+		set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var, p, 1)
+
+	c = Checkbutton(frame1_3_2, text="Molecular Dynamics Simulation from the beginning", variable=check_var, command=lambda: main_status_bar(check_var.get(), p))
+	c.pack(side=TOP)
+	
+	main_status_bar(check_var.get(), p)
+	
 	frame2 = Frame(root)
 	frame2.pack(side=TOP)
 	
-	bar_v = StringVar(root)
-	bar_v.set("Ready to start")
+	#Additional Buttons
+	quit_button = Button(frame2, text = "Cancel", command=root.destroy)
+	quit_button.pack(side=LEFT)
 	
-	w5 = Label(frame1, textvariable=bar_v)
-	w5.pack(side=TOP)
-	p = Meter(frame1, value=0.0)
-	p.pack(side=TOP)
+	clean_button = Button(frame2, text = "Clean", command=cleanMessage)
+	clean_button.pack(side=LEFT)
 	
-	exit_button = Button(frame2, text = "EXIT", command=root.destroy)
-	exit_button.pack(side=LEFT)
+	help_button = Button(frame2, text = "Help", command=lambda: helpWindow(root))
+	help_button.pack(side=LEFT)
 	
-	save_button = Button(frame2, text = "SAVE", command=lambda: select_file_save(moleculeName, 1))
+	save_button = Button(frame2, text = "Save", command=lambda: select_file_save(v1_name.get()))
 	save_button.pack(side=LEFT)
 	
-	stop_button = Button(frame2, text = "STOP", command=lambda : stop_counting(1))
-	stop_button.pack(side=LEFT)
+	load_button = Button(frame2, text = "Load", command=lambda: select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, check_var))
+	load_button.pack(side=LEFT)
 	
-	start_button = Button(frame2, text = "START", command=lambda: thread.start_new_thread(dynamics, (moleculeName,)))
-	start_button.pack(side=LEFT)
-	#Updateing status bar
-	tasks_nr = 0.0
-	for task in progress.to_do:
-		tasks_nr = tasks_nr + task
-	thread.start_new_thread(bar_update, (bar_v, p, tasks_nr, moleculeName))
-	
+	count_button = Button(frame2, text = "OK", command=lambda: calculationW.window(v1_name.get(), root))
+	count_button.pack(side=LEFT)
+		
 	root.mainloop()
 
-##This function will update status bar during molecular dynamics simulation
-def bar_update(bar_var, bar_widget, tasks, name):
-	while bar_var.get() != "Finished!" and error == "":
-		percent = 0.0
-		for job in progress.to_do:
-			percent = percent + job
-		if tasks != 0:
-			percent = (tasks - percent) / tasks
-		else:
-			percent = 1
-		bar_widget.configure(value=percent)
-		bar_widget.update_idletasks()
-		bar_var.set(gromacs2.status[1])
-		if stop == 1:
-			bar_var.set("User Stoped")
-		time.sleep(1)
-	if bar_var.get() == "Finished!":
-		print "Finished!"
-		if plugin == 0:
-			root = Tk()
-			file = tkFileDialog.asksaveasfile(parent=root, mode='w' ,title='Choose final multimodel file to save')
-			try:
-				os.remove(file.name)
-				shutil.copy(dir_path_project + name + "_multimodel.pdb", file.name+".pdb")
-			except:
-				pass
-			root.destroy()
-	elif error != "":
-		bar_var.set("Fatal Error")
+##Molecular Dynamics Performing window
+class CalculationWindow:
+	
+	moleculeName = ""
+	tasks_to_do = 0
+	bar_var = ""
+	bar_widget = ""
+	
+	##This function will create main Calculation Window
+	def window(self, moleculeName, master):
+		print moleculeName
+		master.destroy()
+	
+		gromacs2.status = ["ok", "Waiting to start"]
+		self.moleculeName = moleculeName
+	
 		root = Tk()
-		root.wm_title("GROMACS Error Message")
-		frame = Frame(root)
-		frame.pack()
-		w = Label(frame, text=error)
-		w.pack()
-		ok_button = Button(frame, text = "OK", command=root.destroy)
-		ok_button.pack()
+		root.wm_title("Calculation Window")
+		frame1 = Frame(root)
+		frame1.pack(side=TOP)
+		frame2 = Frame(root)
+		frame2.pack(side=TOP)
+	
+		self.bar_var = StringVar(root)
+		self.bar_var.set("Ready to start")
+	
+		w5 = Label(frame1, textvariable=bar_v)
+		w5.pack(side=TOP)
+		self.bar_widget = Meter(frame1, value=0.0)
+		self.bar_widget.pack(side=TOP)
+	
+		exit_button = Button(frame2, text = "EXIT", command=root.destroy)
+		exit_button.pack(side=LEFT)
+	
+		save_button = Button(frame2, text = "SAVE", command=lambda: select_file_save(self.moleculeName, 1))
+		save_button.pack(side=LEFT)
+	
+		stop_button = Button(frame2, text = "STOP", command=lambda : stop_counting(1))
+		stop_button.pack(side=LEFT)
+	
+		start_button = Button(frame2, text = "START", command=lambda: thread.start_new_thread(dynamics, (self.moleculeName,)))
+		start_button.pack(side=LEFT)
+		#Updateing status bar
+		tasks_nr = 0.0
+		for task in progress.to_do:
+			tasks_nr = tasks_nr + task
+		self.tasks_to_do = tasks_nr
+		thread.start_new_thread(self.bar_update, ())
+	
 		root.mainloop()
+
+	##This function will update status bar during molecular dynamics simulation
+	def bar_update(self):
+		global error
+		while self.bar_var.get() != "Finished!" and error == "":
+			percent = 0.0
+			for job in progress.to_do:
+				percent = percent + job
+			if tasks != 0:
+				percent = (tasks - percent) / tasks
+			else:
+				percent = 1
+			self.bar_widget.configure(value=percent)
+			self.bar_widget.update_idletasks()
+			self.bar_var.set(gromacs2.status[1])
+			if stop == 1:
+				self.bar_var.set("User Stoped")
+			time.sleep(1)
+		if self.bar_var.get() == "Finished!":
+			print "Finished!"
+			self.bar_widget.configure(value=1)
+			self.bar_widget.update_idletasks()
+			if plugin == 0:
+				root = Tk()
+				file = tkFileDialog.asksaveasfile(parent=root, mode='w' ,title='Choose final multimodel file to save')
+				try:
+					os.remove(file.name)
+					shutil.copy(dir_path_project + name + "_multimodel.pdb", file.name+".pdb")
+				except:
+					pass
+				root.destroy()
+		elif error != "":
+			self.bar_var.set("Fatal Error")
+			root = Tk()
+			root.wm_title("GROMACS Error Message")
+			frame = Frame(root)
+			frame.pack()
+			w = Label(frame, text=error)
+			w.pack()
+			ok_button = Button(frame, text = "OK", command=root.destroy)
+			ok_button.pack()
+			root.mainloop()
+			error = ""
+
+	##This function will change global value if stop is clicked during simulation
+	def stop_counting(self, value):
+		global stop
+		stop = value
 
 ##This function will show current progress in main window if "Jobs from the begining" is unchecked
 def main_status_bar(var, bar):
@@ -868,25 +885,17 @@ def main_status_bar(var, bar):
 		progress.to_do = [1,1,1,1,1,1,1]
 		progress.from_begining = 1
 
-##This function will change global value if stop is clicked during simulation
-def stop_counting(value):
-	global stop
-	stop = value
-
 ##This function will allow you to choose PDB file if no file is loaded to PyMOL
-def select_file(entry, project_name):
+def select_file(project_name):
 	root = Tk()
 	file = tkFileDialog.askopenfile(parent=root, mode='rb',title='Choose PDB file')
 	try:
-		entry.insert(0, file.name)
-		entry.delete(0, END)
-		entry.insert(0, file.name)
 		name = file.name.split("/")
 		name2 = name[-1].split(".")
 		project_name.set(name2[0])
 		##Checking directories
 		global dir_path_project
-		dir_path_project = dir_path_dynamics + name2[0] + "/"
+		dir_path_project = dir_path_dynamics + name2[0].lower() + "/"
 		if os.path.isdir(dir_path_project) == False:
 			os.makedirs(dir_path_project)
 			shutil.copyfile(file.name, dir_path_project + name2[0] + ".pdb")
@@ -912,7 +921,7 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
 		new_name = load(file.name)
 		v1_name.set(new_name)
 		v2_group.set(gromacs.group_list[gromacs2.group][0])
-		v3_force.set(gromacs.force_field_list[gromacs2.field-1][0])
+		v3_force.set(gromacs.force_list[gromacs2.force-1][0])
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
 		check_var.set(progress.from_begining)
@@ -924,23 +933,21 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
 def waterChoose(v4_water, water_v, master):
 	root = Toplevel(master)
 	root.wm_title("Water Model")
-	waterNr = gromacs.water_list[0][0]
-	v_nr = IntVar(root)
-	v_nr.set(waterNr)
 	for water in gromacs.water_list:
-		radio_button = Radiobutton(root, text=water[1], value=water[0], variable=v_nr, command = lambda : waterSet(v4_water, water_v, v_nr.get()))
+		radio_button = Radiobutton(root, text=water[1], value=water[0], variable=v4_water, command = lambda : waterSet(v4_water, water_v))
 		radio_button.pack(side=TOP, anchor=W)
 	ok_button = Button(root, text = "OK", command=root.destroy)
 	ok_button.pack(side=TOP)
 
-##This function will change water model after choosing one in "waterChoose"
-def waterSet(v4_water, water_v, water_nr, force = ""):
+##This function will change force field and water model when choosing Force Field in Main Window and also change water model after choosing one in "waterChoose"
+def waterSet(v4_water, water_v, force = ""):
 	if force == "":
-		force = gromacs2.field
+		force = gromacs2.force
+	else:
+		gromac2.force = force
 	gromacs.water_update(force)
-	v4_water.set(water_nr)
-	water_v.set(gromacs.water_list[water_nr-1][1])
-	gromacs2.update(force, water_nr, gromacs2.group, gromacs2.box_type, gromacs2.box_distance, gromacs2.box_density)
+	water_v.set(gromacs.water_list[v4_water.get()-1][1])
+	gromacs2.water = v4_water.get()
 	save1()
 
 ##Water box configuration window
@@ -949,32 +956,32 @@ def waterBox(master):
 	root1.wm_title("Water Box Options")
 	root1.wm_geometry("300x250")
 	v = StringVar(root1)
-	v.set("triclinic")
+	v.set(gromacs2.box_type)
 	w = Label(root1, text="Box type")
 	w.pack()
-	radio_button = Radiobutton(root1, text="triclinic", value="triclinic", variable=v, command = lambda : gromacs2.update(gromacs2.field, gromacs2.water, gromacs2.group, v.get(), gromacs2.box_distance, gromacs2.box_density))
+	radio_button = Radiobutton(root1, text="triclinic", value="triclinic", variable=v, command = lambda : gromacs2.update(gromacs2.group, v.get(), gromacs2.box_distance, gromacs2.box_density))
 	radio_button.pack(side=TOP, anchor=W)
-	radio_button = Radiobutton(root1, text="cubic", value="cubic", variable=v, command = lambda : gromacs2.update(gromacs2.field, gromacs2.water, gromacs2.group, v.get(), gromacs2.box_distance, gromacs2.box_density))
+	radio_button = Radiobutton(root1, text="cubic", value="cubic", variable=v, command = lambda : gromacs2.update(gromacs2.group, v.get(), gromacs2.box_distance, gromacs2.box_density))
 	radio_button.pack(side=TOP, anchor=W)
-	radio_button = Radiobutton(root1, text="dodecahedron", value="dodecahedron", variable=v, command = lambda : gromacs2.update(gromacs2.field, gromacs2.water, gromacs2.group, v.get(), gromacs2.box_distance, gromacs2.box_density))
+	radio_button = Radiobutton(root1, text="dodecahedron", value="dodecahedron", variable=v, command = lambda : gromacs2.update(gromacs2.group, v.get(), gromacs2.box_distance, gromacs2.box_density))
 	radio_button.pack(side=TOP, anchor=W)
-	radio_button = Radiobutton(root1, text="octahedron", value="octahedron", variable=v, command = lambda : gromacs2.update(gromacs2.field, gromacs2.water, gromacs2.group, v.get(), gromacs2.box_distance, gromacs2.box_density))
+	radio_button = Radiobutton(root1, text="octahedron", value="octahedron", variable=v, command = lambda : gromacs2.update(gromacs2.group, v.get(), gromacs2.box_distance, gromacs2.box_density))
 	radio_button.pack(side=TOP, anchor=W)
 	w1 = Label(root1, text="Distance")
 	w1.pack()
 	distance = Entry(root1)
 	distance.pack(side=TOP)
-	distance.insert(0, "0.5")
+	distance.insert(0, gromacs2.box_distance)
 	w2 = Label(root1, text="Density [g/L]")
 	w2.pack()
 	density = Entry(root1)
 	density.pack(side=TOP)
-	density.insert(0, "1000")
-	ok_button = Button(root1, text = "OK", command=lambda : gromacs2.update(gromacs2.field, gromacs2.water, gromacs2.group, gromacs2.box_type, distance.get(), density.get(), root1))
+	density.insert(0, gromacs2.box_density)
+	ok_button = Button(root1, text = "OK", command=lambda : gromacs2.update(gromacs2.group, gromacs2.box_type, distance.get(), density.get(), root1))
 	ok_button.pack(side=TOP)
 
 ##This is very important function, which sets all necessary configuration files
-def set_config_files(name, v2_group="", v3_field="", v4_water="", water_v="", check_var="", main_bar=0, from_pymol=0, config_button_restraints = "", checkbox_restraints=""):
+def set_config_files(name, v2_group="", v3_force="", v4_water="", water_v="", check_var="", main_bar=0, from_pymol=0, config_button_restraints = "", checkbox_restraints=""):
 	global em_file, pr_file, md_file, progress, dir_path_project
 	name = name.lower()
 	dir_path_project = dir_path_dynamics + name + "/"
@@ -982,7 +989,7 @@ def set_config_files(name, v2_group="", v3_field="", v4_water="", water_v="", ch
 	if os.path.isfile(dir_path_project+"options.pickle") == True:
 		load1()
 		v2_group.set(gromacs.group_list[gromacs2.group][0])
-		v3_field.set(gromacs.force_field_list[gromacs2.field-1][0])
+		v3_force.set(gromacs.force_list[gromacs2.force-1][0])
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
 		if restraints_var == 0 and config_button_restraints != "":
@@ -1077,7 +1084,7 @@ def mdp_configure(config_name, master):
 		b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "md", root2))
 		b.pack(side=TOP)
 
-##This function will update MDP class objects alfter closeing "mdp_configure" window
+##This function will update MDP class objects alfter closing "mdp_configure" window
 def mdp_update(values, mdp, root=""):
 	try:
 		root.destroy()
@@ -1147,78 +1154,87 @@ def jobs_configure(master):
 	
 	b1 = Button(root5, text="OK", command=root5.destroy)
 	b1.pack(side=TOP)
-##This function will activ or disable restraints button in main window based on check box
-def restraints(check, config_button):
-	global restraints_var
-	if check == 1:
-		config_button.configure(state=ACTIVE)
-		md_file.options[2][0] = "define"
-		md_file.update()
-		restraints_var = 1
-		gromacs.restraints_index()
-	elif check == 0:
-		config_button.configure(state=DISABLED)
-		md_file.options[2][0] = ";define"
-		md_file.update()
-		restraints_var = 0
-
-##This function will create restraints window
-def restraints_window(master):
-	root1 = Toplevel(master)
-	root1.wm_title("Restraints Configure")
 	
-	sw = ScrolledWindow(root1, scrollbar=Y) # just the vertical scrollbar
-	sw.pack(fill=BOTH, expand=1)
-	
-	check_var = IntVar(sw.window)
-	check_var.set(gromacs2.restraints_nr)
+##Restraints
+##This class is resposible for graphic edition of restraints
+class RestraintsWindow:
 	
 	atom_list = []
-	number = 0
+	check_var = ""
 	
-	for group in gromacs.restraints:
-		select = Radiobutton(sw.window, text=group[0], value=number, variable=check_var, command=lambda : modify_index(check_var.get(), atom_list[check_var.get()]))
-		select.pack()
-		text = Text(sw.window)
-		text.insert(END, group[1])
-		text.pack()
-		atom_list.append(text)
-		number = number + 1
+	##This function will create main window for restraints
+	def window(self, master):
+		root1 = Toplevel(master)
+		root1.wm_title("Restraints Configure")
 	
-	if plugin == 1:
-		select1 = Radiobutton(sw.window, text="[ PyMol Selected ]", value=number, variable=check_var,command=lambda : modify_index(check_var.get(), atom_list[check_var.get()]))
-		select1.pack()
-		text1 = Text(sw.window)
+		sw = ScrolledWindow(root1, scrollbar=Y) # just the vertical scrollbar
+		sw.pack(fill=BOTH, expand=1)
+	
+		self.check_var = IntVar(sw.window)
+		self.check_var.set(gromacs2.restraints_nr)
+	
+		number = 0
+	
+		for group in gromacs.restraints:
+			select = Radiobutton(sw.window, text=group[0], value=number, variable=self.check_var)
+			select.pack()
+			text = Text(sw.window)
+			text.insert(END, group[1])
+			text.pack()
+			self.atom_list.append(text)
+			number = number + 1
+	
+		if plugin == 1:
+			select1 = Radiobutton(sw.window, text="[ PyMol Selected ]", value=number, variable=self.check_var)
+			select1.pack()
+			text1 = Text(sw.window)
 		
-		stored.list=[]
-		cmd.iterate("(sele)","stored.list.append(ID)") #PyMOL API
+			stored.list=[]
+			cmd.iterate("(sele)","stored.list.append(ID)") #PyMOL API
 		
-		stored_string = ""
-		for atom in stored.list:
-			stored_string = stored_string + str(atom)
-			lengh = stored_string.split('\n')
-			if len(lengh[-1]) < 72:
-				stored_string = stored_string + "   "
-			else:
-				stored_string = stored_string + "\n"
+			stored_string = ""
+			for atom in stored.list:
+				stored_string = stored_string + str(atom)
+				lengh = stored_string.split('\n')
+				if len(lengh[-1]) < 72:
+					stored_string = stored_string + "   "
+				else:
+					stored_string = stored_string + "\n"
 		
-		text1.insert(END, stored_string)
-		text1.pack()
-		atom_list.append(text1)
+			text1.insert(END, stored_string)
+			text1.pack()
+			self.atom_list.append(text1)
 		
-	ok_button = Button(sw.window, text="OK", command=lambda : modify_index(check_var.get(), atom_list[check_var.get()], root1))
-	ok_button.pack()
+		ok_button = Button(sw.window, text="OK", command=lambda : self.index(root1))
+		ok_button.pack()
 
-##This function will modyfie index_dynamics.ndx file based on user choosed restraints		
-def modify_index(index_nr, text, root_to_kill=""):
-	gromacs2.restraints_nr = index_nr
-	if index_nr < len(gromacs.restraints):
-		gromacs.restraints[index_nr][1] = text.get(1.0, END)
-	index_file = open("index_dynamics.ndx", "w")
-	index_file.write("[ Dynamics Selected ]\n"+text.get(1.0, END))
-	index_file.close()
-	if root_to_kill != "":
-		root_to_kill.destroy()
+	##This function will modyfie index_dynamics.ndx file based on user choosed restraints		
+	def index(self, root_to_kill=""):
+		index_nr = self.check_var.get()
+		gromacs2.restraints_nr = index_nr
+		text = self.atom_list[index_nr]
+		if index_nr < len(gromacs.restraints):
+			gromacs.restraints[index_nr][1] = text.get(1.0, END)
+		index_file = open("index_dynamics.ndx", "w")
+		index_file.write("[ Dynamics Selected ]\n"+text.get(1.0, END))
+		index_file.close()
+		if root_to_kill != "":
+			root_to_kill.destroy()
+			
+	##This function will activ or disable restraints button in main window based on check box
+	def check(self, check, config_button):
+		global restraints_var
+		if check == 1:
+			config_button.configure(state=ACTIVE)
+			md_file.options[2][0] = "define"
+			md_file.update()
+			restraints_var = 1
+			gromacs.restraints_index()
+		elif check == 0:
+			config_button.configure(state=DISABLED)
+			md_file.options[2][0] = ";define"
+			md_file.update()
+			restraints_var = 0
 
 ##Help window
 def helpWindow(master):
@@ -1241,7 +1257,7 @@ def cleanMessage():
 def dynamics(name = "h"):
 	name = name.lower()
 	file_path = dir_path_project + name
-	field = str(gromacs2.field) + "\n" + str(gromacs2.water)
+	force = str(gromacs2.force) + "\n" + str(gromacs2.water)
 	group = str(gromacs2.group)
 	global status, stop
 	stop = 0
@@ -1276,13 +1292,13 @@ def dynamics(name = "h"):
 
 	##Checking variables - temporary disabled
 	#if status[0] == "ok":
-	#	status = check_variable(name, field1, field2, group)
+	#	status = check_variable(name, force1, force2, group)
 	#elif status[0] == "fail":
 	#	pass
 	
 	##Counting topology
 	if status[0] == "ok" and stop == 0 and progress.to_do[1] == 1:
-		gromacs2.pdb2top(name, file_path, field)
+		gromacs2.pdb2top(name, file_path, force)
 		status = gromacs2.status
 		if status[0] == "ok":
 			progress.status[1] = 1
@@ -1345,6 +1361,7 @@ def dynamics(name = "h"):
 		print status[1]
 		if help_name.count(name) != 1 and clean_name.count(name) != 1:
 			error_message()
+		status = ["ok", ""]
 	#This should be removed
 	if plugin == 0:
 		return dir_path_project
@@ -1358,15 +1375,15 @@ def preproces(name, file_path):
 	os.chdir(dir_path_project)
 
 ##Checking if given varaibles are correct - depreciated
-def check_variable(name, field1, field2, group):
+def check_variable(name, force1, force2, group):
 	#jeszcze nie dziala (name)
 	status = ["ok", ""]
 	try:
-		int(field1)
+		int(force1)
 	except:
-		status = ["fail", "Wrong Force Field"]
+		status = ["fail", "Wrong Force force"]
 	try:
-		int(field2)
+		int(force2)
 	except:
 		status = ["fail", "Wrong Water Model"]
 	try:
@@ -1464,7 +1481,7 @@ The purpose of this plugin is to perform molecular dynamics simulation by GROMAC
 
 To use this program run it as a PyMOL plugin.
 Choose molecule (PDB) for which you want to perform molecular dynamics simulation (left column).
-Choose force field and water model options in the middle column.
+Choose force force and water model options in the middle column.
 Choose any additional options in the right column.
 Press OK button.
 Click Start button and wait till calculations are finished.
@@ -1497,6 +1514,6 @@ def error_message():
 		error = error + line
 	print error
 	
-##--Comand Line Interface-- - depreciated
+##--PyMOL Shell Interface-- - depreciated
 if plugin == 1:
-	cmd.extend("dynamics", dynamics)
+	cmd.extend("dynamics", dynamics) #PyMOL API
