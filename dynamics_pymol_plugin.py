@@ -827,7 +827,7 @@ class CalculationWindow:
 				file = tkFileDialog.asksaveasfile(parent=root, mode='w' ,title='Choose final multimodel file to save')
 				try:
 					os.remove(file.name)
-					shutil.copy(dir_path_project + '/' +project_name + "_multimodel.pdb", file.name+".pdb")
+					shutil.copy(dir_path_project + project_name + "_multimodel.pdb", file.name+".pdb")
 				except:
 					pass
 				root.destroy()
@@ -900,8 +900,8 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
 	root = Tk()
 	file = tkFileDialog.askopenfile(parent=root, mode='rb', defaultextension=".tar.bz2" ,title='Choose file to load')
 	if file != None:
-		new_name = load_file(file.name)
-		v1_name.set(new_name)
+		load_file(file.name)
+		v1_name.set(project_name)
 		v2_group.set(gromacs.group_list[gromacs2.group][0])
 		v3_force.set(gromacs.force_list[gromacs2.force-1][0])
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
