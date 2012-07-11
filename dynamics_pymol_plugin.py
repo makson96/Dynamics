@@ -26,7 +26,6 @@ clean_name = ["-c", "c", "clean", "-clean"]
 plugin_ver = " 1.1.0pre"
 
 stop = 0
-restraints_var = 0
 status = ["ok", ""]
 error = ""
 
@@ -99,8 +98,9 @@ gen_vel = yes
 gen_temp = 300.0
 gen_seed = 173529"""
 
+project_name = 'nothing'
 dir_path_dynamics = os.getenv("HOME")+'/.dynamics/'
-dir_path_project = dir_path_dynamics+'nothing'
+dir_path_project = dir_path_dynamics+project_name + '/'
 ##Clean "nothing" temporary directory if present.
 try:
 	shutil.rmtree(dir_path_project)
@@ -234,19 +234,14 @@ class Gromacs_output:
 			number = number + 1
 			
 		self.water_list = water_list2
-		if os.path.isdir(dir_path_project) == True:
-			save1()
+		save_options()
 		return water_list2
 	
 	##This function will read atoms group for restraints for current molecule.	
-	def restraints_index(self):
+	def index(self):
 		self.restraints = []
-		if os.path.isdir(dir_path_project) == False:
-			os.makedirs(dir_path_project)
 		os.chdir(dir_path_project)
-		name = dir_path_project.split("/")
-		name = name[-2]
-		subprocess.call(self.path+"echo q | make_ndx -f "+name+".pdb -o index.ndx &> restraints.log", executable="/bin/bash", shell=True)	
+		subprocess.call(self.path+"echo q | make_ndx -f "+project_name+".pdb -o index.ndx &> restraints.log", executable="/bin/bash", shell=True)	
 		index = open("index.ndx","r")
 		index_list = index.readlines()
 		index_position = 0
@@ -289,20 +284,20 @@ class Gromacs_input:
 		self.box_type = box_type
 		self.box_distance = box_distance
 		self.box_density = box_density
-		save1()
+		save_options()
 		print "gromacs update"
 	
 	##This function will create initial topology and triectory using pdb file and choosen force force
-	def pdb2top(self, name, file_path, force):
+	def pdb2top(self, file_path, force):
 		status = ["ok", "Calculating topology using Force forces"]
 		self.status = status
 		try:
-			os.remove(name+".gro")
-			os.remove(name+".top")
+			os.remove(project_name+".gro")
+			os.remove(project_name+".top")
 		except:
 			pass
 		print "Calculating topology using Force forces"
-		Pdb2gmx = subprocess.call(gromacs.path+"echo -e '"+force+"' | pdb2gmx -f "+name+".pdb -o "+name+".gro -p "+name+".top &> log.txt",
+		Pdb2gmx = subprocess.call(gromacs.path+"echo -e '"+force+"' | pdb2gmx -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log.txt",
 		executable="/bin/bash", shell=True)
 
 		if os.path.isfile(file_path+".gro") == True:
@@ -310,7 +305,7 @@ class Gromacs_input:
 		else:
 			status = ["fail", "Warning. Trying to ignore unnecessary hydrogen atoms."]
 			print status[1]
-			Pdb2gmx = subprocess.call(gromacs.path+"echo -e '"+force+"' | pdb2gmx -ignh -f "+name+".pdb -o "+name+".gro -p "+name+".top &> log.txt",
+			Pdb2gmx = subprocess.call(gromacs.path+"echo -e '"+force+"' | pdb2gmx -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log.txt",
 			executable="/bin/bash", shell=True)
 
 		if os.path.isfile(file_path+".gro") == True:
@@ -321,7 +316,7 @@ class Gromacs_input:
 		self.status = status
 	
 	##This function will create and add waterbox.
-	def waterbox(self, name, file_path):
+	def waterbox(self, file_path):
 		status = ["ok", "Adding Water Box"]
 		self.status = status
 		box_type = "-bt "+self.box_type+" "
@@ -329,16 +324,16 @@ class Gromacs_input:
 		density = "-density "+self.box_density
 		
 		try:
-			os.remove(name+"1.gro")
+			os.remove(project_name+"1.gro")
 		except:
 			pass
 		
 		print "Generating water_box"
-		Editconf = subprocess.call(gromacs.path+"editconf -f "+name+".gro -o "+name+"1.gro "+box_type+distance+density+" &>> log.txt",
+		Editconf = subprocess.call(gromacs.path+"editconf -f "+project_name+".gro -o "+project_name+"1.gro "+box_type+distance+density+" &>> log.txt",
 		executable="/bin/bash", shell=True)
 
 		print "Adding Water Box"
-		Genbox = subprocess.call(gromacs.path+"genbox -cp "+name+"1.gro -cs -o "+name+"_b4em.gro -p "+name+".top &>> log.txt", executable="/bin/bash", shell=True)
+		Genbox = subprocess.call(gromacs.path+"genbox -cp "+project_name+"1.gro -cs -o "+project_name+"_b4em.gro -p "+project_name+".top &>> log.txt", executable="/bin/bash", shell=True)
 		
 		if os.path.isfile(file_path+"1.gro") == True:
 			status = ["ok", "Added Water Box"]
@@ -347,20 +342,20 @@ class Gromacs_input:
 		self.status = status
 	
 	##This function will perform energy minimalization	
-	def em(self, name, file_path):
+	def em(self, file_path):
 		status = ["ok", "Energy Minimalization"]
 		self.status = status
 		
 		try:
-			os.remove(name+"_em.tpr")
-			os.remove(name+"_em.trr")
+			os.remove(project_name+"_em.tpr")
+			os.remove(project_name+"_em.trr")
 		except:
 			pass
 
 		print "Energy Minimalization"		
-		Grompp = subprocess.call(gromacs.path+"grompp -f em -c "+name+"_b4em -p "+name+" -o "+name+"_em &>> log.txt", executable="/bin/bash", shell=True)
+		Grompp = subprocess.call(gromacs.path+"grompp -f em -c "+project_name+"_b4em -p "+project_name+" -o "+project_name+"_em &>> log.txt", executable="/bin/bash", shell=True)
 
-		Mdrun = subprocess.call(gromacs.path+"mdrun -nice 4 -s "+name+"_em -o "+name+"_em -c "+name+"_b4pr -v &>> log.txt", executable="/bin/bash", shell=True)
+		Mdrun = subprocess.call(gromacs.path+"mdrun -nice 4 -s "+project_name+"_em -o "+project_name+"_em -c "+project_name+"_b4pr -v &>> log.txt", executable="/bin/bash", shell=True)
 		
 		if os.path.isfile(file_path+"_em.tpr") == True:
 			status = ["ok", "Energy Minimalized"]
@@ -369,20 +364,20 @@ class Gromacs_input:
 		self.status = status
 	
 	##This function will perform position restrained MD
-	def pr(self, name, file_path):
+	def pr(self, file_path):
 		status = ["ok", "Position Restrained MD"]
 		self.status = status
 		
 		try:
-			os.remove(name+"_pr.tpr")
-			os.remove(name+"_pr.trr")
+			os.remove(project_name+"_pr.tpr")
+			os.remove(project_name+"_pr.trr")
 		except:
 			pass
 		
 		print "Position Restrained MD"
-		Grompp = subprocess.call(gromacs.path+"grompp -f pr -c "+name+"_b4pr -r "+name+"_b4pr -p "+name+" -o "+name+"_pr &>> log.txt", executable="/bin/bash", shell=True)
+		Grompp = subprocess.call(gromacs.path+"grompp -f pr -c "+project_name+"_b4pr -r "+project_name+"_b4pr -p "+project_name+" -o "+project_name+"_pr &>> log.txt", executable="/bin/bash", shell=True)
 
-		Mdrun = subprocess.call(gromacs.path+"mdrun -nice 4 -s "+name+"_pr -o "+name+"_pr -c "+name+"_b4md -v &>> log.txt", executable="/bin/bash", shell=True)
+		Mdrun = subprocess.call(gromacs.path+"mdrun -nice 4 -s "+project_name+"_pr -o "+project_name+"_pr -c "+project_name+"_b4md -v &>> log.txt", executable="/bin/bash", shell=True)
 		
 		if os.path.isfile(file_path+"_pr.tpr") == True:
 			status = ["ok", "Position Restrained MD finished"]
@@ -391,7 +386,7 @@ class Gromacs_input:
 		self.status = status
 	
 	##This function will create posre.itp file for molecular dynamics simulation with choosen atoms if restraints were selected
-	def restraints(self, name):
+	def restraints(self):
 		status = ["ok", "Adding Restraints"]
 		self.status = status
 		
@@ -401,7 +396,7 @@ class Gromacs_input:
 			pass
 			
 		print "Adding Restraints"
-		Genrestr = subprocess.call("echo 0 | genrestr -f "+name+".pdb -o posre_2.itp -n index_dynamics.ndx &>> log.txt", executable="/bin/bash", shell=True)
+		Genrestr = subprocess.call("echo 0 | genrestr -f "+project_name+".pdb -o posre_2.itp -n index_dynamics.ndx &>> log.txt", executable="/bin/bash", shell=True)
 		
 		if os.path.isfile("posre_2.itp") == True:
 			status = ["ok", "Added Restraints"]
@@ -412,20 +407,20 @@ class Gromacs_input:
 		self.status = status
 	
 	##This function will perform position final molecular dynamics simulation
-	def md(self, name, file_path):
+	def md(self, file_path):
 		status = ["ok", "Molecular Dynamics Simulation"]
 		self.status = status
 		
 		try:
-			os.remove(name+"_md.tpr")
-			os.remove(name+"_md.trr")
+			os.remove(project_name+"_md.tpr")
+			os.remove(project_name+"_md.trr")
 		except:
 			pass
 		
 		print "Molecular Dynamics Simulation"
-		Grompp = subprocess.call(gromacs.path+"grompp -f md -c "+name+"_b4md  -p "+name+" -o "+name+"_md &>> log.txt", executable="/bin/bash", shell=True)
+		Grompp = subprocess.call(gromacs.path+"grompp -f md -c "+project_name+"_b4md  -p "+project_name+" -o "+project_name+"_md &>> log.txt", executable="/bin/bash", shell=True)
 
-		Mdrun = subprocess.call(gromacs.path+"mdrun -nice 4 -s "+name+"_md -o "+name+"_md -c "+name+"_after_md -v &>> log.txt", executable="/bin/bash", shell=True)
+		Mdrun = subprocess.call(gromacs.path+"mdrun -nice 4 -s "+project_name+"_md -o "+project_name+"_md -c "+project_name+"_after_md -v &>> log.txt", executable="/bin/bash", shell=True)
 	
 		if os.path.isfile(file_path+"_md.tpr") == True:
 			status = ["ok", "Molecular Dynamics Simulation finished"]
@@ -434,19 +429,19 @@ class Gromacs_input:
 		self.status = status
 	
 	##This function will convert final results to multimodel pdb file
-	def trjconv(self, name, file_path, group):
+	def trjconv(self, file_path, group):
 		status = ["ok", "Creating Multimodel PDB"]
 		self.status = status
 		
 		try:
-			os.remove(name+"_multimodel.pdb")
+			os.remove(project_name+"_multimodel.pdb")
 		except:
 			pass
-		if os.path.isfile(name+"_multimodel.pdb") == True:
-			os.remove(name+"_multimodel.pdb")
+		if os.path.isfile(project_name+"_multimodel.pdb") == True:
+			os.remove(project_name+"_multimodel.pdb")
 		
 		print "Creating Multimodel PDB"
-		Trjconv = subprocess.call(gromacs.path+"echo "+group+" | trjconv -f "+name+"_md.trr -s "+name+"_md.tpr -app -o "+name+"_multimodel.pdb &>> log.txt", executable="/bin/bash", shell=True)
+		Trjconv = subprocess.call(gromacs.path+"echo "+group+" | trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -app -o "+project_name+"_multimodel.pdb &>> log.txt", executable="/bin/bash", shell=True)
 		
 		if os.path.isfile(file_path+"_multimodel.pdb") == True:
 			status = ["ok", "Finished!"]
@@ -463,9 +458,9 @@ class Mdp_config:
 	options = [[]]
 	file_name = ""
 	
-	def __init__(self, file_name, name, init_config, external_file=0):
+	def __init__(self, file_name, init_config, external_file=0):
 		if external_file == 0:
-			self.config = """title = """+name+"_"+file_name+"\n"+init_config
+			self.config = """title = """+project_name+"_"+file_name+"\n"+init_config
 		elif external_file == 1:
 			self.config = init_config
 		self.file_name = file_name
@@ -485,10 +480,10 @@ class Mdp_config:
 		for option in self.options:
 			config = config + option[0]+" = "+option[1]+"\n"
 		self.config = config
-		save1()
+		save_options()
 	
-	def save_file(self, dir_path):
-		mdp = open(dir_path+self.file_name, "w")
+	def save_file(self):
+		mdp = open(dir_path_project+self.file_name, "w")
 		mdp.write(self.config)
 		mdp.close() 
 
@@ -527,7 +522,7 @@ def __init__(self):
 	command = rootWindow)
 
 ##--Graphic Interface--
-##Master menu window
+##Root menu window
 def rootWindow():
 
 	root = Tk()
@@ -536,24 +531,19 @@ def rootWindow():
 	##Creating objects
 	global calculationW, restraintsW
 	calculationW = CalculationWindow()
-	restrainstsW = RestraintsWindow()
+	restraintsW = RestraintsWindow()
 	
 	##Detect list of PyMOL loaded PDB files if no files than list "nothing"
 	if plugin == 1:
 		allNames = cmd.get_names("objects") #PyMOL API
-		e1 = StringVar(root)
-		e1.set("")
-		if allNames == []:
-			allNames = ["nothing"]
-		else:
-			allNames1 = []
-			for name in allNames:
-				name1 = name.split("_")
-				if name1[-1] == "multimodel" or name1[-1] == "(sele)":
-					pass
-				else:
-					allNames1.append(name)
-			allNames = allNames1
+		allNames1 = []
+		for name in allNames:
+			name1 = name.split("_")
+			if name1[-1] == "multimodel" or name1[-1] == "(sele)":
+				pass
+			else:
+				allNames1.append(name)
+		allNames = allNames1
 		
 	elif plugin == 0:
 		allNames = ["nothing"]
@@ -561,9 +551,12 @@ def rootWindow():
 		allNames = ["nothing"]
 	
 	##TkInter variables
-	moleculeName = allNames[0]
+	global dir_path_project, project_name
+	project_name = allNames[0]
+	dir_path_project = dir_path_dynamics + project_name + '/'
+	
 	v1_name = StringVar(root)
-	v1_name.set(moleculeName)
+	v1_name.set(project_name)
 	
 	groupNr = gromacs.group_list[1][0]
 	v2_group = IntVar(root)
@@ -583,7 +576,7 @@ def rootWindow():
 	check_var = IntVar(root)
 	
 	check_var2 = IntVar(root)
-	check_var2.set(restraints_var)
+	check_var2.set(restraintsW.on_off)
 	
 	#Initial configuration
 	set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var)
@@ -603,9 +596,6 @@ def rootWindow():
 	
 	w1 = Label(frame1_1, text="Molecules")
 	w1.pack(side=TOP)
-	
-	global dir_path_project
-	dir_path_project = dir_path_dynamics + v1_name.get().lower() + "/"
 	
 	frame1_1a = Frame(frame1_1)
 	frame1_1a.pack(side=TOP)
@@ -732,11 +722,6 @@ def rootWindow():
 	w5.pack(side=TOP)
 	p = Meter(frame1_3_2, value=0.0)
 	p.pack(side=TOP)
-	
-	#Set configure if PDB file was loaded in PyMOL
-	if allNames[0] != "nothing":
-		save1()
-		set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var, p, 1)
 
 	c = Checkbutton(frame1_3_2, text="Molecular Dynamics Simulation from the beginning", variable=check_var, command=lambda: main_status_bar(check_var.get(), p))
 	c.pack(side=TOP)
@@ -756,13 +741,13 @@ def rootWindow():
 	help_button = Button(frame2, text = "Help", command=lambda: helpWindow(root))
 	help_button.pack(side=LEFT)
 	
-	save_button = Button(frame2, text = "Save", command=lambda: select_file_save(v1_name.get()))
+	save_button = Button(frame2, text = "Save", command=select_file_save)
 	save_button.pack(side=LEFT)
 	
 	load_button = Button(frame2, text = "Load", command=lambda: select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, check_var))
 	load_button.pack(side=LEFT)
 	
-	count_button = Button(frame2, text = "OK", command=lambda: calculationW.window(v1_name.get(), root))
+	count_button = Button(frame2, text = "OK", command=lambda: calculationW.window(root))
 	count_button.pack(side=LEFT)
 		
 	root.mainloop()
@@ -770,18 +755,16 @@ def rootWindow():
 ##Molecular Dynamics Performing window
 class CalculationWindow:
 	
-	moleculeName = ""
 	tasks_to_do = 0
 	bar_var = ""
 	bar_widget = ""
 	
 	##This function will create main Calculation Window
-	def window(self, moleculeName, master):
-		print moleculeName
+	def window(self, master):
+		print project_name
 		master.destroy()
 	
 		gromacs2.status = ["ok", "Waiting to start"]
-		self.moleculeName = moleculeName
 	
 		root = Tk()
 		root.wm_title("Calculation Window")
@@ -801,13 +784,13 @@ class CalculationWindow:
 		exit_button = Button(frame2, text = "EXIT", command=root.destroy)
 		exit_button.pack(side=LEFT)
 	
-		save_button = Button(frame2, text = "SAVE", command=lambda: select_file_save(self.moleculeName, 1))
+		save_button = Button(frame2, text = "SAVE", command=lambda: select_file_save(1))
 		save_button.pack(side=LEFT)
 	
 		stop_button = Button(frame2, text = "STOP", command=lambda : stop_counting(1))
 		stop_button.pack(side=LEFT)
 	
-		start_button = Button(frame2, text = "START", command=lambda: thread.start_new_thread(dynamics, (self.moleculeName,)))
+		start_button = Button(frame2, text = "START", command=lambda: thread.start_new_thread(dynamics, ()))
 		start_button.pack(side=LEFT)
 		#Updateing status bar
 		tasks_nr = 0.0
@@ -844,7 +827,7 @@ class CalculationWindow:
 				file = tkFileDialog.asksaveasfile(parent=root, mode='w' ,title='Choose final multimodel file to save')
 				try:
 					os.remove(file.name)
-					shutil.copy(dir_path_project + name + "_multimodel.pdb", file.name+".pdb")
+					shutil.copy(dir_path_project + '/' +project_name + "_multimodel.pdb", file.name+".pdb")
 				except:
 					pass
 				root.destroy()
@@ -885,39 +868,39 @@ def main_status_bar(var, bar):
 		progress.from_begining = 1
 
 ##This function will allow you to choose PDB file if no file is loaded to PyMOL
-def select_file(project_name):
+def select_file():
 	root = Tk()
 	file = tkFileDialog.askopenfile(parent=root, mode='rb',title='Choose PDB file')
 	try:
 		name = file.name.split("/")
 		name2 = name[-1].split(".")
-		project_name.set(name2[0])
 		##Checking directories
-		global dir_path_project
-		dir_path_project = dir_path_dynamics + name2[0].lower() + "/"
+		global project_name, dir_path_project
+		project_name = name2[0]
+		dir_path_project = dir_path_dynamics + project_name + "/"
 		if os.path.isdir(dir_path_project) == False:
 			os.makedirs(dir_path_project)
-			shutil.copyfile(file.name, dir_path_project + name2[0] + ".pdb")
+			shutil.copyfile(file.name, dir_path_project + project_name + ".pdb")
 			print "pdb_copied"
-		set_config_files(name2[0])	
+		set_config_files()	
 	except:
 		pass
 	root.destroy()
 
-def select_file_save(moleculeName, rest_of_work=0):
+def select_file_save(rest_of_work=0):
 	if rest_of_work == 1:
 		progress.to_do_status()
 	root = Tk()
 	file = tkFileDialog.asksaveasfile(parent=root, mode='w' ,title='Choose save file')
 	if file != None:
-		save(file.name)	
+		save_file(file.name)	
 	root.destroy()
 
 def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, check_var):
 	root = Tk()
 	file = tkFileDialog.askopenfile(parent=root, mode='rb', defaultextension=".tar.bz2" ,title='Choose file to load')
 	if file != None:
-		new_name = load(file.name)
+		new_name = load_file(file.name)
 		v1_name.set(new_name)
 		v2_group.set(gromacs.group_list[gromacs2.group][0])
 		v3_force.set(gromacs.force_list[gromacs2.force-1][0])
@@ -947,7 +930,7 @@ def waterSet(v4_water, water_v, force = ""):
 	gromacs.water_update(force)
 	water_v.set(gromacs.water_list[v4_water.get()-1][1])
 	gromacs2.water = v4_water.get()
-	save1()
+	save_options()
 
 ##Water box configuration window
 def waterBox(master):
@@ -980,22 +963,23 @@ def waterBox(master):
 	ok_button.pack(side=TOP)
 
 ##This is very important function, which sets all necessary configuration files
-def set_config_files(name, v2_group="", v3_force="", v4_water="", water_v="", check_var="", main_bar=0, from_pymol=0, config_button_restraints = "", checkbox_restraints=""):
-	global em_file, pr_file, md_file, progress, dir_path_project
-	name = name.lower()
-	dir_path_project = dir_path_dynamics + name + "/"
-
+def set_config_files(name="", v2_group="", v3_force="", v4_water="", water_v="", check_var="", main_bar=0, from_pymol=0, config_button_restraints = "", checkbox_restraints=""):
+	global em_file, pr_file, md_file, progress
+	if name != "":
+		global project_name, dir_path_project
+		project_name = name
+		dir_path_project = dir_path_dynamics + project_name + '/'
 	if os.path.isfile(dir_path_project+"options.pickle") == True:
-		load1()
+		load_options()
 		v2_group.set(gromacs.group_list[gromacs2.group][0])
 		v3_force.set(gromacs.force_list[gromacs2.force-1][0])
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
-		if restraints_var == 0 and config_button_restraints != "":
-			checkbox_restraints.set(restraints_var)
+		if restraintsW.on_off == 0 and config_button_restraints != "":
+			checkbox_restraints.set(restraintsW.on_off)
 			config_button_restraints.configure(state=DISABLED)
-		elif restraints_var == 1 and config_button_restraints != "":
-			checkbox_restraints.set(restraints_var)
+		elif restraintsW.on_off == 1 and config_button_restraints != "":
+			checkbox_restraints.set(restraintsW.on_off)
 			config_button_restraints.configure(state=ACTIVE)
 	else:
 		progress = Progress_status(dir_path_project)
@@ -1005,31 +989,31 @@ def set_config_files(name, v2_group="", v3_force="", v4_water="", water_v="", ch
 			em_file = Mdp_config("em.mdp",name, em_file_config, 1)
 			print "Found em.mdp file. Using it instead of local configuration."
 		else:
-			em_file = Mdp_config("em.mdp",name,em_init_config, 0)
+			em_file = Mdp_config("em.mdp",em_init_config, 0)
 		if os.path.isfile(dir_path_dynamics + "pr.mdp"):
 			shutil.copy(dir_path_dynamics + "pr.mdp", dir_path_project + "pr.mdp")
 			pr_file_config = open(dir_path_dynamics + "pr.mdp", "r").read()
 			pr_file = Mdp_config("pr.mdp",name, pr_file_config, 1)
 			print "Found pr.mdp file. Using it instead of local configuration."
 		else:
-			pr_file = Mdp_config("pr.mdp",name,pr_init_config, 0)
+			pr_file = Mdp_config("pr.mdp",pr_init_config, 0)
 		if os.path.isfile(dir_path_dynamics + "md.mdp"):
 			shutil.copy(dir_path_dynamics + "md.mdp", dir_path_project + "md.mdp")
 			md_file_config = open(dir_path_dynamics + "md.mdp", "r").read()
 			md_file = Mdp_config("md.mdp",name, md_file_config, 1)
 			print "Found md.mdp file. Using it instead of local configuration."
 		else:
-			md_file = Mdp_config("md.mdp",name,md_init_config, 0)
+			md_file = Mdp_config("md.mdp",md_init_config, 0)
 	try:
 		check_var.set(progress.from_begining)
 		if main_bar != 0:
 			main_status_bar(check_var.get(), main_bar)
 	except:
 		pass
-	save1()
+	save_options()
 	if from_pymol == 1:
 		print "cmd saved"
-		cmd.save(dir_path_project+name+".pdb", name) #PyMOL API
+		cmd.save(dir_path_project+project_name+".pdb", project_name) #PyMOL API
 
 #This function will create the window with configuration files based on MDP class
 def mdp_configure(config_name, master):
@@ -1038,16 +1022,12 @@ def mdp_configure(config_name, master):
 	
 	if config_name == "em":
 		options = em_file.options
-	elif config_name == "pr":
-		options = pr_file.options
-	elif config_name == "md":
-		options = md_file.options
-	
-	if config_name == "em":
 		root2.wm_title("Energy Minimalization Options")
 	elif config_name == "pr":
+		options = pr_file.options
 		root2.wm_title("Position Restrained MD Options")
 	elif config_name == "md":
+		options = md_file.options
 		root2.wm_title("Molecular Dynamics Simulation Options")
 
 	values_list = []
@@ -1160,6 +1140,10 @@ class RestraintsWindow:
 	
 	atom_list = []
 	check_var = ""
+	on_off = 0
+	
+	def __init__(self):
+		print "Need to prepare here some atome list"
 	
 	##This function will create main window for restraints
 	def window(self, master):
@@ -1173,7 +1157,6 @@ class RestraintsWindow:
 		self.check_var.set(gromacs2.restraints_nr)
 	
 		number = 0
-	
 		for group in gromacs.restraints:
 			select = Radiobutton(sw.window, text=group[0], value=number, variable=self.check_var)
 			select.pack()
@@ -1222,18 +1205,18 @@ class RestraintsWindow:
 			
 	##This function will activ or disable restraints button in main window based on check box
 	def check(self, check, config_button):
-		global restraints_var
+		global restraintsW.on_off
 		if check == 1:
 			config_button.configure(state=ACTIVE)
 			md_file.options[2][0] = "define"
 			md_file.update()
-			restraints_var = 1
-			gromacs.restraints_index()
+			self.on_off = 1
+			gromacs.restraintsW.on_offindex()
 		elif check == 0:
 			config_button.configure(state=DISABLED)
 			md_file.options[2][0] = ";define"
 			md_file.update()
-			restraints_var = 0
+			self.on_off = 0
 
 ##Help window
 def helpWindow(master):
@@ -1249,13 +1232,12 @@ def helpWindow(master):
 
 ##Clean message in tkMessageBox
 def cleanMessage():
-	tkMessageBox.showinfo("Clean", "Temporary files are now removed!")
+	tkMessageBox.showinfo("Clean", "Temporary files are now removed!\nPlease restart plugin.")
 	clean_option()
 
 ##--Comand Line Interface--
-def dynamics(name = "h"):
-	name = name.lower()
-	file_path = dir_path_project + name
+def dynamics(help_clean = ""):
+	file_path = dir_path_project + project_name
 	force = str(gromacs2.force) + "\n" + str(gromacs2.water)
 	group = str(gromacs2.group)
 	global status, stop
@@ -1263,31 +1245,26 @@ def dynamics(name = "h"):
 	print "Starting PyMOL plugin 'dynamics' ver."+plugin_ver+" by Tomasz Makarewicz"
 	
 	##If help is called
-	if help_name.count(name) == 1:
+	if help_name.count(help_clean) == 1:
 		print help_option()
 		status = ["fail", "Help printed"]
 	##If clean is called
-	elif clean_name.count(name) == 1:
+	elif clean_name.count(help_clean) == 1:
 		clean_option()
 		status = ["fail", "Cleaned"]
 	
 	##Starting real calculations
-	##Preprocess
-	if status[0] == "ok":
-		preproces(name, file_path)
-		save1()
-	
 	##Checking GROMACS
 	if status[0] == "ok":
 		status = gromacs.status
 	
 	##Saving configuration files
 	if status[0] == "ok" and stop == 0 and progress.to_do[0] == 1:
-		mdp_files(name)
+		mdp_files()
 		if status[0] == "ok":
 			progress.status[0] = 1
 			progress.to_do[0] = 0
-			save1()
+			save_options()
 
 	##Checking variables - temporary disabled
 	#if status[0] == "ok":
@@ -1297,85 +1274,76 @@ def dynamics(name = "h"):
 	
 	##Counting topology
 	if status[0] == "ok" and stop == 0 and progress.to_do[1] == 1:
-		gromacs2.pdb2top(name, file_path, force)
+		gromacs2.pdb2top(file_path, force)
 		status = gromacs2.status
 		if status[0] == "ok":
 			progress.status[1] = 1
 			progress.to_do[1] = 0
-			save1()
+			save_options()
 
 	##Adding water box
 	if status[0] == "ok" and stop == 0 and progress.to_do[2] == 1:
-		gromacs2.waterbox(name, file_path)
+		gromacs2.waterbox(file_path)
 		status = gromacs2.status
 		if status[0] == "ok":
 			progress.status[2] = 1
 			progress.to_do[2] = 0
-			save1()
+			save_options()
 	
 	##EM	
 	if status[0] == "ok" and stop == 0 and progress.to_do[3] == 1:
-		gromacs2.em(name, file_path)
+		gromacs2.em(file_path)
 		status = gromacs2.status
 		if status[0] == "ok":
 			progress.status[3] = 1
 			progress.to_do[3] = 0
-			save1()
+			save_options()
 	
 	##PR
 	if status[0] == "ok" and stop == 0 and progress.to_do[4] == 1:
-		gromacs2.pr(name, file_path)
+		gromacs2.pr(file_path)
 		status = gromacs2.status
 		if status[0] == "ok":
 			progress.status[4] = 1
 			progress.to_do[4] = 0
-			save1()
+			save_options()
 	
 	##Restraints
-	if status[0] == "ok" and stop == 0 and restraints_var == 1 and progress.to_do[5] == 1:
-		gromacs2.restraints(name)
+	if status[0] == "ok" and stop == 0 and restraintsW.on_off == 1 and progress.to_do[5] == 1:
+		gromacs2.restraints()
 		status = gromacs2.status
 	
 	##MD
 	if status[0] == "ok" and stop == 0 and progress.to_do[5] == 1:
-		gromacs2.md(name, file_path)
+		gromacs2.md(file_path)
 		status = gromacs2.status
 		if status[0] == "ok":
 			progress.status[5] = 1
 			progress.to_do[5] = 0
-			save1()
+			save_options()
 	
 	##Trjconv
 	if status[0] == "ok" and stop == 0 and progress.to_do[6] == 1:
-		gromacs2.trjconv(name, file_path, group)
+		gromacs2.trjconv(file_path, group)
 		status = gromacs2.status
 	
 	##Showing multimodel
 	if status[0] == "ok" and stop == 0 and progress.to_do[6] == 1:
-		show_multipdb(name)
+		show_multipdb()
 		progress.status[6] = 1
 		progress.to_do[6] = 0
-		save1()
+		save_options()
 	elif status[0] == "fail":
 		print status[1]
-		if help_name.count(name) != 1 and clean_name.count(name) != 1:
+		if help_name.count(help_clean) != 1 and clean_name.count(help_clean) != 1:
 			error_message()
 		status = ["ok", ""]
-	#This should be removed
+	#This is for runnig program outside PyMOL
 	if plugin == 0:
 		return dir_path_project
 
-##Preprocesing
-def preproces(name, file_path):
-	status = ["ok", ""]
-	##Checking directories
-	if os.path.isdir(dir_path_project) == False:
-		os.makedirs(dir_path_project)
-	os.chdir(dir_path_project)
-
 ##Checking if given varaibles are correct - depreciated
-def check_variable(name, force1, force2, group):
-	#jeszcze nie dziala (name)
+def check_variable(force1, force2, group):
 	status = ["ok", ""]
 	try:
 		int(force1)
@@ -1392,33 +1360,32 @@ def check_variable(name, force1, force2, group):
 	return status
 
 ##Saving configuration files
-def mdp_files(name):
-	em_file.save_file(dir_path_project)
-	pr_file.save_file(dir_path_project)
-	md_file.save_file(dir_path_project)
+def mdp_files():
+	em_file.save_file()
+	pr_file.save_file()
+	md_file.save_file()
 
 ##Show multimodel PDB file in PyMOOL
-def show_multipdb(name):
+def show_multipdb():
 	if plugin == 1:
 		try:
-			cmd.hide("everything", name) #PyMOL API
+			cmd.hide("everything", project_name) #PyMOL API
 		except:
 			pass
-		cmd.load(name+"_multimodel.pdb") #PyMOL API
+		cmd.load(project_name+"_multimodel.pdb") #PyMOL API
 
 ##Saving tar.bz file
-def save(destination_path):
+def save_file(destination_path):
 	print "Saving"
 	import tarfile
-	name = dir_path_project.split("/")
-	preproces(name[-2], dir_path_project+name[-2])
+	save_options()
 	tar = tarfile.open(destination_path+".tar.bz2", "w:bz2")
 	tar.add(dir_path_project, recursive=True, arcname=name[-2])
 	tar.close()
 	os.remove(destination_path)
 
 ##Load tar.bz file
-def load(file_path):
+def load_file(file_path):
 	print "Loading"
 	import tarfile
 	tar = tarfile.open(file_path, "r:bz2")
@@ -1430,23 +1397,22 @@ def load(file_path):
 			back_folder = back_folder + "_b"
 		os.rename(dir_path_dynamics + names[0], back_folder)
 	tar.extractall(dir_path_dynamics)
-	global dir_path_project
-	dir_path_project = dir_path_dynamics + names[0] + "/"
-	load1()
-	return names[0]
+	global dir_path_project, project_name
+	project_name = names[0]
+	dir_path_project = dir_path_dynamics + project_name + "/"
+	load_options()
 
 ##Save all settings to options.pickle file
-def save1():
+def save_options():
 	if os.path.isdir(dir_path_project) == False:
 		os.makedirs(dir_path_project)
 	destination_option = file(dir_path_project + "options.pickle", "w")
-	pickle.dump([plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress, restraints_var], destination_option)
+	pickle.dump([plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress, restraintsW], destination_option)
 	del destination_option
-	#print "options saved"
 
 ##Load all settings from options.pickle file	
-def load1():
-	global gromacs, gromacs2, em_file, pr_file, md_file, progress, restraints_var
+def load_options():
+	global gromacs, gromacs2, em_file, pr_file, md_file, progress, restraintsW
 	
 	pickle_file = file(dir_path_project +"options.pickle")
 	options = pickle.load(pickle_file)
@@ -1456,14 +1422,21 @@ def load1():
 		print "GROMACS versions not identical."
 	if options[0][1:4] == "1.0":
 		print "1.0 compatibility layer"
-		#gromacs.version = options[1]
 		gromacs2 = options[2]
 		em_file = options[3]
 		pr_file = options[4]
 		md_file = options[5]
 		progress = options[6]
-		restraints_var = options[7]
-		#print "options loaded"
+		restraintsW.on_off = options[7]
+
+	elif options[0][1:4] == "1.1":
+		print "1.1 compatibility layer"
+		gromacs2 = options[2]
+		em_file = options[3]
+		pr_file = options[4]
+		md_file = options[5]
+		progress = options[6]
+		restraintsW = options[7]
 
 ##Text for "Help"
 def help_option():
@@ -1489,9 +1462,8 @@ You will see animated model in PyMOL viewer."""
 
 ##Clean function
 def clean_option():
-	dir_path = os.getenv("HOME")+"/.dynamics/"
-	shutil.rmtree(dir_path)
-	print "Temporary files are now removed!"
+	shutil.rmtree(dir_path_dynamics)
+	print "Temporary files are now removed."
 
 ##If molecular dynamics simulation fails, this function will show the error
 def error_message():
