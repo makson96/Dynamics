@@ -238,7 +238,7 @@ class Gromacs_output:
 		return water_list2
 	
 	##This function will read atoms group for restraints for current molecule.	
-	def index(self):
+	def restraints_index(self):
 		self.restraints = []
 		os.chdir(dir_path_project)
 		subprocess.call(self.path+"echo q | make_ndx -f "+project_name+".pdb -o index.ndx &> restraints.log", executable="/bin/bash", shell=True)	
@@ -1211,7 +1211,7 @@ class RestraintsWindow:
 			md_file.options[2][0] = "define"
 			md_file.update()
 			self.on_off = 1
-			gromacs.restraintsW.on_offindex()
+			gromacs.restraints_index()
 		elif check == 0:
 			config_button.configure(state=DISABLED)
 			md_file.options[2][0] = ";define"
