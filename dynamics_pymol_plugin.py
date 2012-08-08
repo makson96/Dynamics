@@ -896,7 +896,7 @@ def select_file(entry, project_name):
 		dir_path_project = dir_path_dynamics + name2[0].lower() + "/"
 		if os.path.isdir(dir_path_project) == False:
 			os.makedirs(dir_path_project)
-			shutil.copyfile(file.name, dir_path_project + name2[0] + ".pdb")
+			shutil.copyfile(file.name, dir_path_project + name2[0].lower() + ".pdb")
 			print "pdb_copied"
 		set_config_files(name2[0])	
 	except:
