@@ -956,7 +956,7 @@ def waterBox(master):
 	root1.wm_title("Water Box Options")
 	root1.wm_geometry("300x250")
 	v = StringVar(root1)
-	v.set("triclinic")
+	v.set(gromacs2.box_type)
 	w = Label(root1, text="Box type")
 	w.pack()
 	radio_button = Radiobutton(root1, text="triclinic", value="triclinic", variable=v, command = lambda : gromacs2.update(gromacs2.field, gromacs2.water, gromacs2.group, v.get(), gromacs2.box_distance, gromacs2.box_density))
@@ -971,12 +971,12 @@ def waterBox(master):
 	w1.pack()
 	distance = Entry(root1)
 	distance.pack(side=TOP)
-	distance.insert(0, "0.5")
+	distance.insert(0, gromacs2.box_distance)
 	w2 = Label(root1, text="Density [g/L]")
 	w2.pack()
 	density = Entry(root1)
 	density.pack(side=TOP)
-	density.insert(0, "1000")
+	density.insert(0, gromacs2.box_density)
 	ok_button = Button(root1, text = "OK", command=lambda : gromacs2.update(gromacs2.field, gromacs2.water, gromacs2.group, gromacs2.box_type, distance.get(), density.get(), root1))
 	ok_button.pack(side=TOP)
 
@@ -1402,6 +1402,7 @@ def show_multipdb(name):
 def save(destination_path):
 	print "Saving"
 	import tarfile
+	save1()
 	name = dir_path_project.split("/")
 	preproces(name[-2], dir_path_project+name[-2])
 	tar = tarfile.open(destination_path+".tar.bz2", "w:bz2")
@@ -1455,7 +1456,8 @@ def load1():
 		md_file = options[5]
 		progress = options[6]
 		restraints_var = options[7]
-		#print "options loaded"
+		if restraints_var == 1:
+			gromacs.restraints_index()
 
 ##Text for "Help"
 def help_option():
