@@ -1458,6 +1458,7 @@ def load1():
 		restraints_var = options[7]
 		if restraints_var == 1:
 			gromacs.restraints_index()
+		gromacs.water_update(gromacs2.field)
 
 ##Text for "Help"
 def help_option():
