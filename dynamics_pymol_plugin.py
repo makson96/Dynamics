@@ -757,7 +757,7 @@ class MasterWindow:
 		save_button = Button(frame2, text = "Save", command=lambda: select_file_save(v1_name.get()))
 		save_button.pack(side=LEFT)
 		
-		load_button = Button(frame2, text = "Load", command=lambda: select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, check_var))
+		load_button = Button(frame2, text = "Load", command=lambda: select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, check_var, check1_button))
 		load_button.pack(side=LEFT)
 	
 		count_button = Button(frame2, text = "OK", command=lambda: startMessage(v1_name.get(), v2_group.get(), v3_force.get(), v4_water.get(), master))
@@ -912,11 +912,11 @@ def select_file_save(moleculeName, rest_of_work=0):
 		save(file.name)	
 	root.destroy()
 
-def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, check_var):
+def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, check_var, config_button):
 	root = Tk()
 	file = tkFileDialog.askopenfile(parent=root, mode='rb', defaultextension=".tar.bz2" ,title='Choose file to load')
 	if file != None:
-		new_name = load(file.name)
+		new_name = load(file.name, config_button)
 		v1_name.set(new_name)
 		v2_group.set(gromacs.group_list[gromacs2.group][0])
 		v3_force.set(gromacs.force_field_list[gromacs2.field-1][0])
@@ -987,7 +987,7 @@ def set_config_files(name, v2_group="", v3_field="", v4_water="", water_v="", ch
 	dir_path_project = dir_path_dynamics + name + "/"
 
 	if os.path.isfile(dir_path_project+"options.pickle") == True:
-		load1()
+		load1(config_button_restraints)
 		v2_group.set(gromacs.group_list[gromacs2.group][0])
 		v3_field.set(gromacs.force_field_list[gromacs2.field-1][0])
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
@@ -1411,7 +1411,7 @@ def save(destination_path):
 	os.remove(destination_path)
 
 ##Load tar.bz file
-def load(file_path):
+def load(file_path, config_button):
 	print "Loading"
 	import tarfile
 	tar = tarfile.open(file_path, "r:bz2")
@@ -1419,13 +1419,16 @@ def load(file_path):
 	#Backup same name folder if file is loaded
 	if os.path.isdir(dir_path_dynamics + names[0]) == True:
 		back_folder = dir_path_dynamics + names[0] + "_back"
+		back_name = names[0] + "_back"
 		while os.path.isdir(back_folder) == True:
 			back_folder = back_folder + "_b"
+			back_name = back_name + "_b"
 		os.rename(dir_path_dynamics + names[0], back_folder)
+		os.rename(back_folder + "/" + names[0] + ".pdb", back_folder + "/" + back_name + ".pdb")
 	tar.extractall(dir_path_dynamics)
 	global dir_path_project
 	dir_path_project = dir_path_dynamics + names[0] + "/"
-	load1()
+	load1(config_button)
 	return names[0]
 
 ##Save all settings to options.pickle file
@@ -1438,7 +1441,7 @@ def save1():
 	#print "options saved"
 
 ##Load all settings from options.pickle file	
-def load1():
+def load1(config_button=""):
 	global gromacs, gromacs2, em_file, pr_file, md_file, progress, restraints_var
 	
 	pickle_file = file(dir_path_project +"options.pickle")
@@ -1458,6 +1461,8 @@ def load1():
 		restraints_var = options[7]
 		if restraints_var == 1:
 			gromacs.restraints_index()
+			if config_button != "":
+				config_button.configure(state=ACTIVE)
 		gromacs.water_update(gromacs2.field)
 
 ##Text for "Help"
