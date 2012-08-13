@@ -23,7 +23,7 @@ except:
 ##Globals variables
 help_name = ["-h", "h", "-help", "help"]
 clean_name = ["-c", "c", "clean", "-clean"]
-plugin_ver = " 1.0.3pre"
+plugin_ver = " 1.0.3"
 
 stop = 0
 restraints_var = 0
