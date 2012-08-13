@@ -1463,6 +1463,8 @@ def load1(config_button=""):
 			gromacs.restraints_index()
 			if config_button != "":
 				config_button.configure(state=ACTIVE)
+		elif restraints_var == 0 and config_button != "":
+			config_button.configure(state=DISABLED)
 		gromacs.water_update(gromacs2.field)
 
 ##Text for "Help"
