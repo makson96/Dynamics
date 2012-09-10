@@ -490,8 +490,8 @@ class Mdp_config:
 ##Status and to_do maintaining class
 class Progress_status:
 	
-	status= [0,0,0,0,0,0,0,0]
-	to_do = [1,1,1,1,1,1,1,1]
+	status= [0,0,0,0,0,1,0,0]
+	to_do = [1,1,1,1,1,0,1,1]
 	from_begining = 1
 	
 	def to_do_update(self, position, value):
@@ -698,12 +698,16 @@ def rootWindow():
 		md_button2.configure(state=DISABLED)
 	
 	#Checkbox and button for position restraints configuration
-	check1 = Checkbutton(frame1_3_1, text="Position Restraints", variable=check_var2, command=lambda: restraintsW.check(check_var2.get(), check1_button))
-	check1.pack(side=TOP)
+	#check1 = Checkbutton(frame1_3_1, text="Position Restraints", variable=check_var2, command=lambda: restraintsW.check(check_var2.get(), check1_button))
+	#check1.pack(side=TOP)
+	
+	re_label = Label(frame1_3_1, text="Restraints (Select Atoms)")
+	re_label.pack(side=TOP)
 	
 	check1_button = Button(frame1_3_1, text = "Configure", command=lambda: restraintsW.window(root))
 	check1_button.pack(side=TOP)
-	check1_button.configure(state=DISABLED)
+	if progress.to_do[5] == 0:
+		check1_button.configure(state=DISABLED)
 
 	frame1_3_2 = Frame(frame1_3, borderwidth=1, relief=RAISED)
 	frame1_3_2.pack(side=TOP)
@@ -989,13 +993,13 @@ def main_status_bar(var, bar):
 	if var == 0:
 		bar.configure(value=percent)
 		bar.update_idletasks()
-		if progress.to_do == [1,1,1,1,1,1,1,1]:
+		if progress.to_do == [1,1,1,1,1,0,1,1]:
 			progress.to_do_status()
 		progress.from_begining = 0
 	elif var == 1:
 		bar.configure(value=(0.0))
 		bar.update_idletasks()
-		progress.to_do = [1,1,1,1,1,1,1,1]
+		progress.to_do = [1,1,1,1,1,0,1,1]
 		progress.from_begining = 1
 
 ##This function will create window, which allow you to choose PDB file if no file is loaded to PyMOL
@@ -1213,7 +1217,7 @@ def jobs_configure(master):
 	c5 = Checkbutton(frame1, text="Position Restrained MD", variable=check_var5, command=lambda: progress.to_do_update(4, check_var5.get()))
 	c5.pack(side=TOP, anchor=W)
 	
-	c6 = Checkbutton(frame1, text="Restrains", variable=check_var6, command=lambda: progress.to_do_update(5, check_var6.get()))
+	c6 = Checkbutton(frame1, text="Restraints (optional)", variable=check_var6, command=lambda: progress.to_do_update(5, check_var6.get()))
 	c6.pack(side=TOP, anchor=W)
 	
 	c7 = Checkbutton(frame1, text="Molecular Dynamics Simulation", variable=check_var7, command=lambda: progress.to_do_update(6, check_var7.get()))
