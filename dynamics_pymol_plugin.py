@@ -847,7 +847,6 @@ class CalculationWindow:
 class WaterWindows:
 	
 	##Water chooser window
-	#def waterChoose(v4_water, water_v, master):
 	def choose(self, v4_water, water_v, master):
 		root = Toplevel(master)
 		root.wm_title("Water Model")
@@ -858,7 +857,6 @@ class WaterWindows:
 		ok_button.pack(side=TOP)
 
 	##This function will change force field and water model when choosing Force Field in Main Window and also change water model after choosing one in "waterChoose"
-	#def waterSet(v4_water, water_v, force = ""):
 	def change(self, v4_water, water_v, force = ""):
 		if force == "":
 			force = gromacs2.force
@@ -870,7 +868,6 @@ class WaterWindows:
 		save_options()
 
 	##Water box configuration window
-	#def waterBox(master):
 	def box(self, master):
 		root = Toplevel(master)
 		root.wm_title("Water Box Options")
