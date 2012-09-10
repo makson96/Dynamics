@@ -546,6 +546,8 @@ def rootWindow():
 	global project_dir, project_name
 	project_name = allNames[0]
 	project_dir = dynamics_dir + project_name + '/'
+	if allNames != ["nothing"]:
+		set_config_files("", "", "", "", "", "", 0, 1) #This is to save pdb file
 	
 	v1_name = StringVar(root)
 	v1_name.set(project_name)
@@ -768,7 +770,7 @@ class CalculationWindow:
 		self.bar_var = StringVar(root)
 		self.bar_var.set("Ready to start")
 	
-		w5 = Label(frame1, textvariable=bar_v)
+		w5 = Label(frame1, textvariable=self.bar_var)
 		w5.pack(side=TOP)
 		self.bar_widget = Meter(frame1, value=0.0)
 		self.bar_widget.pack(side=TOP)
@@ -800,8 +802,8 @@ class CalculationWindow:
 			percent = 0.0
 			for job in progress.to_do:
 				percent = percent + job
-			if tasks != 0:
-				percent = (tasks - percent) / tasks
+			if self.tasks_to_do != 0:
+				percent = (self.tasks_to_do - percent) / self.tasks_to_do
 			else:
 				percent = 1
 			self.bar_widget.configure(value=percent)
@@ -890,7 +892,7 @@ class WaterWindows:
 		distance = Entry(root)
 		distance.pack(side=TOP)
 		distance.insert(0, gromacs2.box_distance)
-		w2 = Label(root1, text="Density [g/L]")
+		w2 = Label(root, text="Density [g/L]")
 		w2.pack()
 		density = Entry(root)
 		density.pack(side=TOP)
@@ -910,13 +912,13 @@ class RestraintsWindow:
 	
 	##This function will create main window for restraints
 	def window(self, master):
-		root1 = Toplevel(master)
-		root1.wm_title("Restraints Configure")
+		root = Toplevel(master)
+		root.wm_title("Restraints Configure")
 		
-		ok_button = Button(root1, text="OK", command=lambda : self.index(root1))
+		ok_button = Button(root, text="OK", command=lambda : self.index(root))
 		ok_button.pack(side=BOTTOM)
 	
-		sw = ScrolledWindow(root1, scrollbar=Y) #just the vertical scrollbar
+		sw = ScrolledWindow(root, scrollbar=Y) #just the vertical scrollbar
 		sw.pack()
 	
 		self.check_var = IntVar(sw.window)
@@ -1218,7 +1220,7 @@ def jobs_configure(master):
 	c7 = Checkbutton(frame1, text="Generate multimodel PDB", variable=check_var7, command=lambda: progress.to_do_update(6, check_var7.get()))
 	c7.pack(side=TOP, anchor=W)
 	
-	b1 = Button(root, text="OK", command=root5.destroy)
+	b1 = Button(root, text="OK", command=root.destroy)
 	b1.pack(side=TOP)
 
 ##Help window
@@ -1243,6 +1245,7 @@ def dynamics(help_clean = ""):
 	file_path = project_dir + project_name
 	force = str(gromacs2.force) + "\n" + str(gromacs2.water)
 	group = str(gromacs2.group)
+	os.chdir(project_dir)
 	global status, stop
 	stop = 0
 	print "Starting PyMOL plugin 'dynamics' ver."+plugin_ver+" by Tomasz Makarewicz"
@@ -1410,7 +1413,7 @@ def save_options():
 	if os.path.isdir(project_dir) == False:
 		os.makedirs(project_dir)
 	destination_option = file(project_dir + "options.pickle", "w")
-	pickle.dump([plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress, restraintsW], destination_option)
+	pickle.dump([plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress, restraintsW.on_off], destination_option)
 	del destination_option
 
 ##Load all settings from options.pickle file	
@@ -1439,7 +1442,7 @@ def load_options():
 		pr_file = options[4]
 		md_file = options[5]
 		progress = options[6]
-		restraintsW = options[7]
+		restraintsW.on_off = options[7]
 
 ##Text for "Help"
 def help_option():
