@@ -569,8 +569,8 @@ def rootWindow():
 	
 	check_var = IntVar(root)
 	
-	check_var2 = IntVar(root)
-	check_var2.set(restraintsW.on_off)
+	#check_var2 = IntVar(root)
+	#check_var2.set(restraintsW.on_off)
 	
 	#Initial configuration
 	set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var)
@@ -630,7 +630,7 @@ def rootWindow():
 					if molecule1[0] == "gromacs":
 						pass
 					else:
-						radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var, p, 0, check1_button, check_var2))
+						radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var, p, 0, check1_button))
 						radio_button1.pack(side=TOP, anchor=W)
 	
 	#List of group for final model
@@ -713,7 +713,7 @@ def rootWindow():
 	frame1_3_2.pack(side=TOP)
 		
 	#Jobs configuration button, progress bar and check box
-	job_button = Button(frame1_3_2, text = "Jobs to do", command=lambda: jobs_configure(root))
+	job_button = Button(frame1_3_2, text = "Jobs to do", command=lambda: jobs_configure(root, check1_button))
 	job_button.pack(side=TOP)
 	
 	w5 = Label(frame1_3_2, text="Progress Bar")
@@ -978,11 +978,15 @@ class RestraintsWindow:
 			md_file.update()
 			self.on_off = 1
 			gromacs.restraints_index()
+			progress.to_do[5] = 1
+			progress.status[5] = 0
 		elif check == 0:
 			config_button.configure(state=DISABLED)
 			md_file.options[2][0] = ";define"
 			md_file.update()
 			self.on_off = 0
+			progress.to_do[5] = 0
+			progress.status[5] = 1
 
 ##This function will show current progress in main window if "Molecular Dynamics Simulation from the beginning" is unchecked
 def main_status_bar(var, bar):
@@ -1049,7 +1053,7 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
 	root.destroy()
 
 ##This is very important function, which sets all necessary configuration files - it is a mess which needs to be rewritten
-def set_config_files(name="", v2_group="", v3_force="", v4_water="", water_v="", check_var="", main_bar=0, from_pymol=0, config_button_restraints = "", checkbox_restraints=""):
+def set_config_files(name="", v2_group="", v3_force="", v4_water="", water_v="", check_var="", main_bar=0, from_pymol=0, config_button_restraints = ""):
 	global em_file, pr_file, md_file, progress
 	##Set project name and dir
 	if name != "":
@@ -1065,10 +1069,8 @@ def set_config_files(name="", v2_group="", v3_force="", v4_water="", water_v="",
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
 		##Correct set of restraints checkbox
 		if restraintsW.on_off == 0 and config_button_restraints != "":
-			checkbox_restraints.set(restraintsW.on_off)
 			config_button_restraints.configure(state=DISABLED)
 		elif restraintsW.on_off == 1 and config_button_restraints != "":
-			checkbox_restraints.set(restraintsW.on_off)
 			config_button_restraints.configure(state=ACTIVE)
 	##If there is no options.pickle file generate mdp files and start "Progress_status"
 	else:
@@ -1170,7 +1172,7 @@ def mdp_update(values, mdp, root_to_kill=""):
 		md_file.update(values2)
 
 ##This function will create Jobs configuration window
-def jobs_configure(master):
+def jobs_configure(master, restraints_button):
 	root = Toplevel(master)
 	root.wm_title("Jobs configuration")
 	check_var1 = IntVar(root)
@@ -1217,7 +1219,7 @@ def jobs_configure(master):
 	c5 = Checkbutton(frame1, text="Position Restrained MD", variable=check_var5, command=lambda: progress.to_do_update(4, check_var5.get()))
 	c5.pack(side=TOP, anchor=W)
 	
-	c6 = Checkbutton(frame1, text="Restraints (optional)", variable=check_var6, command=lambda: progress.to_do_update(5, check_var6.get()))
+	c6 = Checkbutton(frame1, text="Restraints (optional)", variable=check_var6, command=lambda: restraintsW.check(check_var6.get(), restraints_button))
 	c6.pack(side=TOP, anchor=W)
 	
 	c7 = Checkbutton(frame1, text="Molecular Dynamics Simulation", variable=check_var7, command=lambda: progress.to_do_update(6, check_var7.get()))
