@@ -490,8 +490,8 @@ class Mdp_config:
 ##Status and to_do maintaining class
 class Progress_status:
 	
-	status= [0,0,0,0,0,0,0]
-	to_do = [1,1,1,1,1,1,1]
+	status= [0,0,0,0,0,0,0,0]
+	to_do = [1,1,1,1,1,1,1,1]
 	from_begining = 1
 	
 	def to_do_update(self, position, value):
@@ -989,13 +989,13 @@ def main_status_bar(var, bar):
 	if var == 0:
 		bar.configure(value=percent)
 		bar.update_idletasks()
-		if progress.to_do == [1,1,1,1,1,1,1]:
+		if progress.to_do == [1,1,1,1,1,1,1,1]:
 			progress.to_do_status()
 		progress.from_begining = 0
 	elif var == 1:
 		bar.configure(value=(0.0))
 		bar.update_idletasks()
-		progress.to_do = [1,1,1,1,1,1,1]
+		progress.to_do = [1,1,1,1,1,1,1,1]
 		progress.from_begining = 1
 
 ##This function will create window, which allow you to choose PDB file if no file is loaded to PyMOL
@@ -1185,6 +1185,8 @@ def jobs_configure(master):
 	check_var6.set(progress.to_do[5])
 	check_var7 = IntVar(root)
 	check_var7.set(progress.to_do[6])
+	check_var8 = IntVar(root)
+	check_var8.set(progress.to_do[7])
 	
 	frame1 = Frame(root)
 	frame1.pack(side=TOP)
@@ -1211,11 +1213,14 @@ def jobs_configure(master):
 	c5 = Checkbutton(frame1, text="Position Restrained MD", variable=check_var5, command=lambda: progress.to_do_update(4, check_var5.get()))
 	c5.pack(side=TOP, anchor=W)
 	
-	c6 = Checkbutton(frame1, text="Molecular Dynamics Simulation", variable=check_var6, command=lambda: progress.to_do_update(5, check_var6.get()))
+	c6 = Checkbutton(frame1, text="Restrains", variable=check_var6, command=lambda: progress.to_do_update(5, check_var6.get()))
 	c6.pack(side=TOP, anchor=W)
 	
-	c7 = Checkbutton(frame1, text="Generate multimodel PDB", variable=check_var7, command=lambda: progress.to_do_update(6, check_var7.get()))
+	c7 = Checkbutton(frame1, text="Molecular Dynamics Simulation", variable=check_var7, command=lambda: progress.to_do_update(6, check_var7.get()))
 	c7.pack(side=TOP, anchor=W)
+	
+	c8 = Checkbutton(frame1, text="Generate multimodel PDB", variable=check_var8, command=lambda: progress.to_do_update(7, check_var8.get()))
+	c8.pack(side=TOP, anchor=W)
 	
 	b1 = Button(root, text="OK", command=root.destroy)
 	b1.pack(side=TOP)
@@ -1317,7 +1322,7 @@ def dynamics(help_clean = ""):
 		status = gromacs2.status
 	
 	##MD
-	if status[0] == "ok" and stop == 0 and progress.to_do[5] == 1:
+	if status[0] == "ok" and stop == 0 and progress.to_do[6] == 1:
 		gromacs2.md(file_path)
 		status = gromacs2.status
 		if status[0] == "ok":
@@ -1326,12 +1331,12 @@ def dynamics(help_clean = ""):
 			save_options()
 	
 	##Trjconv
-	if status[0] == "ok" and stop == 0 and progress.to_do[6] == 1:
+	if status[0] == "ok" and stop == 0 and progress.to_do[7] == 1:
 		gromacs2.trjconv(file_path, group)
 		status = gromacs2.status
 	
 	##Showing multimodel
-	if status[0] == "ok" and stop == 0 and progress.to_do[6] == 1:
+	if status[0] == "ok" and stop == 0 and progress.to_do[7] == 1:
 		show_multipdb()
 		progress.status[6] = 1
 		progress.to_do[6] = 0
@@ -1430,6 +1435,8 @@ def load_options():
 		pr_file = options[4]
 		md_file = options[5]
 		progress = options[6]
+		progress.status.append(0) #Solution far from perfection
+		progress.to_do.append(1)
 		restraintsW.on_off = options[7]
 
 	elif options[0][1:4] == "1.1":
