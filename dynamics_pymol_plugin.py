@@ -567,13 +567,10 @@ def rootWindow():
 	water_v = StringVar(root)
 	water_v.set(gromacs.water_list[0][1])
 	
-	check_var = IntVar(root)
-	
-	#check_var2 = IntVar(root)
-	#check_var2.set(restraintsW.on_off)
+	#check_var = IntVar(root)
 	
 	#Initial configuration
-	set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var)
+	set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v)#, check_var)
 	
 	##Start drawing interface
 	frame0 = Frame(root)
@@ -597,7 +594,7 @@ def rootWindow():
 	#List of PyMOL loaded PDB files
 	if allNames[0] != "nothing":
 		for molecule in allNames:
-			radio_button1 = Radiobutton(frame1_1a, text=molecule, value=molecule, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var, p, 1))
+			radio_button1 = Radiobutton(frame1_1a, text=molecule, value=molecule, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, "", p, 1))
 			radio_button1.pack(side=TOP, anchor=W)
 	#If no loaded PDB files, than add button to choose one
 	else:
@@ -630,7 +627,7 @@ def rootWindow():
 					if molecule1[0] == "gromacs":
 						pass
 					else:
-						radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var, p, 0, check1_button))
+						radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, "", p, 0, check1_button))
 						radio_button1.pack(side=TOP, anchor=W)
 	
 	#List of group for final model
@@ -675,6 +672,12 @@ def rootWindow():
 	w4 = Label(frame1_3_1, text="Configuration")
 	w4.pack(side=TOP)
 	
+	#Jobs configuration button, progress bar and check box
+	steps_label = Label(frame1_3_1, text="Simulation Steps")
+	steps_label.pack(side=TOP)
+	steps_button = Button(frame1_3_1, text = "Configure", command=lambda: jobs_configure(root, check1_button))
+	steps_button.pack(side=TOP)
+	
 	#Button for configuration of MDP files
 	em_label = Label(frame1_3_1, text="Energy Minimisation")
 	em_label.pack(side=TOP)
@@ -697,10 +700,7 @@ def rootWindow():
 	if os.path.isfile(dynamics_dir + "md.mdp"):
 		md_button2.configure(state=DISABLED)
 	
-	#Checkbox and button for position restraints configuration
-	#check1 = Checkbutton(frame1_3_1, text="Position Restraints", variable=check_var2, command=lambda: restraintsW.check(check_var2.get(), check1_button))
-	#check1.pack(side=TOP)
-	
+	#Button for configuration of Restraints
 	re_label = Label(frame1_3_1, text="Restraints (Select Atoms)")
 	re_label.pack(side=TOP)
 	
@@ -709,22 +709,18 @@ def rootWindow():
 	if progress.to_do[5] == 0:
 		check1_button.configure(state=DISABLED)
 
-	frame1_3_2 = Frame(frame1_3, borderwidth=1, relief=RAISED)
-	frame1_3_2.pack(side=TOP)
-		
-	#Jobs configuration button, progress bar and check box
-	job_button = Button(frame1_3_2, text = "Jobs to do", command=lambda: jobs_configure(root, check1_button))
-	job_button.pack(side=TOP)
+	#frame1_3_2 = Frame(frame1_3, borderwidth=1, relief=RAISED)
+	#frame1_3_2.pack(side=TOP)
 	
-	w5 = Label(frame1_3_2, text="Progress Bar")
-	w5.pack(side=TOP)
-	p = Meter(frame1_3_2, value=0.0)
-	p.pack(side=TOP)
+	#w5 = Label(frame1_3_2, text="Progress Bar")
+	#w5.pack(side=TOP)
+	#p = Meter(frame1_3_2, value=0.0)
+	#p.pack(side=TOP)
 
-	c = Checkbutton(frame1_3_2, text="Molecular Dynamics Simulation from the beginning", variable=check_var, command=lambda: main_status_bar(check_var.get(), p))
-	c.pack(side=TOP)
+	#c = Checkbutton(frame1_3_2, text="Molecular Dynamics Simulation from the beginning", variable=check_var, command=lambda: main_status_bar(check_var.get(), p))
+	#c.pack(side=TOP)
 	
-	main_status_bar(check_var.get(), p)
+	#main_status_bar(check_var.get(), p)
 	
 	frame2 = Frame(root)
 	frame2.pack(side=TOP)
@@ -742,7 +738,7 @@ def rootWindow():
 	save_button = Button(frame2, text = "Save", command=select_file_save)
 	save_button.pack(side=LEFT)
 	
-	load_button = Button(frame2, text = "Load", command=lambda: select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, check_var))
+	load_button = Button(frame2, text = "Load", command=lambda: select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v))#, check_var))
 	load_button.pack(side=LEFT)
 	
 	count_button = Button(frame2, text = "OK", command=lambda: calculationW.window(root))
@@ -1037,7 +1033,7 @@ def select_file_save(rest_of_work=0):
 	root.destroy()
 
 ##This function will create window, which allow you to load previously saved work
-def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, check_var):
+def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v):#, check_var):
 	root = Tk()
 	file = tkFileDialog.askopenfile(parent=root, mode='rb', defaultextension=".tar.bz2" ,title='Choose file to load')
 	if file != None:
@@ -1047,8 +1043,8 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
 		v3_force.set(gromacs.force_list[gromacs2.force-1][0])
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
-		check_var.set(progress.from_begining)
-		radio_button1 = Radiobutton(frame1_1a, text=new_name, value=new_name, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, check_var, p))
+		#check_var.set(progress.from_begining)
+		radio_button1 = Radiobutton(frame1_1a, text=new_name, value=new_name, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v))#, check_var, p))
 		radio_button1.pack(side=TOP, anchor=W)
 	root.destroy()
 
