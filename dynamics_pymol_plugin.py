@@ -625,7 +625,7 @@ def rootWindow():
 					if molecule1[0] == "gromacs":
 						pass
 					else:
-						radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, "", p, 0, check1_button))
+						radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, "", 0, 0, check1_button))
 						radio_button1.pack(side=TOP, anchor=W)
 	
 	#List of group for final model
@@ -988,7 +988,7 @@ def main_status_bar(var, bar):
 		progress.resume = 0
 
 ##This function will create window, which allow you to choose PDB file if no file is loaded to PyMOL
-def select_file():
+def select_file(v_name):
 	root = Tk()
 	file = tkFileDialog.askopenfile(parent=root, mode='rb',title='Choose PDB file')
 	try:
@@ -998,6 +998,7 @@ def select_file():
 		global project_name, project_dir
 		project_name = name2[0]
 		project_dir = dynamics_dir + project_name + "/"
+		v_name.set(project_name)
 		if os.path.isdir(project_dir) == False:
 			os.makedirs(project_dir)
 			shutil.copyfile(file.name, project_dir + project_name + ".pdb")
@@ -1217,6 +1218,7 @@ def steps_configure(master, restraints_button):
 	
 	progress_bar = Meter(frame1, value=0.0)
 	progress_bar.pack(side=TOP)
+	main_status_bar(check_var9.get(), progress_bar)
 	
 	c9 = Checkbutton(frame1, text="Resume Simulation", variable=check_var9, command=lambda: main_status_bar(check_var9.get(), progress_bar))
 	c9.pack(side=TOP, anchor=W)
