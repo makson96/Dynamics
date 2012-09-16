@@ -492,7 +492,7 @@ class Progress_status:
 	
 	status= [0,0,0,0,0,1,0,0]
 	to_do = [1,1,1,1,1,0,1,1]
-	from_begining = 1
+	resume = 0
 	
 	def to_do_update(self, position, value):
 		if type(position) == type(1):
@@ -566,8 +566,6 @@ def rootWindow():
 
 	water_v = StringVar(root)
 	water_v.set(gromacs.water_list[0][1])
-	
-	#check_var = IntVar(root)
 	
 	#Initial configuration
 	set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v)#, check_var)
@@ -672,10 +670,10 @@ def rootWindow():
 	w4 = Label(frame1_3_1, text="Configuration")
 	w4.pack(side=TOP)
 	
-	#Jobs configuration button, progress bar and check box
+	#Button for configuration of Simulation Steps
 	steps_label = Label(frame1_3_1, text="Simulation Steps")
 	steps_label.pack(side=TOP)
-	steps_button = Button(frame1_3_1, text = "Configure", command=lambda: jobs_configure(root, check1_button))
+	steps_button = Button(frame1_3_1, text = "Configure", command=lambda: steps_configure(root, check1_button))
 	steps_button.pack(side=TOP)
 	
 	#Button for configuration of MDP files
@@ -708,19 +706,6 @@ def rootWindow():
 	check1_button.pack(side=TOP)
 	if progress.to_do[5] == 0:
 		check1_button.configure(state=DISABLED)
-
-	#frame1_3_2 = Frame(frame1_3, borderwidth=1, relief=RAISED)
-	#frame1_3_2.pack(side=TOP)
-	
-	#w5 = Label(frame1_3_2, text="Progress Bar")
-	#w5.pack(side=TOP)
-	#p = Meter(frame1_3_2, value=0.0)
-	#p.pack(side=TOP)
-
-	#c = Checkbutton(frame1_3_2, text="Molecular Dynamics Simulation from the beginning", variable=check_var, command=lambda: main_status_bar(check_var.get(), p))
-	#c.pack(side=TOP)
-	
-	#main_status_bar(check_var.get(), p)
 	
 	frame2 = Frame(root)
 	frame2.pack(side=TOP)
@@ -984,23 +969,23 @@ class RestraintsWindow:
 			progress.to_do[5] = 0
 			progress.status[5] = 1
 
-##This function will show current progress in main window if "Molecular Dynamics Simulation from the beginning" is unchecked
+##This function will show current progress in Steps Simulation Window if "Resume Simulation" is checked
 def main_status_bar(var, bar):
 	percent = 0.0
 	for job in progress.status:
 		percent = percent + job
 	percent = percent / 7
-	if var == 0:
+	if var == 1:
 		bar.configure(value=percent)
 		bar.update_idletasks()
 		if progress.to_do == [1,1,1,1,1,0,1,1]:
 			progress.to_do_status()
-		progress.from_begining = 0
-	elif var == 1:
+		progress.resume = 1
+	elif var == 0:
 		bar.configure(value=(0.0))
 		bar.update_idletasks()
 		progress.to_do = [1,1,1,1,1,0,1,1]
-		progress.from_begining = 1
+		progress.resume = 0
 
 ##This function will create window, which allow you to choose PDB file if no file is loaded to PyMOL
 def select_file():
@@ -1167,10 +1152,10 @@ def mdp_update(values, mdp, root_to_kill=""):
 	elif mdp == "pr":
 		md_file.update(values2)
 
-##This function will create Jobs configuration window
-def jobs_configure(master, restraints_button):
+##This function will create Simulation Steps configuration window
+def steps_configure(master, restraints_button):
 	root = Toplevel(master)
-	root.wm_title("Jobs configuration")
+	root.wm_title("Simulation Steps Configuration")
 	check_var1 = IntVar(root)
 	check_var1.set(progress.to_do[0])
 	check_var2 = IntVar(root)
@@ -1189,6 +1174,9 @@ def jobs_configure(master, restraints_button):
 	check_var7.set(progress.to_do[6])
 	check_var8 = IntVar(root)
 	check_var8.set(progress.to_do[7])
+	#Variable for Resume Simulation
+	check_var9 = IntVar(root)
+	check_var9.set(progress.resume)
 	
 	frame1 = Frame(root)
 	frame1.pack(side=TOP)
@@ -1223,6 +1211,15 @@ def jobs_configure(master, restraints_button):
 	
 	c8 = Checkbutton(frame1, text="Generate multimodel PDB", variable=check_var8, command=lambda: progress.to_do_update(7, check_var8.get()))
 	c8.pack(side=TOP, anchor=W)
+	
+	l1 = Label(frame1, text="Simulation Progress:")
+	l1.pack(side=TOP)
+	
+	progress_bar = Meter(frame1, value=0.0)
+	progress_bar.pack(side=TOP)
+	
+	c9 = Checkbutton(frame1, text="Resume Simulation", variable=check_var9, command=lambda: main_status_bar(check_var9.get(), progress_bar))
+	c9.pack(side=TOP, anchor=W)
 	
 	b1 = Button(root, text="OK", command=root.destroy)
 	b1.pack(side=TOP)
