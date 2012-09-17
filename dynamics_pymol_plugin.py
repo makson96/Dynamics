@@ -1511,10 +1511,13 @@ def load_options():
 		em_file = options[3]
 		pr_file = options[4]
 		md_file = options[5]
-		progress = options[6]
-		progress.status.append(0) #Solution far from perfection
-		progress.to_do.append(1)
-		progess.to_do_optional[0] = options[7]
+		progress.to_do = options[6].to_do
+		progress.status = options[6].status
+		progress.to_do_optional[0] = options[7]
+		progress.status_optional[0] = 0
+		progress.resume = 0
+		progress.x2top = 0
+		
 
 	elif options[0][1:4] == "1.1":
 		print "1.1 compatibility layer"
