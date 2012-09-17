@@ -25,7 +25,7 @@ help_name = ["-h", "h", "-help", "help"]
 clean_name = ["-c", "c", "clean", "-clean"]
 plugin_ver = " 1.1.0pre"
 
-stop = 0
+stop = 1
 status = ["ok", ""]
 error = ""
 
@@ -739,6 +739,8 @@ class CalculationWindow:
 	tasks_to_do = 0
 	bar_var = ""
 	bar_widget = ""
+	start_button = ""
+	stop_button = ""
 	
 	##This function will create main Calculation Window
 	def window(self, master):
@@ -768,11 +770,18 @@ class CalculationWindow:
 		save_button = Button(frame2, text = "SAVE", command=lambda: select_file_save(1))
 		save_button.pack(side=LEFT)
 	
-		stop_button = Button(frame2, text = "STOP", command=lambda : stop_counting(1))
+		stop_button = Button(frame2, text = "STOP", command=lambda : self.start_counting(0))
 		stop_button.pack(side=LEFT)
+		if stop == 1:
+			stop_button.configure(state=DISABLED)
+		self.stop_button = stop_button
 	
-		start_button = Button(frame2, text = "START", command=lambda: thread.start_new_thread(dynamics, ()))
+		start_button = Button(frame2, text = "START", command=lambda: self.start_counting(1))
 		start_button.pack(side=LEFT)
+		if stop == 0:
+			start_button.configure(state=DISABLED)
+		self.start_button = start_button
+		
 		#Updateing status bar
 		tasks_nr = 0.0
 		for task in progress.to_do:
@@ -827,9 +836,17 @@ class CalculationWindow:
 			error = ""
 
 	##This function will change global value if stop is clicked during simulation
-	def stop_counting(self, value):
+	def start_counting(self, value):
 		global stop
-		stop = value
+		if value == 1:
+			stop = 0
+			thread.start_new_thread(dynamics, ())
+			self.stop_button.configure(state=ACTIVE)
+			self.start_button.configure(state=DISABLED)
+		elif value == 0:
+			stop = 1
+			self.stop_button.configure(state=DISABLED)
+			self.start_button.configure(state=ACTIVE)
 
 ##Gather all water options windows in one class
 class WaterWindows:
