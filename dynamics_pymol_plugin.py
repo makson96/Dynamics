@@ -209,8 +209,19 @@ class Gromacs_output:
 			pass
 		subprocess.call(self.path+"echo 1 | trjconv -f "+dynamics_dir+"group_test.pdb -s "+dynamics_dir+"group_test.pdb -o "+dynamics_dir+"group_test2.pdb &> "+dynamics_dir+"test_gromacs_group.txt",
 		executable="/bin/bash", shell=True)
+		group_test = open(dynamics_dir+"test_gromacs_group.txt","r")
+		group_test_list = group_test.readlines()
 		
 		print "Reading available groups"
+		group_start_line = 0
+		while group_test_list[group_start_line] != "Will write pdb: Protein data bank file\n":
+			group_start_line = group_start_line + 1
+		group_start_line = group_start_line + 1
+		group_end_line = group_start_line + 1
+		while group_test_list[group_end_line][0:14] != "Select a group":
+			group_end_line = group_end_line + 1
+		group_list = group_test_list[group_start_line:group_end_line]
+		print group_list
 		group_list = ["0: System", "1: Protein", "2: Protein-H", "3: C-alpha", "4: Backbone", "5: MainChain", "6: MainChain+Cb", "7: MainChain+H", "8: SideChain", "9: SideChain-H", "10: Prot-Masses", "11: non-Protein", "12: Water", "13: SOL", "14: non-Water"]
 		group_list2 = []
 		number = 0
