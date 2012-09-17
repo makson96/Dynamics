@@ -785,7 +785,8 @@ class CalculationWindow:
 	##This function will update status bar during molecular dynamics simulation
 	def bar_update(self):
 		global error
-		while self.bar_var.get() != "Finished!" and error == "":
+		percent = 0.0
+		while self.bar_var.get() != "Finished!" and error == "" and percent != 1:
 			percent = 0.0
 			for job in progress.to_do:
 				percent = percent + job
