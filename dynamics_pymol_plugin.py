@@ -199,8 +199,18 @@ class Gromacs_output:
 			water_list2.append([number, water[:-1]])
 			number = number + 1
 	
+		#Initial work.
+		fo = open(dynamics_dir+"group_test.pdb", "wb")
+		fo.write( "ATOM      1  N   LYS     1      24.966  -0.646  22.314  1.00 32.74      1SRN  99\n");
+		fo.close()
+		try:
+			os.remove(dynamics_dir+"group_test2.pdb")
+		except:
+			pass
+		subprocess.call(self.path+"echo 1 | trjconv -f "+dynamics_dir+"group_test.pdb -s "+dynamics_dir+"group_test.pdb -o "+dynamics_dir+"group_test2.pdb &> "+dynamics_dir+"test_gromacs_group.txt",
+		executable="/bin/bash", shell=True)
+		
 		print "Reading available groups"
-		#Temporary solution. Need real reading from GROMACS.
 		group_list = ["0: System", "1: Protein", "2: Protein-H", "3: C-alpha", "4: Backbone", "5: MainChain", "6: MainChain+Cb", "7: MainChain+H", "8: SideChain", "9: SideChain-H", "10: Prot-Masses", "11: non-Protein", "12: Water", "13: SOL", "14: non-Water"]
 		group_list2 = []
 		number = 0
@@ -470,7 +480,8 @@ class Gromacs_input:
 			os.remove(project_name+"_multimodel.pdb")
 		
 		print "Creating Multimodel PDB"
-		Trjconv = subprocess.call(gromacs.path+"echo "+group+" | trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -app -o "+project_name+"_multimodel.pdb &>> log.txt", executable="/bin/bash", shell=True)
+		Trjconv = subprocess.call(gromacs.path+"echo "+group+" | trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -app -o "+project_name+"_multimodel.pdb &>> log.txt",
+		executable="/bin/bash", shell=True)
 		
 		if os.path.isfile(file_path+"_multimodel.pdb") == True:
 			status = ["ok", "Finished!"]
