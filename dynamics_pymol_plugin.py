@@ -1192,7 +1192,7 @@ def steps_configure(master, restraints_button):
 	check_var2 = IntVar(root)
 	check_var2.set(progress.to_do[1])
 	v1 = IntVar(root)
-	v1.set(1)
+	v1.set(progress.x2top)
 	check_var3 = IntVar(root)
 	check_var3.set(progress.to_do[2])
 	check_var4 = IntVar(root)
@@ -1220,12 +1220,12 @@ def steps_configure(master, restraints_button):
 	c2 = Checkbutton(frame1, text="Generate topology file from pdb", variable=check_var2, command=lambda: progress.to_do_update(1, check_var2.get()))
 	c2.pack(side=TOP, anchor=W)
 	
-	r1 = Radiobutton(frame1, text="Use pdb2gmx tool", value=1, variable=v1, command=lambda: test(v1.get()))
+	r1 = Radiobutton(frame1, text="Use pdb2gmx tool", value=0, variable=v1, command=lambda: progress.x2top_update(v1.get()))
 	r1.pack(side=TOP, anchor=W)
-	#Not yet available
-	r2 = Radiobutton(frame1, text="Use x2top tool [coming soon]", value=2, variable=v1, command=lambda: test(v1.get()))
+	#Initial Start
+	r2 = Radiobutton(frame1, text="Use x2top tool", value=1, variable=v1, command=lambda: progress.x2top_update(v1.get()))
 	r2.pack(side=TOP, anchor=W)
-	r2.configure(state=DISABLED)
+	#r2.configure(state=DISABLED)
 	
 	c3 = Checkbutton(frame1, text="Adding Water Box", variable=check_var3, command=lambda: progress.to_do_update(2, check_var3.get()))
 	c3.pack(side=TOP, anchor=W)
