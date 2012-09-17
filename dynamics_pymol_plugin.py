@@ -782,7 +782,12 @@ class CalculationWindow:
 		master.destroy()
 	
 		gromacs2.status = ["ok", "Waiting to start"]
-	
+		if project_name == 'nothing':
+			global error, status
+			status = ["fail", "No molecule was selected"]
+			error = "No molecule was selected in the main window. Simulation can not proceed."
+			
+		
 		root = Tk()
 		root.wm_title("Calculation Window")
 		frame1 = Frame(root)
