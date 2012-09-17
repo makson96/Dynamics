@@ -490,8 +490,10 @@ class Mdp_config:
 ##Status and to_do maintaining class
 class Progress_status:
 	
-	status= [0,0,0,0,0,1,0,0]
-	to_do = [1,1,1,1,1,0,1,1]
+	status= [0,0,0,0,0,0,0]
+	status_optional = [0]
+	to_do = [1,1,1,1,1,1,1]
+	to_do_optional = [0]
 	resume = 0
 	
 	def to_do_update(self, position, value):
@@ -704,7 +706,7 @@ def rootWindow():
 	
 	check1_button = Button(frame1_3_1, text = "Configure", command=lambda: restraintsW.window(root))
 	check1_button.pack(side=TOP)
-	if progress.to_do[5] == 0:
+	if progress.to_do_optional[0] == 0:
 		check1_button.configure(state=DISABLED)
 	
 	frame2 = Frame(root)
@@ -887,7 +889,6 @@ class RestraintsWindow:
 	
 	atom_list = []
 	check_var = ""
-	on_off = 0
 	
 	def __init__(self):
 		print "Need to prepare here some atome list"
@@ -952,40 +953,17 @@ class RestraintsWindow:
 			
 	##This function will activ or disable restraints button in main window based on check box
 	def check(self, check, config_button):
-		restraintsW.on_off
 		if check == 1:
 			config_button.configure(state=ACTIVE)
 			md_file.options[2][0] = "define"
 			md_file.update()
-			self.on_off = 1
 			gromacs.restraints_index()
-			progress.to_do[5] = 1
-			progress.status[5] = 0
+			progress.to_do_optional[0] = 1
 		elif check == 0:
 			config_button.configure(state=DISABLED)
 			md_file.options[2][0] = ";define"
 			md_file.update()
-			self.on_off = 0
-			progress.to_do[5] = 0
-			progress.status[5] = 1
-
-##This function will show current progress in Steps Simulation Window if "Resume Simulation" is checked
-def main_status_bar(var, bar):
-	percent = 0.0
-	for job in progress.status:
-		percent = percent + job
-	percent = percent / 7
-	if var == 1:
-		bar.configure(value=percent)
-		bar.update_idletasks()
-		if progress.to_do == [1,1,1,1,1,0,1,1]:
-			progress.to_do_status()
-		progress.resume = 1
-	elif var == 0:
-		bar.configure(value=(0.0))
-		bar.update_idletasks()
-		progress.to_do = [1,1,1,1,1,0,1,1]
-		progress.resume = 0
+			progress.to_do_optional[0] = 0
 
 ##This function will create window, which allow you to choose PDB file if no file is loaded to PyMOL
 def select_file(v_name):
@@ -1050,9 +1028,9 @@ def set_config_files(name="", v2_group="", v3_force="", v4_water="", water_v="",
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
 		##Correct set of restraints checkbox
-		if restraintsW.on_off == 0 and config_button_restraints != "":
+		if progress.to_do_optional[0] == 0 and config_button_restraints != "":
 			config_button_restraints.configure(state=DISABLED)
-		elif restraintsW.on_off == 1 and config_button_restraints != "":
+		elif progress.to_do_optional[0] == 1 and config_button_restraints != "":
 			config_button_restraints.configure(state=ACTIVE)
 	##If there is no options.pickle file generate mdp files and start "Progress_status"
 	else:
@@ -1081,7 +1059,7 @@ def set_config_files(name="", v2_group="", v3_force="", v4_water="", water_v="",
 	try:
 		check_var.set(progress.from_begining)
 		if main_bar != 0:
-			main_status_bar(check_var.get(), main_bar)
+			steps_status_bar(check_var.get(), main_bar)
 	except:
 		pass
 	save_options()
@@ -1170,14 +1148,16 @@ def steps_configure(master, restraints_button):
 	check_var5 = IntVar(root)
 	check_var5.set(progress.to_do[4])
 	check_var6 = IntVar(root)
-	check_var6.set(progress.to_do[5])
+	check_var6.set(progress.to_do_optional[0])
 	check_var7 = IntVar(root)
-	check_var7.set(progress.to_do[6])
+	check_var7.set(progress.to_do[5])
 	check_var8 = IntVar(root)
-	check_var8.set(progress.to_do[7])
+	check_var8.set(progress.to_do[6])
 	#Variable for Resume Simulation
 	check_var9 = IntVar(root)
 	check_var9.set(progress.resume)
+	
+	variable_list = [check_var1, check_var2, check_var3, check_var4, check_var5, check_var7, check_var8]
 	
 	frame1 = Frame(root)
 	frame1.pack(side=TOP)
@@ -1207,10 +1187,10 @@ def steps_configure(master, restraints_button):
 	c6 = Checkbutton(frame1, text="Restraints (optional)", variable=check_var6, command=lambda: restraintsW.check(check_var6.get(), restraints_button))
 	c6.pack(side=TOP, anchor=W)
 	
-	c7 = Checkbutton(frame1, text="Molecular Dynamics Simulation", variable=check_var7, command=lambda: progress.to_do_update(6, check_var7.get()))
+	c7 = Checkbutton(frame1, text="Molecular Dynamics Simulation", variable=check_var7, command=lambda: progress.to_do_update(5, check_var7.get()))
 	c7.pack(side=TOP, anchor=W)
 	
-	c8 = Checkbutton(frame1, text="Generate multimodel PDB", variable=check_var8, command=lambda: progress.to_do_update(7, check_var8.get()))
+	c8 = Checkbutton(frame1, text="Generate multimodel PDB", variable=check_var8, command=lambda: progress.to_do_update(6, check_var8.get()))
 	c8.pack(side=TOP, anchor=W)
 	
 	l1 = Label(frame1, text="Simulation Progress:")
@@ -1218,13 +1198,44 @@ def steps_configure(master, restraints_button):
 	
 	progress_bar = Meter(frame1, value=0.0)
 	progress_bar.pack(side=TOP)
-	main_status_bar(check_var9.get(), progress_bar)
+	steps_status_bar(check_var9.get(), progress_bar, variable_list)
 	
-	c9 = Checkbutton(frame1, text="Resume Simulation", variable=check_var9, command=lambda: main_status_bar(check_var9.get(), progress_bar))
+	c9 = Checkbutton(frame1, text="Resume Simulation", variable=check_var9, command=lambda: steps_status_bar(check_var9.get(), progress_bar, variable_list))
 	c9.pack(side=TOP, anchor=W)
 	
 	b1 = Button(root, text="OK", command=root.destroy)
 	b1.pack(side=TOP)
+
+##This function will show current progress in Steps Simulation Window if "Resume Simulation" is checked
+def steps_status_bar(var, bar, variable_list):
+	percent = 0.0
+	for step in progress.status:
+		percent = percent + step
+	if progress.to_do_optional[0] == 1:
+		percent = percent + progress.status_optional[0]
+		percent = percent / 8
+	else:
+		percent = percent / 7
+	if var == 1:
+		bar.configure(value=percent)
+		bar.update_idletasks()
+		to_do_nr = 0
+		for step in progress.status:
+			if step == 1:
+				progress.to_do[to_do_nr] = 0
+				variable_list[to_do_nr].set(0)
+			elif step == 0:
+				progress.to_do[to_do_nr] = 1
+				variable_list[to_do_nr].set(1)
+			to_do_nr = to_do_nr + 1
+		progress.resume = 1
+	elif var == 0:
+		bar.configure(value=(0.0))
+		bar.update_idletasks()
+		progress.to_do = [1,1,1,1,1,1,1]
+		for variable in variable_list:
+			variable.set(1)
+		progress.resume = 0
 
 ##Help window
 def helpWindow(master):
@@ -1318,12 +1329,12 @@ def dynamics(help_clean = ""):
 			save_options()
 	
 	##Restraints
-	if status[0] == "ok" and stop == 0 and restraintsW.on_off == 1 and progress.to_do[5] == 1:
+	if status[0] == "ok" and stop == 0 and progress.to_do_optional[0] == 1:
 		gromacs2.restraints()
 		status = gromacs2.status
 	
 	##MD
-	if status[0] == "ok" and stop == 0 and progress.to_do[6] == 1:
+	if status[0] == "ok" and stop == 0 and progress.to_do[5] == 1:
 		gromacs2.md(file_path)
 		status = gromacs2.status
 		if status[0] == "ok":
@@ -1332,12 +1343,12 @@ def dynamics(help_clean = ""):
 			save_options()
 	
 	##Trjconv
-	if status[0] == "ok" and stop == 0 and progress.to_do[7] == 1:
+	if status[0] == "ok" and stop == 0 and progress.to_do[6] == 1:
 		gromacs2.trjconv(file_path, group)
 		status = gromacs2.status
 	
 	##Showing multimodel
-	if status[0] == "ok" and stop == 0 and progress.to_do[7] == 1:
+	if status[0] == "ok" and stop == 0 and progress.to_do[6] == 1:
 		show_multipdb()
 		progress.status[6] = 1
 		progress.to_do[6] = 0
@@ -1416,12 +1427,12 @@ def save_options():
 	if os.path.isdir(project_dir) == False:
 		os.makedirs(project_dir)
 	destination_option = file(project_dir + "options.pickle", "w")
-	pickle.dump([plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress, restraintsW.on_off], destination_option)
+	pickle.dump([plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress], destination_option)
 	del destination_option
 
 ##Load all settings from options.pickle file	
 def load_options():
-	global gromacs, gromacs2, em_file, pr_file, md_file, progress, restraintsW
+	global gromacs, gromacs2, em_file, pr_file, md_file, progress
 	
 	pickle_file = file(project_dir +"options.pickle")
 	options = pickle.load(pickle_file)
@@ -1438,7 +1449,7 @@ def load_options():
 		progress = options[6]
 		progress.status.append(0) #Solution far from perfection
 		progress.to_do.append(1)
-		restraintsW.on_off = options[7]
+		progess.to_do_optional[0] = options[7]
 
 	elif options[0][1:4] == "1.1":
 		print "1.1 compatibility layer"
@@ -1447,7 +1458,6 @@ def load_options():
 		pr_file = options[4]
 		md_file = options[5]
 		progress = options[6]
-		restraintsW.on_off = options[7]
 
 ##Text for "Help"
 def help_option():
