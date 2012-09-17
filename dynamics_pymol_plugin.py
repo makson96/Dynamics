@@ -315,6 +315,33 @@ class Gromacs_input:
 		
 		self.status = status
 	
+	##This is alternative function to create initial topology and triectory using pdb file
+	def x2top(self, file_path, force):
+		status = ["ok", "Calculating topology using Force forces"]
+		self.status = status
+		try:
+			os.remove(project_name+".gro")
+			os.remove(project_name+".top")
+		except:
+			pass
+		print "Calculating topology using x2top"
+		X2top = subprocess.call(gromacs.path+"g_x2top -f "+project_name+".pdb -o "+project_name+".top &> log.txt",
+		executable="/bin/bash", shell=True)
+
+		if os.path.isfile(file_path+".top") == True:
+			status = ["ok", "Calculated topology using x2top."]
+		else:
+			status = ["fail", "Unable to create topology file."]
+			print status[1]
+		if 	 status[0] == "ok":
+			Trjconv = subprocess.call(gromacs.path+"echo -e 0 | trjconv -ignh -f "+project_name+".pdb -s "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log.txt",
+			executable="/bin/bash", shell=True)
+
+			if os.path.isfile(file_path+".gro") == True:
+				status = ["ok", "Calculated structure using trjconv."]
+			else:
+				status = ["fail", "Unable to create structure file."]
+	
 	##This function will create and add waterbox.
 	def waterbox(self, file_path):
 		status = ["ok", "Adding Water Box"]
