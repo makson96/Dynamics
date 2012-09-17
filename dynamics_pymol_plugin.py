@@ -305,7 +305,7 @@ class Gromacs_input:
 		else:
 			status = ["fail", "Warning. Trying to ignore unnecessary hydrogen atoms."]
 			print status[1]
-			Pdb2gmx = subprocess.call(gromacs.path+"echo -e '"+force+"' | pdb2gmx -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log.txt",
+			Pdb2gmx = subprocess.call(gromacs.path+"echo -e '"+force+"' | pdb2gmx -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &>> log.txt",
 			executable="/bin/bash", shell=True)
 
 		if os.path.isfile(file_path+".gro") == True:
@@ -316,7 +316,7 @@ class Gromacs_input:
 		self.status = status
 	
 	##This is alternative function to create initial topology and triectory using pdb file
-	def x2top(self, file_path, force):
+	def x2top(self, file_path):
 		status = ["ok", "Calculating topology using Force forces"]
 		self.status = status
 		try:
@@ -334,13 +334,14 @@ class Gromacs_input:
 			status = ["fail", "Unable to create topology file."]
 			print status[1]
 		if 	 status[0] == "ok":
-			Trjconv = subprocess.call(gromacs.path+"echo -e 0 | trjconv -ignh -f "+project_name+".pdb -s "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log.txt",
+			Trjconv = subprocess.call(gromacs.path+"echo -e 0 | trjconv -f "+project_name+".pdb -s "+project_name+".pdb -o "+project_name+".gro &>> log.txt",
 			executable="/bin/bash", shell=True)
 
 			if os.path.isfile(file_path+".gro") == True:
 				status = ["ok", "Calculated structure using trjconv."]
 			else:
 				status = ["fail", "Unable to create structure file."]
+		self.status = status
 	
 	##This function will create and add waterbox.
 	def waterbox(self, file_path):
@@ -360,7 +361,8 @@ class Gromacs_input:
 		executable="/bin/bash", shell=True)
 
 		print "Adding Water Box"
-		Genbox = subprocess.call(gromacs.path+"genbox -cp "+project_name+"1.gro -cs -o "+project_name+"_b4em.gro -p "+project_name+".top &>> log.txt", executable="/bin/bash", shell=True)
+		Genbox = subprocess.call(gromacs.path+"genbox -cp "+project_name+"1.gro -cs -o "+project_name+"_b4em.gro -p "+project_name+".top &>> log.txt",
+		executable="/bin/bash", shell=True)
 		
 		if os.path.isfile(file_path+"1.gro") == True:
 			status = ["ok", "Added Water Box"]
@@ -522,10 +524,15 @@ class Progress_status:
 	to_do = [1,1,1,1,1,1,1]
 	to_do_optional = [0]
 	resume = 0
+	x2top = 0
 	
 	def to_do_update(self, position, value):
 		if type(position) == type(1):
 			self.to_do[position] = value
+			
+	def x2top_update(self, value):
+		if type(value) == type(1):
+			self.x2top = value
 	
 	def to_do_status(self):
 		to_do = []
@@ -1338,8 +1345,16 @@ def dynamics(help_clean = ""):
 	#	pass
 	
 	##Counting topology
-	if status[0] == "ok" and stop == 0 and progress.to_do[1] == 1:
+	if status[0] == "ok" and stop == 0 and progress.to_do[1] == 1 and progress.x2top == 0:
 		gromacs2.pdb2top(file_path, force)
+		status = gromacs2.status
+		if status[0] == "ok":
+			progress.status[1] = 1
+			progress.to_do[1] = 0
+			save_options()
+	
+	elif  status[0] == "ok" and stop == 0 and progress.to_do[1] == 1 and progress.x2top == 1:
+		gromacs2.x2top(file_path)
 		status = gromacs2.status
 		if status[0] == "ok":
 			progress.status[1] = 1
