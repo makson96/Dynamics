@@ -221,12 +221,14 @@ class Gromacs_output:
 		while group_test_list[group_end_line][0:14] != "Select a group":
 			group_end_line = group_end_line + 1
 		group_list = group_test_list[group_start_line:group_end_line]
-		print group_list
-		group_list = ["0: System", "1: Protein", "2: Protein-H", "3: C-alpha", "4: Backbone", "5: MainChain", "6: MainChain+Cb", "7: MainChain+H", "8: SideChain", "9: SideChain-H", "10: Prot-Masses", "11: non-Protein", "12: Water", "13: SOL", "14: non-Water"]
+		#print group_list
+		#group_list = ["0: System", "1: Protein", "2: Protein-H", "3: C-alpha", "4: Backbone", "5: MainChain", "6: MainChain+Cb", "7: MainChain+H", "8: SideChain", "9: SideChain-H", "10: Prot-Masses", "11: non-Protein", "12: Water", "13: SOL", "14: non-Water"]
 		group_list2 = []
 		number = 0
 		for group in group_list:
-			group_list2.append([number, group])
+			group1 = group.split(' has')
+			group2 = group1[0].split('Group     ')
+			group_list2.append([number, group2[1]])
 			number = number + 1
 		
 		self.force_list = force_list2
