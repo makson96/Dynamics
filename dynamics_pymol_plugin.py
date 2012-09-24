@@ -600,11 +600,11 @@ def rootWindow():
 		allNames = ["nothing"]
 	
 	##TkInter variables
-	global project_dir, project_name
+	global project_dir, project_name, molecule_from_pymol
 	project_name = allNames[0]
 	project_dir = dynamics_dir + project_name + '/'
 	if allNames != ["nothing"]:
-		set_config_files("", "", "", "", "", "", 0, 1) #This is to save pdb file
+		create_config_files()
 	
 	v1_name = StringVar(root)
 	v1_name.set(project_name)
@@ -623,9 +623,6 @@ def rootWindow():
 
 	water_v = StringVar(root)
 	water_v.set(gromacs.water_list[0][1])
-	
-	#Initial configuration
-	set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v)#, check_var)
 	
 	##Start drawing interface
 	frame0 = Frame(root)
@@ -761,8 +758,8 @@ def rootWindow():
 	
 	check1_button = Button(frame1_3_1, text = "Configure", command=lambda: restraintsW.window(root))
 	check1_button.pack(side=TOP)
-	if progress.to_do_optional[0] == 0:
-		check1_button.configure(state=DISABLED)
+#	if progress.to_do_optional[0] == 0:
+#		check1_button.configure(state=DISABLED)
 	
 	frame2 = Frame(root)
 	frame2.pack(side=TOP)
@@ -785,6 +782,9 @@ def rootWindow():
 	
 	count_button = Button(frame2, text = "OK", command=lambda: calculationW.window(root))
 	count_button.pack(side=LEFT)
+	
+	#Initial configuration
+	set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button)
 		
 	root.mainloop()
 
@@ -1145,7 +1145,7 @@ def set_config_files(name="", v2_group="", v3_force="", v4_water="", water_v="",
 		cmd.save(project_dir+project_name+".pdb", project_name) #PyMOL API
 
 ##This function is to solve issues from set_config_files
-def set_variables(name, v2_group, v3_force, v4_water, water_v, resume_var, config_button_restraints):
+def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_restraints):
 	print "Set Variables"
 	global em_file, pr_file, md_file, progress
 	##Set project name and dir
@@ -1159,8 +1159,7 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, resume_var, confi
 		v3_force.set(gromacs.force_list[gromacs2.force-1][0])
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
-		resume_var.set(progress.resume)
-		##Correct set of restraints checkbox
+		##Correct set of restraints button
 		if progress.to_do_optional[0] == 0:
 			config_button_restraints.configure(state=DISABLED)
 		elif progress.to_do_optional[0] == 1:
@@ -1171,6 +1170,7 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, resume_var, confi
 ##This function is to solve issues from set_config_files
 def create_config_files():
 	print "Create config files"
+	global em_file, pr_file, md_file, progress
 	progress = Progress_status()
 	if os.path.isfile(dynamics_dir + "em.mdp"):
 		shutil.copy(dynamics_dir + "em.mdp", project_dir + "em.mdp")
@@ -1194,9 +1194,10 @@ def create_config_files():
 	else:
 		md_file = Mdp_config("md.mdp",md_init_config, 0)
 	save_options()
-	if from_pymol == 1:
-		print "cmd saved"
-		cmd.save(project_dir+project_name+".pdb", project_name) #PyMOL API
+	if plugin == 1:
+		if project_name in cmd.get_names("objects"): #PyMOL API
+			cmd.save(project_dir+project_name+".pdb", project_name) #PyMOL API
+			print "cmd saved"
 
 #This function will create the window with configuration files based on MDP class
 def mdp_configure(config_name, master):
