@@ -199,7 +199,6 @@ class Gromacs_output:
 			water_list2.append([number, water[:-1]])
 			number = number + 1
 	
-		#Initial work.
 		fo = open(dynamics_dir+"group_test.pdb", "wb")
 		fo.write( "ATOM      1  N   LYS     1      24.966  -0.646  22.314  1.00 32.74      1SRN  99\n");
 		fo.close()
@@ -221,8 +220,6 @@ class Gromacs_output:
 		while group_test_list[group_end_line][0:14] != "Select a group":
 			group_end_line = group_end_line + 1
 		group_list = group_test_list[group_start_line:group_end_line]
-		#print group_list
-		#group_list = ["0: System", "1: Protein", "2: Protein-H", "3: C-alpha", "4: Backbone", "5: MainChain", "6: MainChain+Cb", "7: MainChain+H", "8: SideChain", "9: SideChain-H", "10: Prot-Masses", "11: non-Protein", "12: Water", "13: SOL", "14: non-Water"]
 		group_list2 = []
 		number = 0
 		for group in group_list:
@@ -1088,7 +1085,6 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v):
 		v3_force.set(gromacs.force_list[gromacs2.force-1][0])
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
-		#check_var.set(progress.from_begining)
 		radio_button1 = Radiobutton(frame1_1a, text=new_name, value=new_name, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v))#, check_var, p))
 		radio_button1.pack(side=TOP, anchor=W)
 	root.destroy()
@@ -1143,6 +1139,60 @@ def set_config_files(name="", v2_group="", v3_force="", v4_water="", water_v="",
 			steps_status_bar(check_var.get(), main_bar)
 	except:
 		pass
+	save_options()
+	if from_pymol == 1:
+		print "cmd saved"
+		cmd.save(project_dir+project_name+".pdb", project_name) #PyMOL API
+
+##This function is to solve issues from set_config_files
+def set_variables(name, v2_group, v3_force, v4_water, water_v, resume_var, config_button_restraints):
+	print "Set Variables"
+	global em_file, pr_file, md_file, progress
+	##Set project name and dir
+	if name != "":
+		global project_name, project_dir
+		project_name = name
+		project_dir = dynamics_dir + project_name + '/'
+	if os.path.isfile(project_dir+"options.pickle") == True:
+		load_options()
+		v2_group.set(gromacs.group_list[gromacs2.group][0])
+		v3_force.set(gromacs.force_list[gromacs2.force-1][0])
+		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
+		water_v.set(gromacs.water_list[v4_water.get()-1][1])
+		resume_var.set(progress.resume)
+		##Correct set of restraints checkbox
+		if progress.to_do_optional[0] == 0:
+			config_button_restraints.configure(state=DISABLED)
+		elif progress.to_do_optional[0] == 1:
+			config_button_restraints.configure(state=ACTIVE)
+	else:
+		create_config_files
+
+##This function is to solve issues from set_config_files
+def create_config_files():
+	print "Create config files"
+	progress = Progress_status()
+	if os.path.isfile(dynamics_dir + "em.mdp"):
+		shutil.copy(dynamics_dir + "em.mdp", project_dir + "em.mdp")
+		em_file_config = open(dynamics_dir + "em.mdp", "r").read()
+		em_file = Mdp_config("em.mdp",name, em_file_config, 1)
+		print "Found em.mdp file. Using it instead of local configuration."
+	else:
+		em_file = Mdp_config("em.mdp",em_init_config, 0)
+	if os.path.isfile(dynamics_dir + "pr.mdp"):
+		shutil.copy(dynamics_dir + "pr.mdp", project_dir + "pr.mdp")
+		pr_file_config = open(dynamics_dir + "pr.mdp", "r").read()
+		pr_file = Mdp_config("pr.mdp",name, pr_file_config, 1)
+		print "Found pr.mdp file. Using it instead of local configuration."
+	else:
+		pr_file = Mdp_config("pr.mdp",pr_init_config, 0)
+	if os.path.isfile(dynamics_dir + "md.mdp"):
+		shutil.copy(dynamics_dir + "md.mdp", project_dir + "md.mdp")
+		md_file_config = open(dynamics_dir + "md.mdp", "r").read()
+		md_file = Mdp_config("md.mdp",name, md_file_config, 1)
+		print "Found md.mdp file. Using it instead of local configuration."
+	else:
+		md_file = Mdp_config("md.mdp",md_init_config, 0)
 	save_options()
 	if from_pymol == 1:
 		print "cmd saved"
@@ -1251,10 +1301,9 @@ def steps_configure(master, restraints_button):
 	
 	r1 = Radiobutton(frame1, text="Use pdb2gmx tool", value=0, variable=v1, command=lambda: progress.x2top_update(v1.get()))
 	r1.pack(side=TOP, anchor=W)
-	#Initial Start
+	
 	r2 = Radiobutton(frame1, text="Use x2top tool", value=1, variable=v1, command=lambda: progress.x2top_update(v1.get()))
 	r2.pack(side=TOP, anchor=W)
-	#r2.configure(state=DISABLED)
 	
 	c3 = Checkbutton(frame1, text="Adding Water Box", variable=check_var3, command=lambda: progress.to_do_update(2, check_var3.get()))
 	c3.pack(side=TOP, anchor=W)
