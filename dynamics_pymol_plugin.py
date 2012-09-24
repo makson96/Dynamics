@@ -1087,62 +1087,7 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
 		radio_button1.pack(side=TOP, anchor=W)
 	root.destroy()
 
-##This is very important function, which sets all necessary configuration files - it is a mess which needs to be rewritten
-def set_config_files(name="", v2_group="", v3_force="", v4_water="", water_v="", check_var="", main_bar=0, from_pymol=0, config_button_restraints = ""):
-	global em_file, pr_file, md_file, progress
-	##Set project name and dir
-	if name != "":
-		global project_name, project_dir
-		project_name = name
-		project_dir = dynamics_dir + project_name + '/'
-	##Set variables for Tk if there is options.pickle file
-	if os.path.isfile(project_dir+"options.pickle") == True:
-		load_options()
-		v2_group.set(gromacs.group_list[gromacs2.group][0])
-		v3_force.set(gromacs.force_list[gromacs2.force-1][0])
-		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
-		water_v.set(gromacs.water_list[v4_water.get()-1][1])
-		##Correct set of restraints checkbox
-		if progress.to_do_optional[0] == 0 and config_button_restraints != "":
-			config_button_restraints.configure(state=DISABLED)
-		elif progress.to_do_optional[0] == 1 and config_button_restraints != "":
-			config_button_restraints.configure(state=ACTIVE)
-	##If there is no options.pickle file generate mdp files and start "Progress_status"
-	else:
-		progress = Progress_status()
-		if os.path.isfile(dynamics_dir + "em.mdp"):
-			shutil.copy(dynamics_dir + "em.mdp", project_dir + "em.mdp")
-			em_file_config = open(dynamics_dir + "em.mdp", "r").read()
-			em_file = Mdp_config("em.mdp",name, em_file_config, 1)
-			print "Found em.mdp file. Using it instead of local configuration."
-		else:
-			em_file = Mdp_config("em.mdp",em_init_config, 0)
-		if os.path.isfile(dynamics_dir + "pr.mdp"):
-			shutil.copy(dynamics_dir + "pr.mdp", project_dir + "pr.mdp")
-			pr_file_config = open(dynamics_dir + "pr.mdp", "r").read()
-			pr_file = Mdp_config("pr.mdp",name, pr_file_config, 1)
-			print "Found pr.mdp file. Using it instead of local configuration."
-		else:
-			pr_file = Mdp_config("pr.mdp",pr_init_config, 0)
-		if os.path.isfile(dynamics_dir + "md.mdp"):
-			shutil.copy(dynamics_dir + "md.mdp", project_dir + "md.mdp")
-			md_file_config = open(dynamics_dir + "md.mdp", "r").read()
-			md_file = Mdp_config("md.mdp",name, md_file_config, 1)
-			print "Found md.mdp file. Using it instead of local configuration."
-		else:
-			md_file = Mdp_config("md.mdp",md_init_config, 0)
-	try:
-		check_var.set(progress.from_begining)
-		if main_bar != 0:
-			steps_status_bar(check_var.get(), main_bar)
-	except:
-		pass
-	save_options()
-	if from_pymol == 1:
-		print "cmd saved"
-		cmd.save(project_dir+project_name+".pdb", project_name) #PyMOL API
-
-##This function is to solve issues from set_config_files
+##This function sets variables after choosing new molecule
 def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_restraints):
 	print "Set Variables"
 	global em_file, pr_file, md_file, progress
@@ -1165,7 +1110,7 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
 	else:
 		create_config_files
 
-##This function is to solve issues from set_config_files
+##This function creates files needed by the project
 def create_config_files():
 	print "Create config files"
 	global em_file, pr_file, md_file, progress
