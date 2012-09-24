@@ -478,7 +478,7 @@ class Gromacs_input:
 		self.status = status
 	
 	##This function will convert final results to multimodel pdb file
-	def trjconv(self, file_path, group):
+	def trjconv(self, file_path):
 		status = ["ok", "Creating Multimodel PDB"]
 		self.status = status
 		
@@ -490,7 +490,7 @@ class Gromacs_input:
 			os.remove(project_name+"_multimodel.pdb")
 		
 		print "Creating Multimodel PDB"
-		Trjconv = subprocess.call(gromacs.path+"echo "+group+" | trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -app -o "+project_name+"_multimodel.pdb &>> log.txt",
+		Trjconv = subprocess.call(gromacs.path+"echo "+str(self.group)+" | trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -app -o "+project_name+"_multimodel.pdb &>> log.txt",
 		executable="/bin/bash", shell=True)
 		
 		if os.path.isfile(file_path+"_multimodel.pdb") == True:
@@ -1332,7 +1332,6 @@ def cleanMessage():
 def dynamics(help_clean = ""):
 	file_path = project_dir + project_name
 	force = str(gromacs2.force) + "\n" + str(gromacs2.water)
-	group = str(gromacs2.group)
 	os.chdir(project_dir)
 	global status, stop
 	stop = 0
@@ -1360,11 +1359,11 @@ def dynamics(help_clean = ""):
 			progress.to_do[0] = 0
 			save_options()
 
-	##Checking variables - temporary disabled
-	#if status[0] == "ok":
-	#	status = check_variable(name, force1, force2, group)
-	#elif status[0] == "fail":
-	#	pass
+	##Checking variables
+	if status[0] == "ok":
+		status = check_variable(force)
+	elif status[0] == "fail":
+		pass
 	
 	##Counting topology
 	if status[0] == "ok" and stop == 0 and progress.to_do[1] == 1 and progress.x2top == 0:
@@ -1426,7 +1425,7 @@ def dynamics(help_clean = ""):
 	
 	##Trjconv
 	if status[0] == "ok" and stop == 0 and progress.to_do[6] == 1:
-		gromacs2.trjconv(file_path, group)
+		gromacs2.trjconv(file_path)
 		status = gromacs2.status
 	
 	##Showing multimodel
@@ -1444,21 +1443,21 @@ def dynamics(help_clean = ""):
 	if plugin == 0:
 		return project_dir
 
-##Checking if given varaibles are correct - depreciated
-def check_variable(force1, force2, group):
+##Checking if given varaibles are correct - security
+def check_variable(force):
 	status = ["ok", ""]
+	force_list = force.split("\n")
+	for value in force_list:
+		try:
+			int(value)
+		except:
+			status = ["fail", "Wrong Forcefield (check_variable)"]
 	try:
-		int(force1)
+		int(gromacs2.group)
 	except:
-		status = ["fail", "Wrong Force force"]
-	try:
-		int(force2)
-	except:
-		status = ["fail", "Wrong Water Model"]
-	try:
-		int(group)
-	except:
-		status = ["fail", "Wrong Group"]
+		status = ["fail", "Wrong Group (check_variable)"]
+	if project_name != project_name.split(";")[0]:
+		status = ["fail", "Wrong Project Name (check_variable)"]
 	return status
 
 ##Saving configuration files
