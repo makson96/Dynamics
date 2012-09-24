@@ -1,6 +1,8 @@
 #!/usr/bin/env python2
 #-*- coding: utf-8 -*-
 
+print "This program is currently depreciated"
+
 import sys, os, shutil
 
 current_dir = os.getcwd()

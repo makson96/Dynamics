@@ -975,9 +975,6 @@ class RestraintsWindow:
 	atom_list = []
 	check_var = ""
 	
-	def __init__(self):
-		print "Need to prepare here some atome list"
-	
 	##This function will create main window for restraints
 	def window(self, master):
 		root = Toplevel(master)

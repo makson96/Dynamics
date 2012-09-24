@@ -9,4 +9,4 @@ sys.path.insert(0,"/usr/local/lib/python2.7/dist-packages/pmg_tk/startup/")
 
 import dynamics_pymol_plugin
 
-dynamics.dynamicsDialog("")
+dynamics_pymol_plugin.init_function()
