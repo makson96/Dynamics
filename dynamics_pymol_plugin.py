@@ -6,6 +6,9 @@
 ##Contributors:
 ##- Tomasz Makarewicz (tomaszm@biotech.ug.edu.pl)
 
+##Plugin Version
+plugin_ver = " 1.1.0pre"
+
 ##--Import libraries--
 ##Import nativ python libraries
 import subprocess, time, os, shutil, thread, pickle
@@ -20,95 +23,6 @@ try:
 	plugin = 1
 except:
 	plugin = 0
-##Global variables
-help_name = ["-h", "h", "-help", "help"]
-clean_name = ["-c", "c", "clean", "-clean"]
-plugin_ver = " 1.1.0pre"
-
-stop = 1
-status = ["ok", ""]
-error = ""
-
-em_init_config = """cpp = /usr/bin/cpp
-define = -DFLEX_SPC
-constraints = none
-integrator = steep
-nsteps = 100
-nstlist = 10
-ns_type = grid
-rlist = 1.0
-rcoulomb = 1.0
-rvdw = 1.0
-emtol = 1000.0
-emstep = 0.01"""
-
-pr_init_config = """cpp = /usr/bin/cpp
-define = -DPOSRES
-constraints = all-bonds
-integrator = md
-dt = 0.002
-nsteps = 500
-nstcomm = 1
-nstxout = 10
-nstvout = 1000
-nstfout = 0
-nstlog = 10
-nstenergy = 10
-nstlist = 10
-ns_type = grid
-rlist = 1.0
-rcoulomb = 1.0
-rvdw = 1.0
-Tcoupl = berendsen
-tau_t = 0.1 0.1
-tc-grps = protein Non-Protein
-ref_t = 300 300
-Pcoupl = no
-tau_p = 0.5
-compressibility = 4.5e-5
-ref_p = 1.0
-gen_vel = yes
-gen_temp = 300.0
-gen_seed = 173529"""
-
-md_init_config = """cpp = /usr/bin/cpp
-;define = -DPOSRES
-constraints = all-bonds
-integrator = md
-dt = 0.002
-nsteps = 5000
-nstcomm = 1
-nstxout = 50
-nstvout = 0
-nstfout = 0
-nstlist = 10
-ns_type = grid
-rlist = 1.0
-rcoulomb = 1.0
-rvdw = 1.0
-Tcoupl = berendsen
-tau_t = 0.1 0.1
-tc-grps = protein Non-Protein
-ref_t = 300 300
-Pcoupl = no
-tau_p = 0.5
-compressibility = 4.5e-5
-ref_p = 1.0
-gen_vel = yes
-gen_temp = 300.0
-gen_seed = 173529"""
-
-project_name = 'nothing'
-dynamics_dir = os.getenv("HOME")+'/.dynamics/'
-project_dir = dynamics_dir+project_name + '/'
-##Clean "nothing" temporary directory if present.
-try:
-	shutil.rmtree(project_dir)
-except:
-	pass
-##Creating "nothing" temporary directories
-if os.path.isdir(project_dir) == False:
-	os.makedirs(project_dir)
 
 ##This class is responsible for interface to GROMACS. It will read all important data from GROMACS tools.
 class Gromacs_output:
@@ -277,8 +191,6 @@ class Gromacs_output:
 			else:
 				atoms = atoms + line
 		self.restraints[index_position-1].append(atoms)
-
-gromacs = Gromacs_output()
 
 ##This class is responsible for performing molecular dynamics simulation with GROMACS tools.
 class Gromacs_input:
@@ -499,8 +411,6 @@ class Gromacs_input:
 			status = ["fail", "Unable to generate multimodel PDB file"]
 		self.status = status
 
-gromacs2 = Gromacs_input()
-
 ##This class create and maintain abstraction mdp file representatives. em.mdp, pr.mdp, md.mdp
 class Mdp_config:
 	
@@ -564,10 +474,109 @@ class Progress_status:
 				to_do.append(0)
 		self.to_do = to_do
 
-##init function - puts plugin into menu and starts 'dynamicsDialog' after clicking.
+##init function - puts plugin into menu and starts 'init_function' after clicking.
 def __init__(self):
 	self.menuBar.addmenuitem("Plugin", "command", "dynamics"+plugin_ver, label = "dynamics"+plugin_ver,
-	command = rootWindow)
+	command = init_function)#rootWindow)
+
+##This function will initialize all plugin stufs
+def init_function():
+	##Global variables
+	global help_name, clean_name, stop, status, error, em_init_config, pr_init_config, md_init_config, project_name, dynamics_dir, project_dir
+	help_name = ["-h", "h", "-help", "help"]
+	clean_name = ["-c", "c", "clean", "-clean"]
+
+	stop = 1
+	status = ["ok", ""]
+	error = ""
+
+	em_init_config = """cpp = /usr/bin/cpp
+define = -DFLEX_SPC
+constraints = none
+integrator = steep
+nsteps = 100
+nstlist = 10
+ns_type = grid
+rlist = 1.0
+rcoulomb = 1.0
+rvdw = 1.0
+emtol = 1000.0
+emstep = 0.01"""
+
+	pr_init_config = """cpp = /usr/bin/cpp
+define = -DPOSRES
+constraints = all-bonds
+integrator = md
+dt = 0.002
+nsteps = 500
+nstcomm = 1
+nstxout = 10
+nstvout = 1000
+nstfout = 0
+nstlog = 10
+nstenergy = 10
+nstlist = 10
+ns_type = grid
+rlist = 1.0
+rcoulomb = 1.0
+rvdw = 1.0
+Tcoupl = berendsen
+tau_t = 0.1 0.1
+tc-grps = protein Non-Protein
+ref_t = 300 300
+Pcoupl = no
+tau_p = 0.5
+compressibility = 4.5e-5
+ref_p = 1.0
+gen_vel = yes
+gen_temp = 300.0
+gen_seed = 173529"""
+
+	md_init_config = """cpp = /usr/bin/cpp
+;define = -DPOSRES
+constraints = all-bonds
+integrator = md
+dt = 0.002
+nsteps = 5000
+nstcomm = 1
+nstxout = 50
+nstvout = 0
+nstfout = 0
+nstlist = 10
+ns_type = grid
+rlist = 1.0
+rcoulomb = 1.0
+rvdw = 1.0
+Tcoupl = berendsen
+tau_t = 0.1 0.1
+tc-grps = protein Non-Protein
+ref_t = 300 300
+Pcoupl = no
+tau_p = 0.5
+compressibility = 4.5e-5
+ref_p = 1.0
+gen_vel = yes
+gen_temp = 300.0
+gen_seed = 173529"""
+
+	project_name = 'nothing'
+	dynamics_dir = os.getenv("HOME")+'/.dynamics/'
+	project_dir = dynamics_dir+project_name + '/'
+	##Clean "nothing" temporary directory if present.
+	try:
+		shutil.rmtree(project_dir)
+	except:
+		pass
+	##Creating "nothing" temporary directories
+	if os.path.isdir(project_dir) == False:
+		os.makedirs(project_dir)
+	
+	global gromacs, gromacs2
+	gromacs = Gromacs_output()
+	gromacs2 = Gromacs_input()
+
+	##Start graphic interface
+	rootWindow()
 
 ##--Graphic Interface--
 ##Root menu window
