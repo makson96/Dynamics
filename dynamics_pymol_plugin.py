@@ -646,7 +646,7 @@ def rootWindow():
 	#List of PyMOL loaded PDB files
 	if allNames[0] != "nothing":
 		for molecule in allNames:
-			radio_button1 = Radiobutton(frame1_1a, text=molecule, value=molecule, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, "", p, 1))
+			radio_button1 = Radiobutton(frame1_1a, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button))
 			radio_button1.pack(side=TOP, anchor=W)
 	#If no loaded PDB files, than add button to choose one
 	else:
@@ -679,7 +679,7 @@ def rootWindow():
 					if molecule1[0] == "gromacs":
 						pass
 					else:
-						radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v, "", 0, 0, check1_button))
+						radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button))
 						radio_button1.pack(side=TOP, anchor=W)
 	
 	#List of group for final model
@@ -758,8 +758,6 @@ def rootWindow():
 	
 	check1_button = Button(frame1_3_1, text = "Configure", command=lambda: restraintsW.window(root))
 	check1_button.pack(side=TOP)
-#	if progress.to_do_optional[0] == 0:
-#		check1_button.configure(state=DISABLED)
 	
 	frame2 = Frame(root)
 	frame2.pack(side=TOP)
@@ -777,7 +775,7 @@ def rootWindow():
 	save_button = Button(frame2, text = "Save", command=select_file_save)
 	save_button.pack(side=LEFT)
 	
-	load_button = Button(frame2, text = "Load", command=lambda: select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v))#, check_var))
+	load_button = Button(frame2, text = "Load", command=lambda: select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, check1_button))
 	load_button.pack(side=LEFT)
 	
 	count_button = Button(frame2, text = "OK", command=lambda: calculationW.window(root))
@@ -1059,7 +1057,7 @@ def select_file(v_name):
 			os.makedirs(project_dir)
 			shutil.copyfile(file.name, project_dir + project_name + ".pdb")
 			print "pdb_copied"
-		set_config_files()	
+		create_config_files()	
 	except:
 		pass
 	root.destroy()
@@ -1075,7 +1073,7 @@ def select_file_save(rest_of_work=0):
 	root.destroy()
 
 ##This function will create window, which allow you to load previously saved work
-def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v):#, check_var):
+def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, config_button_restraints):
 	root = Tk()
 	file = tkFileDialog.askopenfile(parent=root, mode='rb', defaultextension=".tar.bz2" ,title='Choose file to load')
 	if file != None:
@@ -1085,7 +1083,7 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v):
 		v3_force.set(gromacs.force_list[gromacs2.force-1][0])
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
-		radio_button1 = Radiobutton(frame1_1a, text=new_name, value=new_name, variable=v1_name, command=lambda: set_config_files(v1_name.get(), v2_group, v3_force, v4_water, water_v))#, check_var, p))
+		radio_button1 = Radiobutton(frame1_1a, text=new_name, value=new_name, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, config_button_restraints))
 		radio_button1.pack(side=TOP, anchor=W)
 	root.destroy()
 
