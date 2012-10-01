@@ -473,6 +473,10 @@ class Progress_status:
 			elif work == 1:
 				to_do.append(0)
 		self.to_do = to_do
+	
+	##This function is created because of some pickle problems
+	def update(self):
+		self.status = progress.status
 
 ##init function - puts plugin into menu and starts 'init_function' after clicking.
 def __init__(self):
@@ -558,7 +562,8 @@ ref_p = 1.0
 gen_vel = yes
 gen_temp = 300.0
 gen_seed = 173529"""
-
+	
+	os.chdir(os.getenv("HOME"))
 	project_name = 'nothing'
 	dynamics_dir = os.getenv("HOME")+'/.dynamics/'
 	project_dir = dynamics_dir+project_name + '/'
@@ -937,7 +942,7 @@ class WaterWindows:
 		gromacs.water_update(force)
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
 		gromacs2.water = v4_water.get()
-		save_options()
+		#save_options()
 
 	##Water box configuration window
 	def box(self, master):
@@ -1097,7 +1102,6 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
 ##This function sets variables after choosing new molecule
 def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_restraints):
 	print "Set Variables"
-	global em_file, pr_file, md_file, progress
 	##Set project name and dir
 	if name != "":
 		global project_name, project_dir
@@ -1121,7 +1125,9 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
 def create_config_files():
 	print "Create config files"
 	global em_file, pr_file, md_file, progress
-	progress = Progress_status()
+	#if not "progress" in globals():
+	if not os.path.isfile(project_dir + "options.pickle"):
+		progress = Progress_status()
 	if os.path.isfile(dynamics_dir + "em.mdp"):
 		shutil.copy(dynamics_dir + "em.mdp", project_dir + "em.mdp")
 		em_file_config = open(dynamics_dir + "em.mdp", "r").read()
@@ -1364,6 +1370,8 @@ def dynamics(help_clean = ""):
 		if status[0] == "ok":
 			progress.status[0] = 1
 			progress.to_do[0] = 0
+			#This magic trick make Progress_status pickle correctly
+			progress.update()
 			save_options()
 
 	##Checking variables
@@ -1512,10 +1520,12 @@ def load_file(file_path):
 
 ##Save all settings to options.pickle file
 def save_options():
+	print "saving options"
 	if os.path.isdir(project_dir) == False:
 		os.makedirs(project_dir)
 	destination_option = file(project_dir + "options.pickle", "w")
-	pickle.dump([plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress], destination_option)
+	pickle_list = [plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress]
+	pickle.dump(pickle_list, destination_option)
 	del destination_option
 
 ##Load all settings from options.pickle file	
