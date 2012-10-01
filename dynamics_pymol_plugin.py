@@ -988,7 +988,8 @@ class RestraintsWindow:
 	
 		self.check_var = IntVar(sw.window)
 		self.check_var.set(gromacs2.restraints_nr)
-	
+		
+		self.atom_list = []
 		number = 0
 		for group in gromacs.restraints:
 			select = Radiobutton(sw.window, text=group[0], value=number, variable=self.check_var)
