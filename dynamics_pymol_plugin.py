@@ -1090,7 +1090,7 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
 		v3_force.set(gromacs.force_list[gromacs2.force-1][0])
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
-		radio_button1 = Radiobutton(frame1_1a, text=new_name, value=new_name, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, config_button_restraints))
+		radio_button1 = Radiobutton(frame1_1a, text=project_name, value=project_name, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, config_button_restraints))
 		radio_button1.pack(side=TOP, anchor=W)
 	root.destroy()
 
