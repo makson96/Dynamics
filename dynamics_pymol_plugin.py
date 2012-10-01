@@ -1488,7 +1488,7 @@ def save_file(destination_path):
 	import tarfile
 	save_options()
 	tar = tarfile.open(destination_path+".tar.bz2", "w:bz2")
-	tar.add(project_dir, recursive=True, arcname=name[-2])
+	tar.add(project_dir, recursive=True, arcname=project_name)
 	tar.close()
 	os.remove(destination_path)
 
