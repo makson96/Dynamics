@@ -579,6 +579,12 @@ gen_seed = 173529"""
 	gromacs = Gromacs_output()
 	gromacs2 = Gromacs_input()
 
+	##Creating objects - data from those windows will be used by rootWindow
+	global calculationW, waterW, restraintsW
+	calculationW = CalculationWindow()
+	waterW = WaterWindows()
+	restraintsW = RestraintsWindow()
+	
 	##Start graphic interface
 	rootWindow()
 
@@ -588,12 +594,6 @@ def rootWindow():
 
 	root = Tk()
 	root.wm_title("Dynamics"+plugin_ver)
-	
-	##Creating objects - data from those windows will be used by rootWindow
-	global calculationW, waterW, restraintsW
-	calculationW = CalculationWindow()
-	waterW = WaterWindows()
-	restraintsW = RestraintsWindow()
 	
 	##Detect list of PyMOL loaded PDB files if no files than list "nothing"
 	if plugin == 1:
@@ -791,7 +791,7 @@ def rootWindow():
 	load_button = Button(frame2, text = "Load", command=lambda: select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, check1_button))
 	load_button.pack(side=LEFT)
 	
-	count_button = Button(frame2, text = "OK", command=lambda: calculationW.window(root))
+	count_button = Button(frame2, text = "OK", command=lambda: calculationW.check_window(root))
 	count_button.pack(side=LEFT)
 	
 	#Initial configuration
@@ -807,6 +807,12 @@ class CalculationWindow:
 	bar_widget = ""
 	start_button = ""
 	stop_button = ""
+	
+	def check_window(self, master):
+		if project_name != "nothing":
+			self.window(master)
+		elif project_name == "nothing":
+			no_molecule_warning()
 	
 	##This function will create main Calculation Window
 	def window(self, master):
@@ -1080,13 +1086,16 @@ def select_file(v_name):
 
 ##This function will create window, which allow you to save current work
 def select_file_save(rest_of_work=0):
-	if rest_of_work == 1:
-		progress.to_do_status()
-	root = Tk()
-	file = tkFileDialog.asksaveasfile(parent=root, mode='w' ,title='Choose save file')
-	if file != None:
-		save_file(file.name)	
-	root.destroy()
+	if project_name != "nothing":
+		if rest_of_work == 1:
+			progress.to_do_status()
+		root = Tk()
+		file = tkFileDialog.asksaveasfile(parent=root, mode='w' ,title='Choose save file')
+		if file != None:
+			save_file(file.name)	
+		root.destroy()
+	elif project_name == "nothing":
+		no_molecule_warning()
 
 ##This function will create window, which allow you to load previously saved work
 def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, config_button_restraints):
@@ -1117,13 +1126,14 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
 		v3_force.set(gromacs.force_list[gromacs2.force-1][0])
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
-		##Correct set of restraints button
-		if progress.to_do_optional[0] == 0:
-			config_button_restraints.configure(state=DISABLED)
-		elif progress.to_do_optional[0] == 1:
-			config_button_restraints.configure(state=ACTIVE)
 	else:
-		create_config_files
+		create_config_files()
+	##Correct set of restraints button
+	if progress.to_do_optional[0] == 0:
+		config_button_restraints.configure(state=DISABLED)
+	elif progress.to_do_optional[0] == 1:
+		config_button_restraints.configure(state=ACTIVE)
+
 
 ##This function creates files needed by the project
 def create_config_files():
@@ -1160,51 +1170,53 @@ def create_config_files():
 
 #This function will create the window with configuration files based on MDP class
 def mdp_configure(config_name, master):
-	
-	root2 = Toplevel(master)
-	
-	if config_name == "em":
-		options = em_file.options
-		root2.wm_title("Energy Minimalization Options")
-	elif config_name == "pr":
-		options = pr_file.options
-		root2.wm_title("Position Restrained MD Options")
-	elif config_name == "md":
-		options = md_file.options
-		root2.wm_title("Molecular Dynamics Simulation Options")
-
-	values_list = []
-	for option, value in options:
-		frame1 = Frame(root2)
-		frame1.pack(side=TOP)
-		if option == "emtol":
-			l1 = Label(frame1, text="Energy minimizing stuff")
-			l1.pack(side=TOP)
-		elif option == "Tcoupl":
-			l1 = Label(frame1, text="Berendsen temperature and coupling")
-			l1.pack(side=TOP)
-		elif option == "Pcoupl":
-			l1 = Label(frame1, text="Pressure coupling")
-			l1.pack(side=TOP)
-		elif option == "gen_vel":
-			l1 = Label(frame1, text="Generate velocites temperature")
-			l1.pack(side=TOP)
-		values_list.append(StringVar(root2)) #brilliant
-		values_list[-1].set(value)
-		if option[0] != ";":
-			l = Label(frame1, text=option, width=25, anchor=W)
-			l.pack(side=LEFT)
-			e = Entry(frame1, textvariable=values_list[-1])
-			e.pack(side=LEFT)
-	if config_name == "em":
-		b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "em", root2))
-		b.pack(side=TOP)
-	elif config_name == "pr":
-		b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "pr", root2))
-		b.pack(side=TOP)
-	elif config_name == "md":
-		b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "md", root2))
-		b.pack(side=TOP)
+	if project_name != "nothing":
+		root2 = Toplevel(master)
+		
+		if config_name == "em":
+			options = em_file.options
+			root2.wm_title("Energy Minimalization Options")
+		elif config_name == "pr":
+			options = pr_file.options
+			root2.wm_title("Position Restrained MD Options")
+		elif config_name == "md":
+			options = md_file.options
+			root2.wm_title("Molecular Dynamics Simulation Options")
+		
+		values_list = []
+		for option, value in options:
+			frame1 = Frame(root2)
+			frame1.pack(side=TOP)
+			if option == "emtol":
+				l1 = Label(frame1, text="Energy minimizing stuff")
+				l1.pack(side=TOP)
+			elif option == "Tcoupl":
+				l1 = Label(frame1, text="Berendsen temperature and coupling")
+				l1.pack(side=TOP)
+			elif option == "Pcoupl":
+				l1 = Label(frame1, text="Pressure coupling")
+				l1.pack(side=TOP)
+			elif option == "gen_vel":
+				l1 = Label(frame1, text="Generate velocites temperature")
+				l1.pack(side=TOP)
+			values_list.append(StringVar(root2)) #brilliant
+			values_list[-1].set(value)
+			if option[0] != ";":
+				l = Label(frame1, text=option, width=25, anchor=W)
+				l.pack(side=LEFT)
+				e = Entry(frame1, textvariable=values_list[-1])
+				e.pack(side=LEFT)
+		if config_name == "em":
+			b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "em", root2))
+			b.pack(side=TOP)
+		elif config_name == "pr":
+			b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "pr", root2))
+			b.pack(side=TOP)
+		elif config_name == "md":
+			b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "md", root2))
+			b.pack(side=TOP)
+	elif project_name == "nothing":
+		no_molecule_warning()
 
 ##This function will update MDP class objects alfter closing "mdp_configure" window
 def mdp_update(values, mdp, root_to_kill=""):
@@ -1224,87 +1236,90 @@ def mdp_update(values, mdp, root_to_kill=""):
 
 ##This function will create Simulation Steps configuration window
 def steps_configure(master, restraints_button):
-	root = Toplevel(master)
-	root.wm_title("Simulation Steps Configuration")
-	check_var1 = IntVar(root)
-	check_var1.set(progress.to_do[0])
-	check_var2 = IntVar(root)
-	check_var2.set(progress.to_do[1])
-	v1 = IntVar(root)
-	v1.set(progress.x2top)
-	check_var3 = IntVar(root)
-	check_var3.set(progress.to_do[2])
-	check_var4 = IntVar(root)
-	check_var4.set(progress.to_do[3])
-	check_var5 = IntVar(root)
-	check_var5.set(progress.to_do[4])
-	check_var6 = IntVar(root)
-	check_var6.set(progress.to_do_optional[0])
-	check_var7 = IntVar(root)
-	check_var7.set(progress.to_do[5])
-	check_var8 = IntVar(root)
-	check_var8.set(progress.to_do[6])
-	#Variable for Resume Simulation
-	check_var9 = IntVar(root)
-	check_var9.set(progress.resume)
+	if project_name != "nothing":
+		root = Toplevel(master)
+		root.wm_title("Simulation Steps Configuration")
+		check_var1 = IntVar(root)
+		check_var1.set(progress.to_do[0])
+		check_var2 = IntVar(root)
+		check_var2.set(progress.to_do[1])
+		v1 = IntVar(root)
+		v1.set(progress.x2top)
+		check_var3 = IntVar(root)
+		check_var3.set(progress.to_do[2])
+		check_var4 = IntVar(root)
+		check_var4.set(progress.to_do[3])
+		check_var5 = IntVar(root)
+		check_var5.set(progress.to_do[4])
+		check_var6 = IntVar(root)
+		check_var6.set(progress.to_do_optional[0])
+		check_var7 = IntVar(root)
+		check_var7.set(progress.to_do[5])
+		check_var8 = IntVar(root)
+		check_var8.set(progress.to_do[6])
+		#Variable for Resume Simulation
+		check_var9 = IntVar(root)
+		check_var9.set(progress.resume)
 	
-	frame1 = Frame(root)
-	frame1.pack(side=TOP)
+		frame1 = Frame(root)
+		frame1.pack(side=TOP)
 
-	c1 = Checkbutton(frame1, text="Save configuration files", variable=check_var1, command=lambda: progress.to_do_update(0, check_var1.get()))
-	c1.pack(side=TOP, anchor=W)
-	
-	c2 = Checkbutton(frame1, text="Generate topology file from pdb", variable=check_var2, command=lambda: progress.to_do_update(1, check_var2.get()))
-	c2.pack(side=TOP, anchor=W)
-	
-	r1 = Radiobutton(frame1, text="Use pdb2gmx tool", value=0, variable=v1, command=lambda: progress.x2top_update(v1.get()))
-	r1.pack(side=TOP, anchor=W)
-	
-	r2 = Radiobutton(frame1, text="Use x2top tool", value=1, variable=v1, command=lambda: progress.x2top_update(v1.get()))
-	r2.pack(side=TOP, anchor=W)
-	
-	c3 = Checkbutton(frame1, text="Adding Water Box", variable=check_var3, command=lambda: progress.to_do_update(2, check_var3.get()))
-	c3.pack(side=TOP, anchor=W)
-	
-	c4 = Checkbutton(frame1, text="Energy minimalization", variable=check_var4, command=lambda: progress.to_do_update(3, check_var4.get()))
-	c4.pack(side=TOP, anchor=W)
-	
-	c5 = Checkbutton(frame1, text="Position Restrained MD", variable=check_var5, command=lambda: progress.to_do_update(4, check_var5.get()))
-	c5.pack(side=TOP, anchor=W)
-	
-	c6 = Checkbutton(frame1, text="Restraints (optional)", variable=check_var6, command=lambda: restraintsW.check(check_var6.get(), restraints_button))
-	c6.pack(side=TOP, anchor=W)
-	
-	c7 = Checkbutton(frame1, text="Molecular Dynamics Simulation", variable=check_var7, command=lambda: progress.to_do_update(5, check_var7.get()))
-	c7.pack(side=TOP, anchor=W)
-	
-	c8 = Checkbutton(frame1, text="Generate multimodel PDB", variable=check_var8, command=lambda: progress.to_do_update(6, check_var8.get()))
-	c8.pack(side=TOP, anchor=W)
-	
-	l1 = Label(frame1, text="Simulation Progress:")
-	l1.pack(side=TOP)
-	
-	variable_list = [check_var1, check_var2, check_var3, check_var4, check_var5, check_var7, check_var8]
-	progress_bar = Meter(frame1, value=0.0)
-	progress_bar.pack(side=TOP)
-	#steps_status_bar(check_var9.get(), progress_bar, variable_list)
-	if check_var9.get() == 1:
-		percent = 0.0
-		for step in progress.status:
-			percent = percent + step
-		if progress.to_do_optional[0] == 1:
-			percent = percent + progress.status_optional[0]
-			percent = percent / 8
-		else:
-			percent = percent / 7
-		progress_bar.configure(value=percent)
-		progress_bar.update_idletasks()
-	
-	c9 = Checkbutton(frame1, text="Resume Simulation", variable=check_var9, command=lambda: steps_status_bar(check_var9.get(), progress_bar, variable_list))
-	c9.pack(side=TOP, anchor=W)
-	
-	b1 = Button(root, text="OK", command=root.destroy)
-	b1.pack(side=TOP)
+		c1 = Checkbutton(frame1, text="Save configuration files", variable=check_var1, command=lambda: progress.to_do_update(0, check_var1.get()))
+		c1.pack(side=TOP, anchor=W)
+		
+		c2 = Checkbutton(frame1, text="Generate topology file from pdb", variable=check_var2, command=lambda: progress.to_do_update(1, check_var2.get()))
+		c2.pack(side=TOP, anchor=W)
+		
+		r1 = Radiobutton(frame1, text="Use pdb2gmx tool", value=0, variable=v1, command=lambda: progress.x2top_update(v1.get()))
+		r1.pack(side=TOP, anchor=W)
+		
+		r2 = Radiobutton(frame1, text="Use x2top tool", value=1, variable=v1, command=lambda: progress.x2top_update(v1.get()))
+		r2.pack(side=TOP, anchor=W)
+		
+		c3 = Checkbutton(frame1, text="Adding Water Box", variable=check_var3, command=lambda: progress.to_do_update(2, check_var3.get()))
+		c3.pack(side=TOP, anchor=W)
+		
+		c4 = Checkbutton(frame1, text="Energy minimalization", variable=check_var4, command=lambda: progress.to_do_update(3, check_var4.get()))
+		c4.pack(side=TOP, anchor=W)
+		
+		c5 = Checkbutton(frame1, text="Position Restrained MD", variable=check_var5, command=lambda: progress.to_do_update(4, check_var5.get()))
+		c5.pack(side=TOP, anchor=W)
+		
+		c6 = Checkbutton(frame1, text="Restraints (optional)", variable=check_var6, command=lambda: restraintsW.check(check_var6.get(), restraints_button))
+		c6.pack(side=TOP, anchor=W)
+		
+		c7 = Checkbutton(frame1, text="Molecular Dynamics Simulation", variable=check_var7, command=lambda: progress.to_do_update(5, check_var7.get()))
+		c7.pack(side=TOP, anchor=W)
+		
+		c8 = Checkbutton(frame1, text="Generate multimodel PDB", variable=check_var8, command=lambda: progress.to_do_update(6, check_var8.get()))
+		c8.pack(side=TOP, anchor=W)
+		
+		l1 = Label(frame1, text="Simulation Progress:")
+		l1.pack(side=TOP)
+		
+		variable_list = [check_var1, check_var2, check_var3, check_var4, check_var5, check_var7, check_var8]
+		progress_bar = Meter(frame1, value=0.0)
+		progress_bar.pack(side=TOP)
+		#steps_status_bar(check_var9.get(), progress_bar, variable_list)
+		if check_var9.get() == 1:
+			percent = 0.0
+			for step in progress.status:
+				percent = percent + step
+			if progress.to_do_optional[0] == 1:
+				percent = percent + progress.status_optional[0]
+				percent = percent / 8
+			else:
+				percent = percent / 7
+			progress_bar.configure(value=percent)
+			progress_bar.update_idletasks()
+		
+		c9 = Checkbutton(frame1, text="Resume Simulation", variable=check_var9, command=lambda: steps_status_bar(check_var9.get(), progress_bar, variable_list))
+		c9.pack(side=TOP, anchor=W)
+		
+		b1 = Button(root, text="OK", command=root.destroy)
+		b1.pack(side=TOP)
+	elif project_name == "nothing":
+		no_molecule_warning()
 
 ##This function will show current progress in Steps Simulation Window if "Resume Simulation" is checked
 def steps_status_bar(var, bar, variable_list):
@@ -1355,6 +1370,10 @@ def helpWindow(master):
 def cleanMessage():
 	tkMessageBox.showinfo("Clean", "Temporary files are now removed!\nPlease restart plugin.")
 	clean_option()
+
+##
+def no_molecule_warning():
+	tkMessageBox.showinfo("No Molecule Selected", "Please choose any molecule before using this option.")
 
 ##--Comand Line Interface--
 def dynamics(help_clean = ""):
