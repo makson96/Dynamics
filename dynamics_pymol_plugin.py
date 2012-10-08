@@ -1129,7 +1129,6 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
 def create_config_files():
 	print "Create config files"
 	global em_file, pr_file, md_file, progress
-	#if not "progress" in globals():
 	if not os.path.isfile(project_dir + "options.pickle"):
 		progress = Progress_status()
 	if os.path.isfile(dynamics_dir + "em.mdp"):
@@ -1547,7 +1546,7 @@ def save_options():
 
 ##Load all settings from options.pickle file	
 def load_options():
-	global gromacs, gromacs2, em_file, pr_file, md_file, progress
+	global gromacs2, em_file, pr_file, md_file, progress
 	
 	pickle_file = file(project_dir +"options.pickle")
 	options = pickle.load(pickle_file)
@@ -1557,7 +1556,9 @@ def load_options():
 		print "GROMACS versions is different for loaded file."
 	if options[0][1:4] == "1.0":
 		print "1.0 compatibility layer"
+		progress = Progress_status()
 		gromacs2 = options[2]
+		gromacs2.force = gromacs2.field
 		em_file = options[3]
 		pr_file = options[4]
 		md_file = options[5]
