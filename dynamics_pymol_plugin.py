@@ -1133,7 +1133,9 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
 		config_button_restraints.configure(state=DISABLED)
 	elif progress.to_do_optional[0] == 1:
 		config_button_restraints.configure(state=ACTIVE)
-
+	##If Resume is zero than initial Steps are all ON
+	if progress.resume == 0:
+		progress.to_do = [1,1,1,1,1,1,1]
 
 ##This function creates files needed by the project
 def create_config_files():
@@ -1371,7 +1373,7 @@ def cleanMessage():
 	tkMessageBox.showinfo("Clean", "Temporary files are now removed!\nPlease restart plugin.")
 	clean_option()
 
-##
+##This warning message will show if no molecule is selected, but user want to proceed
 def no_molecule_warning():
 	tkMessageBox.showinfo("No Molecule Selected", "Please choose any molecule before using this option.")
 
