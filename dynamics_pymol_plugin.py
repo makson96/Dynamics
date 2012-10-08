@@ -476,10 +476,6 @@ class Progress_status:
 			elif work == 1:
 				to_do.append(0)
 		self.to_do = to_do
-	
-	##This function is created because of some pickle problems
-	#def update(self):
-	#	self.status = progress.status
 
 ##init function - puts plugin into menu and starts 'init_function' after clicking.
 def __init__(self):
@@ -1246,7 +1242,7 @@ def steps_configure(master, restraints_button):
 	check_var6 = IntVar(root)
 	check_var6.set(progress.to_do_optional[0])
 	check_var7 = IntVar(root)
-	check_var7.set(0)
+	check_var7.set(progress.to_do[5])
 	check_var8 = IntVar(root)
 	check_var8.set(progress.to_do[6])
 	#Variable for Resume Simulation
@@ -1294,6 +1290,7 @@ def steps_configure(master, restraints_button):
 	progress_bar.pack(side=TOP)
 	#steps_status_bar(check_var9.get(), progress_bar, variable_list)
 	if check_var9.get() == 1:
+		percent = 0.0
 		for step in progress.status:
 			percent = percent + step
 		if progress.to_do_optional[0] == 1:
