@@ -436,6 +436,7 @@ class Mdp_config:
 			for option in self.options:
 				option[1] = values[index_nr]
 				index_nr = index_nr + 1
+		self.options = self.options
 		config = ""
 		for option in self.options:
 			config = config + option[0]+" = "+option[1]+"\n"
@@ -460,6 +461,8 @@ class Progress_status:
 	def to_do_update(self, position, value):
 		if type(position) == type(1):
 			self.to_do[position] = value
+			self.to_do = self.to_do
+			save_options()
 			
 	def x2top_update(self, value):
 		if type(value) == type(1):
@@ -475,8 +478,8 @@ class Progress_status:
 		self.to_do = to_do
 	
 	##This function is created because of some pickle problems
-	def update(self):
-		self.status = progress.status
+	#def update(self):
+	#	self.status = progress.status
 
 ##init function - puts plugin into menu and starts 'init_function' after clicking.
 def __init__(self):
@@ -1033,6 +1036,7 @@ class RestraintsWindow:
 		text = self.atom_list[index_nr]
 		if index_nr < len(gromacs.restraints):
 			gromacs.restraints[index_nr][1] = text.get(1.0, END)
+			gromacs.restraints = gromacs.restraints
 		index_file = open("index_dynamics.ndx", "w")
 		index_file.write("[ Dynamics Selected ]\n"+text.get(1.0, END))
 		index_file.close()
@@ -1044,14 +1048,18 @@ class RestraintsWindow:
 		if check == 1:
 			config_button.configure(state=ACTIVE)
 			md_file.options[2][0] = "define"
+			md_file.options = md_file.options
 			md_file.update()
 			gromacs.restraints_index()
 			progress.to_do_optional[0] = 1
+			progress.to_do_optional = progress.to_do_optional
 		elif check == 0:
 			config_button.configure(state=DISABLED)
 			md_file.options[2][0] = ";define"
+			md_file.options = md_file.options
 			md_file.update()
 			progress.to_do_optional[0] = 0
+			progress.to_do_optional = progress.to_do_optional
 
 ##This function will create window, which allow you to choose PDB file if no file is loaded to PyMOL
 def select_file(v_name):
@@ -1238,14 +1246,12 @@ def steps_configure(master, restraints_button):
 	check_var6 = IntVar(root)
 	check_var6.set(progress.to_do_optional[0])
 	check_var7 = IntVar(root)
-	check_var7.set(progress.to_do[5])
+	check_var7.set(0)
 	check_var8 = IntVar(root)
 	check_var8.set(progress.to_do[6])
 	#Variable for Resume Simulation
 	check_var9 = IntVar(root)
 	check_var9.set(progress.resume)
-	
-	variable_list = [check_var1, check_var2, check_var3, check_var4, check_var5, check_var7, check_var8]
 	
 	frame1 = Frame(root)
 	frame1.pack(side=TOP)
@@ -1283,9 +1289,20 @@ def steps_configure(master, restraints_button):
 	l1 = Label(frame1, text="Simulation Progress:")
 	l1.pack(side=TOP)
 	
+	variable_list = [check_var1, check_var2, check_var3, check_var4, check_var5, check_var7, check_var8]
 	progress_bar = Meter(frame1, value=0.0)
 	progress_bar.pack(side=TOP)
-	steps_status_bar(check_var9.get(), progress_bar, variable_list)
+	#steps_status_bar(check_var9.get(), progress_bar, variable_list)
+	if check_var9.get() == 1:
+		for step in progress.status:
+			percent = percent + step
+		if progress.to_do_optional[0] == 1:
+			percent = percent + progress.status_optional[0]
+			percent = percent / 8
+		else:
+			percent = percent / 7
+		progress_bar.configure(value=percent)
+		progress_bar.update_idletasks()
 	
 	c9 = Checkbutton(frame1, text="Resume Simulation", variable=check_var9, command=lambda: steps_status_bar(check_var9.get(), progress_bar, variable_list))
 	c9.pack(side=TOP, anchor=W)
@@ -1310,9 +1327,11 @@ def steps_status_bar(var, bar, variable_list):
 		for step in progress.status:
 			if step == 1:
 				progress.to_do[to_do_nr] = 0
+				progress.to_do = progress.to_do
 				variable_list[to_do_nr].set(0)
 			elif step == 0:
 				progress.to_do[to_do_nr] = 1
+				progress.to_do = progress.to_do
 				variable_list[to_do_nr].set(1)
 			to_do_nr = to_do_nr + 1
 		progress.resume = 1
@@ -1370,8 +1389,9 @@ def dynamics(help_clean = ""):
 		if status[0] == "ok":
 			progress.status[0] = 1
 			progress.to_do[0] = 0
-			#This magic trick make Progress_status pickle correctly
-			progress.update()
+			#Pickle trick
+			progress.status = progress.status
+			progress.to_do = progress.to_do
 			save_options()
 
 	##Checking variables
@@ -1547,7 +1567,9 @@ def load_options():
 		progress.to_do = options[6].to_do
 		progress.status = options[6].status
 		progress.to_do_optional[0] = options[7]
+		progress.to_do_optional = progress.to_do_optional
 		progress.status_optional[0] = 0
+		progress.status_optional = progress.status_optional
 		progress.resume = 0
 		progress.x2top = 0
 		
