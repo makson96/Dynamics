@@ -7,23 +7,23 @@ ________________
 
 Table of Content:
 
-1. Introduction	3
-2. Requirements and Installation	4
-2.1. Requirements	4
-2.2. Installation	4
-3. Instruction	5
-3.1. Molecule	5
-3.2. Force Field and Water Model	8
-3.3. Configuration	9
-3.4. Restraints	10
-3.5. Jobs	11
-3.6. Command line	12
-3.7. Additional Buttons	12
-4. Standalone Application	14
-4.1. pyDynamics-gui	14
-4.2. pyDynamics	14
-5. Changelog	15
-6. Copyright	16
+1. Introduction
+2. Requirements and Installation
+2.1. Requirements
+2.2. Installation
+3. Instruction
+3.1. Molecule
+3.2. Force Field and Water Model
+3.3. Configuration
+3.4. Restraints
+3.5. Jobs
+3.6. Command line
+3.7. Additional Buttons
+4. Standalone Application
+4.1. pyDynamics-gui
+4.2. pyDynamics
+5. Changelog
+6. Copyright
 ________________
 
 1. Introduction
