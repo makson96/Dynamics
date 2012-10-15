@@ -1,10 +1,8 @@
-﻿Dynamics PyMOL Plugin Manual
+Dynamics PyMOL Plugin Manual
 v. 1.1.0
 
 University of Gdansk
 Laboratory of Biomolecular Systems Simulation
-________________
-
 Table of Content:
 
 1. Introduction
@@ -14,9 +12,9 @@ Table of Content:
 3. Instruction
 3.1. Molecule
 3.2. Force Field and Water Model
-3.3. Configuration
+3.3. Simulation Steps
 3.4. Restraints
-3.5. Jobs
+3.5. Configuration
 3.6. Command line
 3.7. Additional Buttons
 4. Standalone Application
@@ -24,33 +22,30 @@ Table of Content:
 4.2. pyDynamics
 5. Changelog
 6. Copyright
-________________
 
 1. Introduction
 
 PyMOL is powerful and easy to use open source tool for viewing and manipulating molecules. Thanks to its API capabilities it can be extended by developing third party plugins in high level programing language Python. This project is focused on developing plugin for PyMOL, which add molecular dynamics simulation feature. It is meant to be easy to use. The plugin uses GROMACS tools as a back-end. Project is developed as an open source and as such create full open source stack together with PyMOL and GROMACS. Because GROMACS can compile easily only on Unix like systems, the plugin also keep compatibility only with those. No Windows port is expected. Plugin is developed and maintained by Laboratory of Biomolecular Systems Simulation at University of Gdansk.
-________________
 
 2. Requirements and Installation
 
 2.1. Requirements
 
-The plugin should work on all variety of Unix like systems. Most of the tests are performed on Ubuntu Linux, which is treated as a reference platform. To work properly plugin require Bash, Python with TkInter, Tix, PyMOL, GROMACS and X-Window system for GUI. To satisfy those requirements on Ubuntu do following command:
+The plugin should work on all variety of Unix like systems. Most of the tests are performed on Ubuntu Linux, which is treated as a reference platform. To work properly plugin require Bash, Python with TkInter, Tix, PyMOL, GROMACS and X-Window System for GUI. To satisfy those requirements on Ubuntu do following command:
 	sudo apt-get install python-tk python-pmw tix pymol gromacs
 
 2.2. Installation
 
-	There are two ways to install plugin. If you are Ubuntu user, then you can just add repository and install package:
+	There are two ways to install the plugin. If you are Ubuntu user, then you can just add repository and install package:
 	sudo add-apt-repository ppa:tomaszm/dynamics
 	sudo apt-get update
 	sudo apt-get install dynamics-pymol-plugin
-All required libraries will be downloaded as a dependencies. Supported versions of Ubuntu are latest stable and latest LTS.
-	The second way for all other platforms or Ubuntu as well is to install plugin directly from its GitHub repository:
+All required libraries will be downloaded as dependencies. Supported versions of Ubuntu are latest stable and latest LTS.
+	The second way for all other platforms or Ubuntu as well is to install the plugin directly from its GitHub repository:
 https://github.com/tomaszmakarewicz/Dynamics
 You can download latest master snapshot by command:
 	git clone git://github.com/tomaszmakarewicz/Dynamics.git
-Than run PyMOL as a root. On the top Menu choose Plugin->Manage Plugins->Install... Than choose dynamics_pymol_plugin.py file. After installation restart PyMOL with normal user privilege.
-________________
+Then run PyMOL as a root. On the top Menu choose Plugin->Manage Plugins->Install... Then choose dynamics_pymol_plugin.py file. After installation restart PyMOL with normal user privilege.
 
 3. Instruction
 
@@ -58,11 +53,11 @@ ________________
 
 3.1. Molecule
 
-	There are three columns in the plugin menu. The left one is used to choose molecule for dynamics simulation. If you have loaded any molecule in PyMOL the list of those should appear. Chose one, for which you want perform simulation.
+	There are three columns in the plugin menu. The left one is used to choose a molecule for dynamics simulation. If you have loaded any molecule in PyMOL the list of those should appear. Chose one, for which you want perform simulation.
 
 	If you haven't loaded any molecule in PyMOL. The Browse button should appear. You can use it to select PDB file for molecular dynamics simulation.
 
-	If you have earlier perform any simulations using this plugin, the additional list should appear. It will allow you to select any of previous molecules.
+	If you have earlier performed any simulations using this plugin, the additional list should appear. It will allow you to select any molecules from previous projects.
 
 The last list in this column determine which part of molecule should be displayed as a final result. It does not affect any calculations. The default selection is whole Protein, as it is suggested by GROMACS.
 
@@ -72,24 +67,24 @@ The last list in this column determine which part of molecule should be displaye
 
 	Below force field there is a label with default water model for chosen force field. You can change it by clicking Choose... button. Note that every force field may have different available list of water models.
 
-	Next to the Choose... button there is a Configure button, which allows you to customise water box details. Here you can change shape of the box, water density which is given in g/L unit. You can also determine here size of the water box, which is given in multiple of molecule size.
+	Next to the Choose... button there is a Configure button, which allows you to customise water box details. Here you can change shape of the box, water density which is given in g/L unit. You can also determine here the size of the water box, which is given in multiple of molecule size.
 
-3.3. Configuration
+3.3. Simulation Steps
 
-	The right column of plugin menu is devoted for advanced configuration. The first configuration options are for Energy Minimalisation. This step is performed after adding molecule to water box. Some atoms in that system may collide. The purpose is to move water atoms a bit, so dynamics simulation will not started in very inconvenient energy state.
+	The right column of plugin menu is devoted for advanced configuration. The first configuration option is Simulation Steps. Not all of molecular dynamics calculation need to be done at once. To configure this aspect you can click Configure button below the label Simulation Steps. You will then get list of available steps. Select those, which you want to do. After calculation you can save results and finish work on other machine or resume work on the same computer later. To resume work in the main menu select molecule in left column from list Previous Projects and check box Resume in the Simulation Steps. You can also select here if you want to do restraints or not.
+
+3.4. Restraints
+
+	If the checkbox for Restraints (optional) in Simulation Steps is checked, the Configure button below Restraints (Select Atoms) will become active. After clicking button you will get the list of proposed parts of molecules to be restraints. Every list of the atoms contain atoms IDs, which are assigned to them in PDB file. The last options show atoms selected in PyMOL. You can choose one of the available list and modify which atoms should be restrained. Those atoms will get big energy penalty for every move while performing molecular dynamics simulation, so they will stay fixed and only not selected atoms will get proper molecular dynamics simulation.
+
+3.5. Configuration
+
+	There are three more configuration option in the right column. The first configuration options is for Energy Minimalisation. This step is performed after adding molecule to water box. Some atoms in that system may collide. The purpose is to move water atoms a bit, so dynamics simulation will not start in very inconvenient energy state.
 	The second option is for Progression Restrained MD. This step keep molecule fix, while allow water molecules to moves. It will make water to fill any holes created by Energy Minimalisation.
 	The third option is for final Molecular Dynamics Simulation.
 	To get exact info about available options look at GROMACS configuration MDP files options:
 http://manual.gromacs.org/current/online/mdp_opt.html
 	If you want to use your own MDP files instead of available configuration options just paste your files to ~/.dynamics/ directory. File names are respectively em.mdp, pr.mdp, md.mdp.
-
-3.4. Restraints
-
-	In the right column there is checkbox for Position Restraints. After clicking it, the Configure button will become active. After clicking button you will get the list of proposed parts of molecules to be restraints. Every list of the atoms contain atoms IDs, which are assigned to them in PDB file. The last options show atoms selected in PyMOL. You can choose one of the available list and modify which atoms should be restrained. Those atoms will get big energy penalty for every move while performing molecular dynamics simulation, so they will stay fixed and only not selected atoms will get proper molecular dynamics simulation.
-
-3.5. Jobs
-
-	Not all of molecular dynamics calculation need to be done at once. In the right column at the bottom, you can click Jobs to do button. You will then get list of available jobs. Select those, which you want to do. After calculation you can save results and finish work on other machine or resume work on the same computer later. To resume work in the main menu select molecule in left column from list Previous Projects and uncheck box Molecular Dynamics Simulation from the beginning in the right column.
 
 3.6. Command line
 
@@ -100,7 +95,6 @@ There is command line interface for Dynamics PyMOL Plugin, which allows you to u
 	In the main menu on the bottom there are six buttons. From the left. Cancel button will exit the plugin. Clean button will remove all temporary plugin files including previous project files. Help button will display brief help information. Save button will allow you to save your molecule with all settings and any previous work as at tar.bz2 archive. Load button will allow you to load previously saved tar.bz2 archive. OK button will take you to next window, in which you will perform molecular dynamics simulation.
 
 In the next menu there are 4 buttons. From the left. EXIT button will quit plugin. SAVE button will allow you to save current project with its progress and settings as a tar.bz archive. STOP button will suspend calculations, while START button will resume or start counting.
-________________
 
 4. Standalone Application
 
@@ -122,20 +116,25 @@ This variant of application offers the same graphic interface as known from Dyna
 
 	This application does not require graphic environment to run and can be called from command line:
 	pydynamics
-It is designed with servers in mind. As a input it takes Dynamics PyMOL Plugin saved tar.bz archive files. It run all operations set in settings and as a output gives multimodel pdb file.
+It is designed with servers in mind. As an input it takes Dynamics PyMOL Plugin saved tar.bz archive files. It run all operations set in settings and as an output gives multimodel pdb file.
 Example of how to use program:
 	pydynamics /home/user/aprotein_saved.tar.bz /home/user/aprotein_multimodel.pdb
-First argument after pydynamics command is path to saved Dynamics PyMOL Plugin project (which could be for example uploaded to a server). The second argument is path to which output multimodel pdb file will be saved.
-________________
+First argument after pydynamics command is path to saved Dynamics PyMOL Plugin project (which could be for example uploaded to a server). The second argument is path to which output multimodel pdb file will be saved. At the moment this option is unfortunately depreciated.
 
 5. Changelog
 
-What's new in 1.0.0:
-- initial release
+What's new in 1.1.0:
+x2top added as an alternative to pdb2gmx
+check every given variables (security)
+rework “jobs” and “restraints” and cumulate it in the “Steps”
+disable buttons, when they are not to be used
+do not allow to proceed without choosing molecule
+lot of code cleanups
+tons of bug's fixed
 
 Known issues:
-- command line interface is depreciated
-________________
+command line interface is depreciated
+pydynamics is depreciated
 
 6. Copyright
 
