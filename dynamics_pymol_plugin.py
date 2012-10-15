@@ -420,7 +420,7 @@ class Mdp_config:
 	
 	def __init__(self, file_name, init_config, external_file=0):
 		if external_file == 0:
-			self.config = """title = """+project_name+"_"+file_name+"\n"+init_config
+			self.config = "title = "+project_name+"_"+file_name+"\n"+init_config
 		elif external_file == 1:
 			self.config = init_config
 		self.file_name = file_name
@@ -677,23 +677,25 @@ def rootWindow():
 		projects = os.listdir(dynamics_dir)
 	else:
 		projects = []
-	if projects != ['test_gromacs.txt'] and projects != []:
+	projects2 = []
+	for file_dir in projects:
+		if os.path.isdir(dynamics_dir + file_dir) and file_dir not in allNames and file_dir != "nothing":
+			projects2.append(file_dir)
+	if projects2 != []:
 		w1_2 = Label(frame1_1, text="Previous Projects")
 		w1_2.pack(side=TOP)
 	
-		for molecule in projects:
-			if os.path.isdir(dynamics_dir + molecule) == True and molecule != "nothing":
-				projects1 = []
-				molecule1 = molecule.split("_")
-				if molecule1[-1] == "multimodel":
+		for molecule in projects2:
+			molecule1 = molecule.split("_")
+			if molecule1[-1] == "multimodel":
+				pass
+			else:
+				molecule1 = molecule.split("-")
+				if molecule1[0] == "gromacs":
 					pass
 				else:
-					molecule1 = molecule.split("-")
-					if molecule1[0] == "gromacs":
-						pass
-					else:
-						radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button))
-						radio_button1.pack(side=TOP, anchor=W)
+					radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button))
+					radio_button1.pack(side=TOP, anchor=W)
 	
 	#List of group for final model
 	w2 = Label(frame1_1, text="Group")
@@ -947,7 +949,6 @@ class WaterWindows:
 		gromacs.water_update(force)
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
 		gromacs2.water = v4_water.get()
-		#save_options()
 
 	##Water box configuration window
 	def box(self, master):
@@ -1143,11 +1144,16 @@ def create_config_files():
 	global em_file, pr_file, md_file, progress
 	if not os.path.isfile(project_dir + "options.pickle"):
 		progress = Progress_status()
+	else:
+		load_options()
 	if os.path.isfile(dynamics_dir + "em.mdp"):
 		shutil.copy(dynamics_dir + "em.mdp", project_dir + "em.mdp")
 		em_file_config = open(dynamics_dir + "em.mdp", "r").read()
 		em_file = Mdp_config("em.mdp",name, em_file_config, 1)
 		print "Found em.mdp file. Using it instead of local configuration."
+	elif os.path.isfile(project_dir + "em.mdp"):
+		em_file_config = open(project_dir + "em.mdp", "r").read()
+		em_file = Mdp_config("em.mdp",em_file_config, 1)
 	else:
 		em_file = Mdp_config("em.mdp",em_init_config, 0)
 	if os.path.isfile(dynamics_dir + "pr.mdp"):
@@ -1155,6 +1161,9 @@ def create_config_files():
 		pr_file_config = open(dynamics_dir + "pr.mdp", "r").read()
 		pr_file = Mdp_config("pr.mdp",name, pr_file_config, 1)
 		print "Found pr.mdp file. Using it instead of local configuration."
+	elif os.path.isfile(project_dir + "pr.mdp"):
+		pr_file_config = open(project_dir + "pr.mdp", "r").read()
+		pr_file = Mdp_config("pr.mdp",pr_file_config, 1)
 	else:
 		pr_file = Mdp_config("pr.mdp",pr_init_config, 0)
 	if os.path.isfile(dynamics_dir + "md.mdp"):
@@ -1162,6 +1171,9 @@ def create_config_files():
 		md_file_config = open(dynamics_dir + "md.mdp", "r").read()
 		md_file = Mdp_config("md.mdp",name, md_file_config, 1)
 		print "Found md.mdp file. Using it instead of local configuration."
+	elif os.path.isfile(project_dir + "md.mdp"):
+		md_file_config = open(project_dir + "md.mdp", "r").read()
+		md_file = Mdp_config("md.mdp",md_file_config, 1)
 	else:
 		md_file = Mdp_config("md.mdp",md_init_config, 0)
 	save_options()
