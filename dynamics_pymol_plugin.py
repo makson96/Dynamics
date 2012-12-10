@@ -586,7 +586,7 @@ gen_seed = 173529"""
 	restraintsW = RestraintsWindow()
 	
 	##Start graphic interface
-	if shell = 0:
+	if shell == 0:
 		rootWindow()
 
 ##--Graphic Interface--
