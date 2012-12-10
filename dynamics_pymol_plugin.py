@@ -1659,7 +1659,13 @@ def error_message():
 	for line in error_list:
 		error = error + line
 	print error
+
+##This function will set everything for running plugin in PyMOL Shell
+def dynamics_cmd(name, options="nothing now"):
+	print "Dynamics PyMOL Shell"
+	init_function()
+	dynamics()
 	
 ##--PyMOL Shell Interface-- - depreciated
 if plugin == 1:
-	cmd.extend("dynamics", dynamics) #PyMOL API
+	cmd.extend("dynamics", dynamics_cmd) #PyMOL API
