@@ -483,7 +483,7 @@ def __init__(self):
 	command = init_function)#rootWindow)
 
 ##This function will initialize all plugin stufs
-def init_function():
+def init_function(shell=0):
 	##Global variables
 	global help_name, clean_name, stop, status, error, em_init_config, pr_init_config, md_init_config, project_name, dynamics_dir, project_dir
 	help_name = ["-h", "h", "-help", "help"]
@@ -586,7 +586,8 @@ gen_seed = 173529"""
 	restraintsW = RestraintsWindow()
 	
 	##Start graphic interface
-	rootWindow()
+	if shell = 0:
+		rootWindow()
 
 ##--Graphic Interface--
 ##Root menu window
@@ -1663,7 +1664,7 @@ def error_message():
 ##This function will set everything for running plugin in PyMOL Shell
 def dynamics_cmd(name, options="nothing now"):
 	print "Dynamics PyMOL Shell"
-	init_function()
+	init_function(1)
 	dynamics()
 	
 ##--PyMOL Shell Interface-- - depreciated
