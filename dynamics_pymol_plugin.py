@@ -1588,25 +1588,7 @@ def load_options():
 	print "Project was created for Dynamics PyMOL Plugin"+options[0]+" and "+options[1]
 	if gromacs.version != options[1]:
 		print "GROMACS versions is different for loaded file."
-	if options[0][1:4] == "1.0":
-		print "1.0 compatibility layer"
-		progress = Progress_status()
-		gromacs2 = options[2]
-		gromacs2.force = gromacs2.field
-		em_file = options[3]
-		pr_file = options[4]
-		md_file = options[5]
-		progress.to_do = options[6].to_do
-		progress.status = options[6].status
-		progress.to_do_optional[0] = options[7]
-		progress.to_do_optional = progress.to_do_optional
-		progress.status_optional[0] = 0
-		progress.status_optional = progress.status_optional
-		progress.resume = 0
-		progress.x2top = 0
-		
-
-	elif options[0][1:4] == "1.1":
+	if options[0][1:4] == "1.1":
 		print "1.1 compatibility layer"
 		gromacs2 = options[2]
 		em_file = options[3]
