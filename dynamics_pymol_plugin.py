@@ -1595,6 +1595,14 @@ def load_options():
 		pr_file = options[4]
 		md_file = options[5]
 		progress = options[6]
+	
+	elif options[0][1:4] == "1.2":
+		print "1.2 compatibility layer"
+		gromacs2 = options[2]
+		em_file = options[3]
+		pr_file = options[4]
+		md_file = options[5]
+		progress = options[6]
 
 ##Text for "Help"
 def help_option():
