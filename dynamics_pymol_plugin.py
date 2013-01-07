@@ -203,6 +203,7 @@ class Gromacs_input:
 	box_distance = "0.5"
 	box_density = "1000"
 	restraints_nr = 1
+	global gromacs, project_name
 
 	##This function will change given variabless stored by the class (needed for lambda statements)
 	def update(self, group, box_type, box_distance, box_density, root=""):
@@ -443,7 +444,7 @@ class Mdp_config:
 		self.config = config
 		save_options()
 	
-	def save_file(self):
+	def save_file(self, project_dir):
 		mdp = open(project_dir+self.file_name, "w")
 		mdp.write(self.config)
 		mdp.close() 
@@ -588,6 +589,10 @@ gen_seed = 173529"""
 	##Start graphic interface
 	if shell == 0:
 		rootWindow()
+	
+	#This is for runnig program outside PyMOL
+	if plugin == 0:
+		return help_name, clean_name
 
 ##--Graphic Interface--
 ##Root menu window
@@ -1392,12 +1397,8 @@ def no_molecule_warning():
 
 ##--Comand Line Interface--
 def dynamics(help_clean = ""):
-	file_path = project_dir + project_name
-	force = str(gromacs2.force) + "\n" + str(gromacs2.water)
-	os.chdir(project_dir)
-	global status, stop
-	stop = 0
 	print "Starting PyMOL plugin 'dynamics' ver."+plugin_ver+" by Tomasz Makarewicz"
+	global status, stop, gromacs, project_name
 	
 	##If help is called
 	if help_name.count(help_clean) == 1:
@@ -1407,6 +1408,12 @@ def dynamics(help_clean = ""):
 	elif clean_name.count(help_clean) == 1:
 		clean_option()
 		status = ["fail", "Cleaned"]
+	##Normal work
+	else:
+		file_path = project_dir + project_name
+		force = str(gromacs2.force) + "\n" + str(gromacs2.water)
+		os.chdir(project_dir)
+		stop = 0
 	
 	##Starting real calculations
 	##Checking GROMACS
@@ -1504,9 +1511,6 @@ def dynamics(help_clean = ""):
 		if help_name.count(help_clean) != 1 and clean_name.count(help_clean) != 1:
 			error_message()
 		status = ["ok", ""]
-	#This is for runnig program outside PyMOL
-	if plugin == 0:
-		return project_dir
 
 ##Checking if given varaibles are correct - security
 def check_variable(force):
@@ -1527,9 +1531,9 @@ def check_variable(force):
 
 ##Saving configuration files
 def mdp_files():
-	em_file.save_file()
-	pr_file.save_file()
-	md_file.save_file()
+	em_file.save_file(project_dir)
+	pr_file.save_file(project_dir)
+	md_file.save_file(project_dir)
 
 ##Show multimodel PDB file in PyMOOL
 def show_multipdb():
@@ -1652,18 +1656,22 @@ def error_message():
 	print error
 
 ##This function will set everything for running plugin in PyMOL Shell
-def dynamics_cmd(name, options="nothing now"):
+def dynamics_cmd(name, options=["load_file"]):
 	print "Dynamics PyMOL Shell"
 	init_function(1)
-	global project_dir, project_name
-	project_name = name
-	dynamics_dir = os.getenv("HOME")+'/.dynamics/'
-	project_dir = dynamics_dir+project_name + '/'
-	##Creating directory for project
-	if os.path.isdir(project_dir) == False:
-		os.makedirs(project_dir)
-	create_config_files()
+	if plugin == 1:
+		project_name = name
+		dynamics_dir = os.getenv("HOME")+'/.dynamics/'
+		project_dir = dynamics_dir+project_name + '/'
+		##Creating directory for project
+		if os.path.isdir(project_dir) == False:
+			os.makedirs(project_dir)
+		create_config_files()
+	elif plugin == 0:
+		#print dynamics_dir
+		load_file(options[0])
 	dynamics()
+	return project_name, project_dir
 	
 ##--PyMOL Shell Interface-- - depreciated
 if plugin == 1:
