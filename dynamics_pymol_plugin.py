@@ -1665,6 +1665,14 @@ def error_message():
 def dynamics_cmd(name, options="nothing now"):
 	print "Dynamics PyMOL Shell"
 	init_function(1)
+	global project_dir, project_name
+	project_name = name
+	dynamics_dir = os.getenv("HOME")+'/.dynamics/'
+	project_dir = dynamics_dir+project_name + '/'
+	##Creating directory for project
+	if os.path.isdir(project_dir) == False:
+		os.makedirs(project_dir)
+	create_config_files()
 	dynamics()
 	
 ##--PyMOL Shell Interface-- - depreciated
