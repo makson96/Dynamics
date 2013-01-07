@@ -203,7 +203,6 @@ class Gromacs_input:
 	box_distance = "0.5"
 	box_density = "1000"
 	restraints_nr = 1
-	global gromacs, project_name
 
 	##This function will change given variabless stored by the class (needed for lambda statements)
 	def update(self, group, box_type, box_distance, box_density, root=""):
