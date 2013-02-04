@@ -707,8 +707,8 @@ def rootWindow():
 	frame1_2 = Frame(frame1, borderwidth=1, relief=RAISED)
 	frame1_2.pack(side=LEFT)
 	
-	#List of available force forces
-	w3 = Label(frame1_2, text="Force force", anchor=E)
+	#List of available force fields
+	w3 = Label(frame1_2, text="Force fields", anchor=E)
 	w3.pack(side=TOP)
 
 	for force in gromacs.force_list:
