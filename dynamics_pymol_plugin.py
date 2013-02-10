@@ -1245,7 +1245,7 @@ def mdp_update(values, mdp, root_to_kill=""):
 		em_file.update(values2)
 	elif mdp == "pr":
 		pr_file.update(values2)
-	elif mdp == "pr":
+	elif mdp == "md":
 		md_file.update(values2)
 
 ##This function will create Simulation Steps configuration window
