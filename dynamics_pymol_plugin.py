@@ -218,9 +218,9 @@ class Gromacs_input:
 		self.box_density = box_density
 		save_options()
 		print "gromacs update"
-	
+
 	##This function will create initial topology and triectory using pdb file and choosen force force
-	def pdb2top(self, file_path, force):
+	def pdb2top(self, file_path, force, gromacs, project_name):
 		status = ["ok", "Calculating topology using Force forces"]
 		self.status = status
 		try:
@@ -248,7 +248,7 @@ class Gromacs_input:
 		self.status = status
 	
 	##This is alternative function to create initial topology and triectory using pdb file
-	def x2top(self, file_path):
+	def x2top(self, file_path, gromacs, project_name):
 		status = ["ok", "Calculating topology using Force forces"]
 		self.status = status
 		try:
@@ -276,7 +276,7 @@ class Gromacs_input:
 		self.status = status
 	
 	##This function will create and add waterbox.
-	def waterbox(self, file_path):
+	def waterbox(self, file_path, gromacs, project_name):
 		status = ["ok", "Adding Water Box"]
 		self.status = status
 		box_type = "-bt "+self.box_type+" "
@@ -303,7 +303,7 @@ class Gromacs_input:
 		self.status = status
 	
 	##This function will perform energy minimalization	
-	def em(self, file_path):
+	def em(self, file_path, gromacs, project_name):
 		status = ["ok", "Energy Minimalization"]
 		self.status = status
 		
@@ -325,7 +325,7 @@ class Gromacs_input:
 		self.status = status
 	
 	##This function will perform position restrained MD
-	def pr(self, file_path):
+	def pr(self, file_path, gromacs, project_name):
 		status = ["ok", "Position Restrained MD"]
 		self.status = status
 		
@@ -347,7 +347,7 @@ class Gromacs_input:
 		self.status = status
 	
 	##This function will create posre.itp file for molecular dynamics simulation with choosen atoms if restraints were selected
-	def restraints(self):
+	def restraints(self, gromacs, project_name):
 		status = ["ok", "Adding Restraints"]
 		self.status = status
 		
@@ -357,7 +357,7 @@ class Gromacs_input:
 			pass
 			
 		print "Adding Restraints"
-		Genrestr = subprocess.call("echo 0 | genrestr -f "+project_name+".pdb -o posre_2.itp -n index_dynamics.ndx &>> log.txt", executable="/bin/bash", shell=True)
+		Genrestr = subprocess.call(gromacs.path+"echo 0 | genrestr -f "+project_name+".pdb -o posre_2.itp -n index_dynamics.ndx &>> log.txt", executable="/bin/bash", shell=True)
 		
 		if os.path.isfile("posre_2.itp") == True:
 			status = ["ok", "Added Restraints"]
@@ -368,7 +368,7 @@ class Gromacs_input:
 		self.status = status
 	
 	##This function will perform position final molecular dynamics simulation
-	def md(self, file_path):
+	def md(self, file_path, gromacs, project_name):
 		status = ["ok", "Molecular Dynamics Simulation"]
 		self.status = status
 		
@@ -390,7 +390,7 @@ class Gromacs_input:
 		self.status = status
 	
 	##This function will convert final results to multimodel pdb file
-	def trjconv(self, file_path):
+	def trjconv(self, file_path, gromacs, project_name):
 		status = ["ok", "Creating Multimodel PDB"]
 		self.status = status
 		
@@ -1438,7 +1438,7 @@ def dynamics(help_clean = ""):
 	
 	##Counting topology
 	if status[0] == "ok" and stop == 0 and progress.to_do[1] == 1 and progress.x2top == 0:
-		gromacs2.pdb2top(file_path, force)
+		gromacs2.pdb2top(file_path, force, gromacs, project_name)
 		status = gromacs2.status
 		if status[0] == "ok":
 			progress.status[1] = 1
@@ -1446,7 +1446,7 @@ def dynamics(help_clean = ""):
 			save_options()
 	
 	elif  status[0] == "ok" and stop == 0 and progress.to_do[1] == 1 and progress.x2top == 1:
-		gromacs2.x2top(file_path)
+		gromacs2.x2top(file_path, gromacs, project_name)
 		status = gromacs2.status
 		if status[0] == "ok":
 			progress.status[1] = 1
@@ -1455,7 +1455,7 @@ def dynamics(help_clean = ""):
 
 	##Adding water box
 	if status[0] == "ok" and stop == 0 and progress.to_do[2] == 1:
-		gromacs2.waterbox(file_path)
+		gromacs2.waterbox(file_path, gromacs, project_name)
 		status = gromacs2.status
 		if status[0] == "ok":
 			progress.status[2] = 1
@@ -1464,7 +1464,7 @@ def dynamics(help_clean = ""):
 	
 	##EM	
 	if status[0] == "ok" and stop == 0 and progress.to_do[3] == 1:
-		gromacs2.em(file_path)
+		gromacs2.em(file_path, gromacs, project_name)
 		status = gromacs2.status
 		if status[0] == "ok":
 			progress.status[3] = 1
@@ -1473,7 +1473,7 @@ def dynamics(help_clean = ""):
 	
 	##PR
 	if status[0] == "ok" and stop == 0 and progress.to_do[4] == 1:
-		gromacs2.pr(file_path)
+		gromacs2.pr(file_path, gromacs, project_name)
 		status = gromacs2.status
 		if status[0] == "ok":
 			progress.status[4] = 1
@@ -1482,12 +1482,12 @@ def dynamics(help_clean = ""):
 	
 	##Restraints
 	if status[0] == "ok" and stop == 0 and progress.to_do_optional[0] == 1:
-		gromacs2.restraints()
+		gromacs2.restraints(gromacs, project_name)
 		status = gromacs2.status
 	
 	##MD
 	if status[0] == "ok" and stop == 0 and progress.to_do[5] == 1:
-		gromacs2.md(file_path)
+		gromacs2.md(file_path, gromacs, project_name)
 		status = gromacs2.status
 		if status[0] == "ok":
 			progress.status[5] = 1
@@ -1496,7 +1496,7 @@ def dynamics(help_clean = ""):
 	
 	##Trjconv
 	if status[0] == "ok" and stop == 0 and progress.to_do[6] == 1:
-		gromacs2.trjconv(file_path)
+		gromacs2.trjconv(file_path, gromacs, project_name)
 		status = gromacs2.status
 	
 	##Showing multimodel
@@ -1510,6 +1510,7 @@ def dynamics(help_clean = ""):
 		if help_name.count(help_clean) != 1 and clean_name.count(help_clean) != 1:
 			error_message()
 		status = ["ok", ""]
+	return project_name, project_dir
 
 ##Checking if given varaibles are correct - security
 def check_variable(force):
@@ -1669,7 +1670,7 @@ def dynamics_cmd(name, options=["load_file"]):
 	elif plugin == 0:
 		#print dynamics_dir
 		load_file(options[0])
-	dynamics()
+	project_name, project_dir = dynamics()
 	return project_name, project_dir
 	
 ##--PyMOL Shell Interface-- - depreciated
