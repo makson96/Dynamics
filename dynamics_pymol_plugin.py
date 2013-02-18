@@ -537,7 +537,6 @@ gen_seed = 173529"""
 
 	md_init_config = """cpp = /usr/bin/cpp
 ;define = -DPOSRES
-constraints = all-bonds
 integrator = md
 dt = 0.002
 nsteps = 5000
@@ -560,7 +559,14 @@ compressibility = 4.5e-5
 ref_p = 1.0
 gen_vel = yes
 gen_temp = 300.0
-gen_seed = 173529"""
+gen_seed = 173529
+constraints = all-bonds
+constraint-algorithm = Lincs
+unconstrained-start = no
+shake-tol = 0.0001
+lincs-order = 4
+lincs-warnangle = 30
+morse = no"""
 	
 	os.chdir(os.getenv("HOME"))
 	project_name = 'nothing'
@@ -1217,6 +1223,9 @@ def mdp_configure(config_name, master):
 				l1.pack(side=TOP)
 			elif option == "gen_vel":
 				l1 = Label(frame1, text="Generate velocites temperature")
+				l1.pack(side=TOP)
+			elif option == "constraints":
+				l1 = Label(frame1, text="Options for bonds")
 				l1.pack(side=TOP)
 			values_list.append(StringVar(root2)) #brilliant
 			values_list[-1].set(value)
