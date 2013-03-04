@@ -82,7 +82,7 @@ class Gromacs_output:
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
 		
-		print "Reading available force forces"	
+		print "Reading available force fields"	
 		force_start_line = 0
 		while lista_gromacs[force_start_line] != "Select the Force Field:\n":
 			force_start_line = force_start_line + 1
@@ -217,15 +217,15 @@ class Gromacs_input:
 		save_options()
 		print "gromacs update"
 
-	##This function will create initial topology and triectory using pdb file and choosen force force
+	##This function will create initial topology and triectory using pdb file and choosen force field
 	def pdb2top(self, file_path, force, gromacs, project_name):
-		status = ["ok", "Calculating topology using Force forces"]
+		status = ["ok", "Calculating topology using Force fields"]
+		status_update(status)
 		try:
 			os.remove(project_name+".gro")
 			os.remove(project_name+".top")
 		except:
 			pass
-		print "Calculating topology using Force forces"
 		Pdb2gmx = subprocess.call(gromacs.path+"echo -e '"+force+"' | pdb2gmx -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log.txt",
 		executable="/bin/bash", shell=True)
 
@@ -233,33 +233,33 @@ class Gromacs_input:
 			status = ["ok", ""]
 		else:
 			status = ["fail", "Warning. Trying to ignore unnecessary hydrogen atoms."]
-			print status[1]
+			status_update(status)
 			Pdb2gmx = subprocess.call(gromacs.path+"echo -e '"+force+"' | pdb2gmx -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &>> log.txt",
 			executable="/bin/bash", shell=True)
 
 		if os.path.isfile(file_path+".gro") == True:
-			status = ["ok", "Calculated topology using Force forces"]
+			status = ["ok", "Calculated topology using Force fields"]
 		else:
-			status = ["fail", "Force force unable to create topology file"]
+			status = ["fail", "Force field unable to create topology file"]
 		return status
 	
 	##This is alternative function to create initial topology and triectory using pdb file
 	def x2top(self, file_path, gromacs, project_name):
-		status = ["ok", "Calculating topology using Force forces"]
+		status = ["ok", "Calculating topology using Force fields"]
+		status_update(status)
 		try:
 			os.remove(project_name+".gro")
 			os.remove(project_name+".top")
 		except:
 			pass
-		print "Calculating topology using x2top"
 		X2top = subprocess.call(gromacs.path+"g_x2top -f "+project_name+".pdb -o "+project_name+".top &> log.txt",
 		executable="/bin/bash", shell=True)
 
 		if os.path.isfile(file_path+".top") == True:
-			status = ["ok", "Calculated topology using x2top."]
+			status = ["ok", "Calculating structure using trjconv."]
 		else:
 			status = ["fail", "Unable to create topology file."]
-			print status[1]
+		status_update(status)
 		if 	 status[0] == "ok":
 			Trjconv = subprocess.call(gromacs.path+"echo -e 0 | trjconv -f "+project_name+".pdb -s "+project_name+".pdb -o "+project_name+".gro &>> log.txt",
 			executable="/bin/bash", shell=True)
@@ -272,7 +272,7 @@ class Gromacs_input:
 	
 	##This function will create and add waterbox.
 	def waterbox(self, file_path, gromacs, project_name):
-		status = ["ok", "Adding Water Box"]
+		status = ["ok", "Generating waterbox"]
 		box_type = "-bt "+self.box_type+" "
 		distance = "-d "+self.box_distance+" "
 		density = "-density "+self.box_density
@@ -282,16 +282,17 @@ class Gromacs_input:
 		except:
 			pass
 		
-		print "Generating water_box"
+		status_update(status)
 		Editconf = subprocess.call(gromacs.path+"editconf -f "+project_name+".gro -o "+project_name+"1.gro "+box_type+distance+density+" &>> log.txt",
 		executable="/bin/bash", shell=True)
-
-		print "Adding Water Box"
+		
+		status = ["ok", "Adding Water Box"]
+		status_update(status)
 		Genbox = subprocess.call(gromacs.path+"genbox -cp "+project_name+"1.gro -cs -o "+project_name+"_b4em.gro -p "+project_name+".top &>> log.txt",
 		executable="/bin/bash", shell=True)
 		
 		if os.path.isfile(file_path+"1.gro") == True:
-			status = ["ok", "Added Water Box"]
+			status = ["ok", "Water Box Added"]
 		else:
 			status = ["fail", "Unable to add waterbox"]
 		return status
@@ -306,7 +307,7 @@ class Gromacs_input:
 		except:
 			pass
 
-		print "Energy Minimalization"		
+		status_update(status)		
 		Grompp = subprocess.call(gromacs.path+"grompp -f em -c "+project_name+"_b4em -p "+project_name+" -o "+project_name+"_em &>> log.txt", executable="/bin/bash", shell=True)
 
 		Mdrun = subprocess.call(gromacs.path+"mdrun -nice 4 -s "+project_name+"_em -o "+project_name+"_em -c "+project_name+"_b4pr -v &>> log.txt", executable="/bin/bash", shell=True)
@@ -327,7 +328,7 @@ class Gromacs_input:
 		except:
 			pass
 		
-		print "Position Restrained MD"
+		status_update(status)
 		Grompp = subprocess.call(gromacs.path+"grompp -f pr -c "+project_name+"_b4pr -r "+project_name+"_b4pr -p "+project_name+" -o "+project_name+"_pr &>> log.txt", executable="/bin/bash", shell=True)
 
 		Mdrun = subprocess.call(gromacs.path+"mdrun -nice 4 -s "+project_name+"_pr -o "+project_name+"_pr -c "+project_name+"_b4md -v &>> log.txt", executable="/bin/bash", shell=True)
@@ -347,7 +348,7 @@ class Gromacs_input:
 		except:
 			pass
 			
-		print "Adding Restraints"
+		status_update(status)
 		Genrestr = subprocess.call(gromacs.path+"echo 0 | genrestr -f "+project_name+".pdb -o posre_2.itp -n index_dynamics.ndx &>> log.txt", executable="/bin/bash", shell=True)
 		
 		if os.path.isfile("posre_2.itp") == True:
@@ -368,7 +369,7 @@ class Gromacs_input:
 		except:
 			pass
 		
-		print "Molecular Dynamics Simulation"
+		status_update(status)
 		Grompp = subprocess.call(gromacs.path+"grompp -f md -c "+project_name+"_b4md  -p "+project_name+" -o "+project_name+"_md &>> log.txt", executable="/bin/bash", shell=True)
 
 		Mdrun = subprocess.call(gromacs.path+"mdrun -nice 4 -s "+project_name+"_md -o "+project_name+"_md -c "+project_name+"_after_md -v &>> log.txt", executable="/bin/bash", shell=True)
@@ -390,7 +391,7 @@ class Gromacs_input:
 		if os.path.isfile(project_name+"_multimodel.pdb") == True:
 			os.remove(project_name+"_multimodel.pdb")
 		
-		print "Creating Multimodel PDB"
+		status_update(status)
 		Trjconv = subprocess.call(gromacs.path+"echo "+str(self.group)+" | trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -app -o "+project_name+"_multimodel.pdb &>> log.txt",
 		executable="/bin/bash", shell=True)
 		
@@ -873,6 +874,8 @@ class CalculationWindow:
 	def bar_update(self):
 		global error
 		percent = 0.0
+		while stop == 1:
+			time.sleep(1)
 		while self.bar_var.get() != "Finished!" and error == "" and percent != 1:
 			percent = 0.0
 			for job in progress.to_do:
@@ -1370,6 +1373,12 @@ def steps_status_bar(var, bar, variable_list):
 			variable.set(1)
 		progress.resume = 0
 
+##This function will receive status from gromacs2 class and change it to global variable.
+def status_update(input_status):
+	global status
+	status = input_status
+	print status[1]
+
 ##Help window
 def helpWindow(master):
 	root = Toplevel(master)
@@ -1607,7 +1616,7 @@ The purpose of this plugin is to perform molecular dynamics simulation by GROMAC
 
 To use this program run it as a PyMOL plugin.
 Choose molecule (PDB) for which you want to perform molecular dynamics simulation (left column).
-Choose force force and water model options in the middle column.
+Choose force field and water model options in the middle column.
 Choose any additional options in the right column.
 Press OK button.
 Click Start button and wait till calculations are finished.
