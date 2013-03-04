@@ -1609,8 +1609,8 @@ Software is created and maintained by Laboratory of Biomolecular Systems Simulat
 Contributors:
 - Tomasz Makarewicz (tomaszm@biotech.ug.edu.pl)
 
-Full manual is available to you on project website: ...
-or as a file: /usr/share/doc/dynamics-pymol-plugin/manual.pdf
+Full manual is available to you on project website: https://github.com/tomaszmakarewicz/Dynamics/raw/master/manual.odt
+or as a file: /usr/share/doc/dynamics-pymol-plugin/manual.odt
 
 The purpose of this plugin is to perform molecular dynamics simulation by GROMACS using easy graphical tool and powerful molecular viewer.
 
@@ -1619,8 +1619,9 @@ Choose molecule (PDB) for which you want to perform molecular dynamics simulatio
 Choose force field and water model options in the middle column.
 Choose any additional options in the right column.
 Press OK button.
-Click Start button and wait till calculations are finished.
-You will see animated model in PyMOL viewer."""
+Click Start button and wait till calculation is finished.
+Multimodel PDB file will be displayed in PyMOL viewer.
+You can click Play button in order to see animation."""
 	return help_message
 
 ##Clean function
