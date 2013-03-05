@@ -1200,8 +1200,22 @@ def mdp_configure(config_name, master):
 			root2.wm_title("Molecular Dynamics Simulation Options")
 		
 		values_list = []
+		
+		if config_name == "em":
+			b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "em", root2))
+			b.pack(side=BOTTOM)
+		elif config_name == "pr":
+			b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "pr", root2))
+			b.pack(side=BOTTOM)
+		elif config_name == "md":
+			b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "md", root2))
+			b.pack(side=BOTTOM)
+		
+		sw = ScrolledWindow(root2, scrollbar=Y) #just the vertical scrollbar
+		sw.pack()
+		
 		for option, value in options:
-			frame1 = Frame(root2)
+			frame1 = Frame(sw.window)
 			frame1.pack(side=TOP)
 			if option == "emtol":
 				l1 = Label(frame1, text="Energy minimizing stuff")
@@ -1225,15 +1239,7 @@ def mdp_configure(config_name, master):
 				l.pack(side=LEFT)
 				e = Entry(frame1, textvariable=values_list[-1])
 				e.pack(side=LEFT)
-		if config_name == "em":
-			b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "em", root2))
-			b.pack(side=TOP)
-		elif config_name == "pr":
-			b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "pr", root2))
-			b.pack(side=TOP)
-		elif config_name == "md":
-			b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "md", root2))
-			b.pack(side=TOP)
+		
 	elif project_name == "nothing":
 		no_molecule_warning()
 
