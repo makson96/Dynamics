@@ -297,9 +297,9 @@ class Gromacs_input:
 			status = ["fail", "Unable to add waterbox"]
 		return status
 	
-	##This function will perform energy minimalization	
+	##This function will perform energy minimization	
 	def em(self, file_path, gromacs, project_name):
-		status = ["ok", "Energy Minimalization"]
+		status = ["ok", "Energy Minimization"]
 		
 		try:
 			os.remove(project_name+"_em.tpr")
@@ -313,9 +313,9 @@ class Gromacs_input:
 		Mdrun = subprocess.call(gromacs.path+"mdrun -nice 4 -s "+project_name+"_em -o "+project_name+"_em -c "+project_name+"_b4pr -v &>> log.txt", executable="/bin/bash", shell=True)
 		
 		if os.path.isfile(file_path+"_em.tpr") == True:
-			status = ["ok", "Energy Minimalized"]
+			status = ["ok", "Energy Minimized"]
 		else:
-			status = ["fail", "Unable to perform Energy Minimalization"]
+			status = ["fail", "Unable to perform Energy Minimization"]
 		return status
 	
 	##This function will perform position restrained MD
@@ -747,7 +747,7 @@ def rootWindow():
 	steps_button.pack(side=TOP)
 	
 	#Button for configuration of MDP files
-	em_label = Label(frame1_3_1, text="Energy Minimisation")
+	em_label = Label(frame1_3_1, text="Energy Minimization")
 	em_label.pack(side=TOP)
 	em_button2 = Button(frame1_3_1, text = "Configure", command=lambda: mdp_configure("em", root))
 	em_button2.pack(side=TOP)
@@ -1191,7 +1191,7 @@ def mdp_configure(config_name, master):
 		
 		if config_name == "em":
 			options = em_file.options
-			root2.wm_title("Energy Minimalization Options")
+			root2.wm_title("Energy Minimization Options")
 		elif config_name == "pr":
 			options = pr_file.options
 			root2.wm_title("Position Restrained MD Options")
@@ -1298,7 +1298,7 @@ def steps_configure(master, restraints_button):
 		c3 = Checkbutton(frame1, text="Adding Water Box", variable=check_var3, command=lambda: progress.to_do_update(2, check_var3.get()))
 		c3.pack(side=TOP, anchor=W)
 		
-		c4 = Checkbutton(frame1, text="Energy minimalization", variable=check_var4, command=lambda: progress.to_do_update(3, check_var4.get()))
+		c4 = Checkbutton(frame1, text="Energy Minimization", variable=check_var4, command=lambda: progress.to_do_update(3, check_var4.get()))
 		c4.pack(side=TOP, anchor=W)
 		
 		c5 = Checkbutton(frame1, text="Position Restrained MD", variable=check_var5, command=lambda: progress.to_do_update(4, check_var5.get()))
