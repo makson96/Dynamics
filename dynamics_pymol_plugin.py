@@ -24,6 +24,13 @@ try:
 except:
 	plugin = 0
 
+##Check for ProDy
+try:
+	import prody
+	prody_true = 1
+except:
+	prody_true = 0 
+
 ##This class is responsible for interface to GROMACS. It will read all important data from GROMACS tools.
 class Gromacs_output:
 	
@@ -447,6 +454,7 @@ class Progress_status:
 	to_do_optional = [0]
 	resume = 0
 	x2top = 0
+	results_format = 0
 	
 	def to_do_update(self, position, value):
 		if type(position) == type(1):
@@ -457,6 +465,11 @@ class Progress_status:
 	def x2top_update(self, value):
 		if type(value) == type(1):
 			self.x2top = value
+			
+	def results_format_update(self, value):
+		if type(value) == type(1):
+		self.results_format = value
+	print self.results_format
 	
 	def to_do_status(self):
 		to_do = []
@@ -638,6 +651,9 @@ def rootWindow():
 	water_v = StringVar(root)
 	water_v.set(gromacs.water_list[0][1])
 	
+	v5_results = IntVar(root)
+	v5_results.set(0)
+	
 	##Start drawing interface
 	frame0 = Frame(root)
 	frame0.pack(side=TOP)
@@ -660,7 +676,7 @@ def rootWindow():
 	#List of PyMOL loaded PDB files
 	if allNames[0] != "nothing":
 		for molecule in allNames:
-			radio_button1 = Radiobutton(frame1_1a, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button))
+			radio_button1 = Radiobutton(frame1_1a, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button, v5_results, radiobutton_results_format))
 			radio_button1.pack(side=TOP, anchor=W)
 	#If no loaded PDB files, than add button to choose one
 	else:
@@ -695,7 +711,7 @@ def rootWindow():
 				if molecule1[0] == "gromacs":
 					pass
 				else:
-					radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button))
+					radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button, v5_results, radiobutton_results_format))
 					radio_button1.pack(side=TOP, anchor=W)
 	
 	#List of group for final model
@@ -775,6 +791,15 @@ def rootWindow():
 	check1_button = Button(frame1_3_1, text = "Configure", command=lambda: restraintsW.window(root))
 	check1_button.pack(side=TOP)
 	
+	#Radiobutton for choosing form of results
+	re_label = Label(frame1_3_1, text="Form of results")
+	re_label.pack(side=TOP)
+	
+	results_radiobutton = Radiobutton(frame1_3_1, text="Animation", value=0, variable=v5_results, command=lambda: progress.results_format_update(v5_results.get()))
+	results_radiobutton.pack(side=TOP, anchor=W)
+	results_radiobutton = Radiobutton(frame1_3_1, text="Vectors", value=1, variable=v5_results, command=lambda: progress.results_format_update(v5_results.get()))
+	results_radiobutton.pack(side=TOP, anchor=W) 
+	
 	frame2 = Frame(root)
 	frame2.pack(side=TOP)
 	
@@ -798,7 +823,7 @@ def rootWindow():
 	count_button.pack(side=LEFT)
 	
 	#Initial configuration
-	set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button)
+	set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button, v5_results, radiobutton_results_format)
 		
 	root.mainloop()
 
@@ -1111,12 +1136,12 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
 		v3_force.set(gromacs.force_list[gromacs2.force-1][0])
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
-		radio_button1 = Radiobutton(frame1_1a, text=project_name, value=project_name, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, config_button_restraints))
+		radio_button1 = Radiobutton(frame1_1a, text=project_name, value=project_name, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, config_button_restraints, v5_results, radiobutton_results_format))
 		radio_button1.pack(side=TOP, anchor=W)
 	root.destroy()
 
 ##This function sets variables after choosing new molecule
-def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_restraints):
+def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_restraints, v5_results, radiobutton_results_format):
 	print "Set Variables"
 	##Set project name and dir
 	if name != "":
@@ -1136,6 +1161,13 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
 		config_button_restraints.configure(state=DISABLED)
 	elif progress.to_do_optional[0] == 1:
 		config_button_restraints.configure(state=ACTIVE)
+	##Correct set of results format
+	if prody_true == 1:
+		v5_results.set(progress.results_format)
+	else:
+		radiobutton_results_format.configure(state=DISABLED)
+		progress.results_format = 0
+		v5_results.set(progress.results_format)
 	##If Resume is zero than initial Steps are all ON
 	if progress.resume == 0:
 		progress.to_do = [1,1,1,1,1,1,1]
