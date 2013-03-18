@@ -7,7 +7,7 @@
 ##- Tomasz Makarewicz (tomaszm@biotech.ug.edu.pl)
 
 ##Plugin Version
-plugin_ver = " 1.2.0"
+plugin_ver = " 2.0.0pre"
 
 ##--Import libraries--
 ##Import nativ python libraries
