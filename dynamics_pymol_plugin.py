@@ -468,8 +468,8 @@ class Progress_status:
 			
 	def results_format_update(self, value):
 		if type(value) == type(1):
-		self.results_format = value
-	print self.results_format
+			self.results_format = value
+		print self.results_format
 	
 	def to_do_status(self):
 		to_do = []
@@ -795,10 +795,10 @@ def rootWindow():
 	re_label = Label(frame1_3_1, text="Form of results")
 	re_label.pack(side=TOP)
 	
-	results_radiobutton = Radiobutton(frame1_3_1, text="Animation", value=0, variable=v5_results, command=lambda: progress.results_format_update(v5_results.get()))
-	results_radiobutton.pack(side=TOP, anchor=W)
-	results_radiobutton = Radiobutton(frame1_3_1, text="Vectors", value=1, variable=v5_results, command=lambda: progress.results_format_update(v5_results.get()))
-	results_radiobutton.pack(side=TOP, anchor=W) 
+	radiobutton_results_format = Radiobutton(frame1_3_1, text="Animation", value=0, variable=v5_results, command=lambda: progress.results_format_update(v5_results.get()))
+	radiobutton_results_format.pack(side=TOP, anchor=W)
+	radiobutton_results_format = Radiobutton(frame1_3_1, text="Vectors", value=1, variable=v5_results, command=lambda: progress.results_format_update(v5_results.get()))
+	radiobutton_results_format.pack(side=TOP, anchor=W) 
 	
 	frame2 = Frame(root)
 	frame2.pack(side=TOP)
