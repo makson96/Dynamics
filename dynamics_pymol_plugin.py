@@ -15,7 +15,7 @@ import subprocess, time, os, shutil, thread, pickle
 ##Import libraries for tk graphic interface
 from Tkinter import *
 #from Tix import *
-from ttk import Progressbar
+from ttk import Progressbar, Scrollbar
 import tkSimpleDialog, tkMessageBox, tkFileDialog
 ##Import libraries from PyMOL specific work. Detect if running as a plugin. If true set plugin variable to 1.
 try:
@@ -1022,27 +1022,41 @@ class RestraintsWindow:
 		ok_button = Button(root, text="OK", command=lambda : self.index(root))
 		ok_button.pack(side=BOTTOM)
 	
-		sw = ScrolledWindow(root, scrollbar=Y) #just the vertical scrollbar
-		sw.pack()
+		#sw = ScrolledWindow(root, scrollbar=Y) #just the vertical scrollbar
+		#sw.pack()
+		sb = Scrollbar(root, orient=VERTICAL)
+		sb.pack(side=RIGHT, fill=Y)
+		
+		canvas = Canvas(root, width=600)#sw.window)
+		canvas.pack(side=TOP, fill="both", expand=True)
+		frame1 = Frame(canvas)
+		frame1.pack(side=TOP)
+		
+		#attach canves (with frame1 in it) to scrollbar
+		canvas.config(yscrollcommand=sb.set)
+		sb.config(command=canvas.yview)
+		
+		canvas.create_window((1,1), window=frame1, anchor="nw", tags="frame1")
+		frame1.bind("<Configure>", canvas.config(scrollregion=(0, 0, 0, 4500)))
 	
-		self.check_var = IntVar(sw.window)
+		self.check_var = IntVar(frame1)
 		self.check_var.set(gromacs2.restraints_nr)
 		
 		self.atom_list = []
 		number = 0
 		for group in gromacs.restraints:
-			select = Radiobutton(sw.window, text=group[0], value=number, variable=self.check_var)
+			select = Radiobutton(frame1, text=group[0], value=number, variable=self.check_var)
 			select.pack()
-			text = Text(sw.window)
+			text = Text(frame1)
 			text.insert(END, group[1])
 			text.pack()
 			self.atom_list.append(text)
 			number = number + 1
 	
 		if plugin == 1:
-			select1 = Radiobutton(sw.window, text="[ PyMol Selected ]", value=number, variable=self.check_var)
+			select1 = Radiobutton(frame1, text="[ PyMol Selected ]", value=number, variable=self.check_var)
 			select1.pack()
-			text1 = Text(sw.window)
+			text1 = Text(frame1)
 		
 			stored.list=[]
 			cmd.iterate("(sele)","stored.list.append(ID)") #PyMOL API
@@ -1244,35 +1258,52 @@ def mdp_configure(config_name, master):
 			b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "md", root2))
 			b.pack(side=BOTTOM)
 		
-		sw = ScrolledWindow(root2, scrollbar=Y) #just the vertical scrollbar
-		sw.pack()
+		#sw = ScrolledWindow(root2, scrollbar=Y) #just the vertical scrollbar
+		sb = Scrollbar(root2, orient=VERTICAL)
+		sb.pack(side=RIGHT, fill=Y)
+		
+		canvas = Canvas(root2, width=400)#sw.window)
+		canvas.pack(side=TOP, fill="both", expand=True)
+		frame1 = Frame(canvas)
+		frame1.pack(side=TOP)
+		
+		#attach canves (with frame1 in it) to scrollbar
+		canvas.config(yscrollcommand=sb.set)
+		sb.config(command=canvas.yview)
+		
+		canvas.create_window((1,1), window=frame1, anchor="nw", tags="frame1")
+
+		#frame1.bind("<Configure>", canvas.config(scrollregion=(0, 0, 1000, 1000)))#scrollregion=canvas.bbox("all")))
+		#frame1.bind("<Configure>", canvas.configure(scrollregion=canvas.bbox("all")))
 		
 		for option, value in options:
-			frame1 = Frame(sw.window)
-			frame1.pack(side=TOP)
+			frame2 = Frame(frame1)
+			frame2.pack(side=TOP)
 			if option == "emtol":
-				l1 = Label(frame1, text="Energy minimizing stuff")
+				l1 = Label(frame2, text="Energy minimizing stuff")
 				l1.pack(side=TOP)
 			elif option == "Tcoupl":
-				l1 = Label(frame1, text="Berendsen temperature and coupling")
+				l1 = Label(frame2, text="Berendsen temperature and coupling")
 				l1.pack(side=TOP)
 			elif option == "Pcoupl":
-				l1 = Label(frame1, text="Pressure coupling")
+				l1 = Label(frame2, text="Pressure coupling")
 				l1.pack(side=TOP)
 			elif option == "gen_vel":
-				l1 = Label(frame1, text="Generate velocites temperature")
+				l1 = Label(frame2, text="Generate velocites temperature")
 				l1.pack(side=TOP)
 			elif option == "constraints":
-				l1 = Label(frame1, text="Options for bonds")
+				l1 = Label(frame2, text="Options for bonds")
 				l1.pack(side=TOP)
 			values_list.append(StringVar(root2)) #brilliant
 			values_list[-1].set(value)
 			if option[0] != ";":
-				l = Label(frame1, text=option, width=25, anchor=W)
+				l = Label(frame2, text=option, width=25, anchor=W)
 				l.pack(side=LEFT)
-				e = Entry(frame1, textvariable=values_list[-1])
+				e = Entry(frame2, textvariable=values_list[-1])
 				e.pack(side=LEFT)
 		
+		frame1.bind("<Configure>", canvas.config(scrollregion=(0, 0, 0, len(values_list*26))))
+	
 	elif project_name == "nothing":
 		no_molecule_warning()
 
