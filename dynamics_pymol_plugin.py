@@ -14,7 +14,8 @@ plugin_ver = " 2.0.0pre"
 import subprocess, time, os, shutil, thread, pickle
 ##Import libraries for tk graphic interface
 from Tkinter import *
-from Tix import *
+#from Tix import *
+from ttk import Progressbar
 import tkSimpleDialog, tkMessageBox, tkFileDialog
 ##Import libraries from PyMOL specific work. Detect if running as a plugin. If true set plugin variable to 1.
 try:
@@ -865,7 +866,7 @@ class CalculationWindow:
 	
 		w5 = Label(frame1, textvariable=self.bar_var)
 		w5.pack(side=TOP)
-		self.bar_widget = Meter(frame1, value=0.0)
+		self.bar_widget = Progressbar(frame1)#, value=0.0)
 		self.bar_widget.pack(side=TOP)
 	
 		exit_button = Button(frame2, text = "EXIT", command=root.destroy)
@@ -901,23 +902,23 @@ class CalculationWindow:
 		percent = 0.0
 		while stop == 1:
 			time.sleep(1)
-		while self.bar_var.get() != "Finished!" and error == "" and percent != 1:
+		while self.bar_var.get() != "Finished!" and error == "" and percent != 100:
 			percent = 0.0
 			for job in progress.to_do:
 				percent = percent + job
 			if self.tasks_to_do != 0:
 				percent = (self.tasks_to_do - percent) / self.tasks_to_do
+				percent = percent * 100
 			else:
-				percent = 1
+				percent = 100
 			self.bar_widget.configure(value=percent)
-			self.bar_widget.update_idletasks()
 			self.bar_var.set(status[1])
 			if stop == 1:
 				self.bar_var.set("User Stoped")
 			time.sleep(1)
 		if self.bar_var.get() == "Finished!":
 			print "Finished!"
-			self.bar_widget.configure(value=1)
+			self.bar_widget.configure(value=100)
 			self.bar_widget.update_idletasks()
 			if plugin == 0:
 				root = Tk()
@@ -1355,7 +1356,7 @@ def steps_configure(master, restraints_button):
 		l1.pack(side=TOP)
 		
 		variable_list = [check_var1, check_var2, check_var3, check_var4, check_var5, check_var7, check_var8]
-		progress_bar = Meter(frame1, value=0.0)
+		progress_bar = Progressbar(frame1)#, value=0.0)
 		progress_bar.pack(side=TOP)
 		#steps_status_bar(check_var9.get(), progress_bar, variable_list)
 		if check_var9.get() == 1:
@@ -1388,9 +1389,10 @@ def steps_status_bar(var, bar, variable_list):
 		percent = percent / 8
 	else:
 		percent = percent / 7
+	percent = percent * 100
 	if var == 1:
 		bar.configure(value=percent)
-		bar.update_idletasks()
+		#bar.update_idletasks()
 		to_do_nr = 0
 		for step in progress.status:
 			if step == 1:
@@ -1405,7 +1407,7 @@ def steps_status_bar(var, bar, variable_list):
 		progress.resume = 1
 	elif var == 0:
 		bar.configure(value=(0.0))
-		bar.update_idletasks()
+		#bar.update_idletasks()
 		progress.to_do = [1,1,1,1,1,1,1]
 		for variable in variable_list:
 			variable.set(1)
