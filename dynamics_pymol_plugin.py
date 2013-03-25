@@ -14,7 +14,6 @@ plugin_ver = " 2.0.0pre"
 import subprocess, time, os, shutil, thread, pickle
 ##Import libraries for tk graphic interface
 from Tkinter import *
-#from Tix import *
 from ttk import Progressbar, Scrollbar
 import tkSimpleDialog, tkMessageBox, tkFileDialog
 ##Import libraries from PyMOL specific work. Detect if running as a plugin. If true set plugin variable to 1.
@@ -866,7 +865,7 @@ class CalculationWindow:
 	
 		w5 = Label(frame1, textvariable=self.bar_var)
 		w5.pack(side=TOP)
-		self.bar_widget = Progressbar(frame1)#, value=0.0)
+		self.bar_widget = Progressbar(frame1)
 		self.bar_widget.pack(side=TOP)
 	
 		exit_button = Button(frame2, text = "EXIT", command=root.destroy)
@@ -1022,20 +1021,19 @@ class RestraintsWindow:
 		ok_button = Button(root, text="OK", command=lambda : self.index(root))
 		ok_button.pack(side=BOTTOM)
 	
-		#sw = ScrolledWindow(root, scrollbar=Y) #just the vertical scrollbar
-		#sw.pack()
 		sb = Scrollbar(root, orient=VERTICAL)
 		sb.pack(side=RIGHT, fill=Y)
 		
-		canvas = Canvas(root, width=600)#sw.window)
+		canvas = Canvas(root, width=600)
 		canvas.pack(side=TOP, fill="both", expand=True)
 		frame1 = Frame(canvas)
 		frame1.pack(side=TOP)
 		
-		#attach canves (with frame1 in it) to scrollbar
+		#attach canvas (with frame1 in it) to scrollbar
 		canvas.config(yscrollcommand=sb.set)
 		sb.config(command=canvas.yview)
 		
+		#bind frame1 with canvas
 		canvas.create_window((1,1), window=frame1, anchor="nw", tags="frame1")
 		frame1.bind("<Configure>", canvas.config(scrollregion=(0, 0, 0, 4500)))
 	
@@ -1258,7 +1256,6 @@ def mdp_configure(config_name, master):
 			b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "md", root2))
 			b.pack(side=BOTTOM)
 		
-		#sw = ScrolledWindow(root2, scrollbar=Y) #just the vertical scrollbar
 		sb = Scrollbar(root2, orient=VERTICAL)
 		sb.pack(side=RIGHT, fill=Y)
 		
@@ -1267,14 +1264,12 @@ def mdp_configure(config_name, master):
 		frame1 = Frame(canvas)
 		frame1.pack(side=TOP)
 		
-		#attach canves (with frame1 in it) to scrollbar
+		#attach canvas (with frame1 in it) to scrollbar
 		canvas.config(yscrollcommand=sb.set)
 		sb.config(command=canvas.yview)
 		
+		#bind canvas with frame1 1/2
 		canvas.create_window((1,1), window=frame1, anchor="nw", tags="frame1")
-
-		#frame1.bind("<Configure>", canvas.config(scrollregion=(0, 0, 1000, 1000)))#scrollregion=canvas.bbox("all")))
-		#frame1.bind("<Configure>", canvas.configure(scrollregion=canvas.bbox("all")))
 		
 		for option, value in options:
 			frame2 = Frame(frame1)
@@ -1302,6 +1297,7 @@ def mdp_configure(config_name, master):
 				e = Entry(frame2, textvariable=values_list[-1])
 				e.pack(side=LEFT)
 		
+		#bind canvas with frame1 2/2
 		frame1.bind("<Configure>", canvas.config(scrollregion=(0, 0, 0, len(values_list*26))))
 	
 	elif project_name == "nothing":
@@ -1387,9 +1383,8 @@ def steps_configure(master, restraints_button):
 		l1.pack(side=TOP)
 		
 		variable_list = [check_var1, check_var2, check_var3, check_var4, check_var5, check_var7, check_var8]
-		progress_bar = Progressbar(frame1)#, value=0.0)
+		progress_bar = Progressbar(frame1)
 		progress_bar.pack(side=TOP)
-		#steps_status_bar(check_var9.get(), progress_bar, variable_list)
 		if check_var9.get() == 1:
 			percent = 0.0
 			for step in progress.status:
@@ -1423,7 +1418,6 @@ def steps_status_bar(var, bar, variable_list):
 	percent = percent * 100
 	if var == 1:
 		bar.configure(value=percent)
-		#bar.update_idletasks()
 		to_do_nr = 0
 		for step in progress.status:
 			if step == 1:
@@ -1438,7 +1432,6 @@ def steps_status_bar(var, bar, variable_list):
 		progress.resume = 1
 	elif var == 0:
 		bar.configure(value=(0.0))
-		#bar.update_idletasks()
 		progress.to_do = [1,1,1,1,1,1,1]
 		for variable in variable_list:
 			variable.set(1)
