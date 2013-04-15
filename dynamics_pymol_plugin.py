@@ -448,10 +448,8 @@ class Mdp_config:
 ##Status and to_do maintaining class
 class Progress_status:
 	
-	status= [0,0,0,0,0,0,0]
-	status_optional = [0]
-	to_do = [1,1,1,1,1,1,1]
-	to_do_optional = [0]
+	status= [0,0,0,0,0,0,0,0]
+	to_do = [1,1,1,1,1,0,1,1]
 	resume = 0
 	x2top = 0
 	results_format = 0
@@ -902,15 +900,7 @@ class CalculationWindow:
 		while stop == 1:
 			time.sleep(1)
 		while self.bar_var.get() != "Finished!" and error == "" and percent != 100:
-			percent = 0.0
-			for job in progress.to_do:
-				percent = percent + job
-			if self.tasks_to_do != 0:
-				percent = (self.tasks_to_do - percent) / self.tasks_to_do
-				percent = percent * 100
-			else:
-				percent = 100
-			self.bar_widget.configure(value=percent)
+			steps_status_bar("only_bar", self.bar_widget)
 			self.bar_var.set(status[1])
 			if stop == 1:
 				self.bar_var.set("User Stoped")
@@ -1094,15 +1084,15 @@ class RestraintsWindow:
 			md_file.options = md_file.options
 			md_file.update()
 			gromacs.restraints_index()
-			progress.to_do_optional[0] = 1
-			progress.to_do_optional = progress.to_do_optional
+			progress.to_do[5] = 1
+			progress.to_do = progress.to_do
 		elif check == 0:
 			config_button.configure(state=DISABLED)
 			md_file.options[2][0] = ";define"
 			md_file.options = md_file.options
 			md_file.update()
-			progress.to_do_optional[0] = 0
-			progress.to_do_optional = progress.to_do_optional
+			progress.to_do[5] = 0
+			progress.to_do = progress.to_do
 
 ##This function will create window, which allow you to choose PDB file if no file is loaded to PyMOL
 def select_file(v_name):
@@ -1170,9 +1160,9 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
 	else:
 		create_config_files()
 	##Correct set of restraints button
-	if progress.to_do_optional[0] == 0:
+	if progress.to_do[5] == 0:
 		config_button_restraints.configure(state=DISABLED)
-	elif progress.to_do_optional[0] == 1:
+	elif progress.to_do[5] == 1:
 		config_button_restraints.configure(state=ACTIVE)
 	##Correct set of results format
 	if prody_true == 1:
@@ -1183,7 +1173,7 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
 		v5_results.set(progress.results_format)
 	##If Resume is zero than initial Steps are all ON
 	if progress.resume == 0:
-		progress.to_do = [1,1,1,1,1,1,1]
+		progress.to_do = [1,1,1,1,1,0,1,1]
 
 ##This function creates files needed by the project
 def create_config_files():
@@ -1337,11 +1327,11 @@ def steps_configure(master, restraints_button):
 		check_var5 = IntVar(root)
 		check_var5.set(progress.to_do[4])
 		check_var6 = IntVar(root)
-		check_var6.set(progress.to_do_optional[0])
+		check_var6.set(progress.to_do[5])
 		check_var7 = IntVar(root)
-		check_var7.set(progress.to_do[5])
+		check_var7.set(progress.to_do[6])
 		check_var8 = IntVar(root)
-		check_var8.set(progress.to_do[6])
+		check_var8.set(progress.to_do[7])
 		#Variable for Resume Simulation
 		check_var9 = IntVar(root)
 		check_var9.set(progress.resume)
@@ -1373,29 +1363,20 @@ def steps_configure(master, restraints_button):
 		c6 = Checkbutton(frame1, text="Restraints (optional)", variable=check_var6, command=lambda: restraintsW.check(check_var6.get(), restraints_button))
 		c6.pack(side=TOP, anchor=W)
 		
-		c7 = Checkbutton(frame1, text="Molecular Dynamics Simulation", variable=check_var7, command=lambda: progress.to_do_update(5, check_var7.get()))
+		c7 = Checkbutton(frame1, text="Molecular Dynamics Simulation", variable=check_var7, command=lambda: progress.to_do_update(6, check_var7.get()))
 		c7.pack(side=TOP, anchor=W)
 		
-		c8 = Checkbutton(frame1, text="Generate multimodel PDB", variable=check_var8, command=lambda: progress.to_do_update(6, check_var8.get()))
+		c8 = Checkbutton(frame1, text="Generate multimodel PDB", variable=check_var8, command=lambda: progress.to_do_update(7, check_var8.get()))
 		c8.pack(side=TOP, anchor=W)
 		
 		l1 = Label(frame1, text="Simulation Progress:")
 		l1.pack(side=TOP)
 		
-		variable_list = [check_var1, check_var2, check_var3, check_var4, check_var5, check_var7, check_var8]
+		variable_list = [check_var1, check_var2, check_var3, check_var4, check_var5, check_var6, check_var7, check_var8]
 		progress_bar = Progressbar(frame1)
 		progress_bar.pack(side=TOP)
 		if check_var9.get() == 1:
-			percent = 0.0
-			for step in progress.status:
-				percent = percent + step
-			if progress.to_do_optional[0] == 1:
-				percent = percent + progress.status_optional[0]
-				percent = percent / 8
-			else:
-				percent = percent / 7
-			progress_bar.configure(value=percent)
-			progress_bar.update_idletasks()
+			steps_status_bar(check_var9.get(), progress_bar, variable_list)
 		
 		c9 = Checkbutton(frame1, text="Resume Simulation", variable=check_var9, command=lambda: steps_status_bar(check_var9.get(), progress_bar, variable_list))
 		c9.pack(side=TOP, anchor=W)
@@ -1405,37 +1386,46 @@ def steps_configure(master, restraints_button):
 	elif project_name == "nothing":
 		no_molecule_warning()
 
-##This function will show current progress in Steps Simulation Window if "Resume Simulation" is checked
-def steps_status_bar(var, bar, variable_list):
+##This function will show current progress on Progress Bar and operate with Steps Simulation Window for "Resume Simulation" button.
+def steps_status_bar(var, bar, variable_list=[]):
 	percent = 0.0
+	to_do_nr = 0
+	task_nr = 0
 	for step in progress.status:
-		percent = percent + step
-	if progress.to_do_optional[0] == 1:
-		percent = percent + progress.status_optional[0]
-		percent = percent / 8
-	else:
-		percent = percent / 7
-	percent = percent * 100
+		if step == 0 and progress.to_do[to_do_nr] == 1:
+			task_nr = task_nr + 1
+		elif step == 1:
+			task_nr = task_nr + 1
+			percent = percent + 100
+		to_do_nr = to_do_nr + 1
+	percent = percent / task_nr
+
 	if var == 1:
-		bar.configure(value=percent)
 		to_do_nr = 0
 		for step in progress.status:
 			if step == 1:
 				progress.to_do[to_do_nr] = 0
 				progress.to_do = progress.to_do
 				variable_list[to_do_nr].set(0)
-			elif step == 0:
+			elif step == 0 and to_do_nr != 5:
 				progress.to_do[to_do_nr] = 1
 				progress.to_do = progress.to_do
 				variable_list[to_do_nr].set(1)
 			to_do_nr = to_do_nr + 1
 		progress.resume = 1
 	elif var == 0:
-		bar.configure(value=(0.0))
-		progress.to_do = [1,1,1,1,1,1,1]
+		percent = 0.0
+		progress.to_do = [1,1,1,1,1,0,1,1]
+		to_do_nr = 0
 		for variable in variable_list:
-			variable.set(1)
+			if to_do_nr != 5:
+				variable.set(1)
+			elif to_do_nr != 5:
+				variable.set(0)
+			to_do_nr = to_do_nr + 1
 		progress.resume = 0
+	
+	bar.configure(value=percent)
 
 ##This function will receive status from gromacs2 class and change it to global variable.
 def status_update(input_status):
@@ -1541,26 +1531,30 @@ def dynamics(help_clean = ""):
 			save_options()
 	
 	##Restraints
-	if status[0] == "ok" and stop == 0 and progress.to_do_optional[0] == 1:
-		status = gromacs2.restraints(gromacs, project_name)
-	
-	##MD
 	if status[0] == "ok" and stop == 0 and progress.to_do[5] == 1:
-		status = gromacs2.md(file_path, gromacs, project_name)
+		status = gromacs2.restraints(gromacs, project_name)
 		if status[0] == "ok":
 			progress.status[5] = 1
 			progress.to_do[5] = 0
 			save_options()
 	
-	##Trjconv
+	##MD
 	if status[0] == "ok" and stop == 0 and progress.to_do[6] == 1:
+		status = gromacs2.md(file_path, gromacs, project_name)
+		if status[0] == "ok":
+			progress.status[6] = 1
+			progress.to_do[6] = 0
+			save_options()
+	
+	##Trjconv
+	if status[0] == "ok" and stop == 0 and progress.to_do[7] == 1:
 		status = gromacs2.trjconv(file_path, gromacs, project_name)
 	
 	##Showing multimodel
-	if status[0] == "ok" and stop == 0 and progress.to_do[6] == 1:
+	if status[0] == "ok" and stop == 0 and progress.to_do[7] == 1:
 		show_multipdb()
-		progress.status[6] = 1
-		progress.to_do[6] = 0
+		progress.status[7] = 1
+		progress.to_do[7] = 0
 		save_options()
 	elif status[0] == "fail":
 		print status[1]
