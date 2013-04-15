@@ -1354,7 +1354,7 @@ def steps_configure(master, restraints_button):
 		c3 = Checkbutton(frame1, text="Adding Water Box"+steps_status_done(2), variable=check_var3, command=lambda: progress.to_do_update(2, check_var3.get()))
 		c3.pack(side=TOP, anchor=W)
 		
-		c4 = Checkbutton(frame1, text="Energy Minimization"+steps_status_done(3), variable=check_var4, command=lambda: progress.to_do_update(3, check_var4.get()))
+		c4 = Checkbutton(frame1, text="Energy Minimization (optional)"+steps_status_done(3), variable=check_var4, command=lambda: progress.to_do_update(3, check_var4.get()))
 		c4.pack(side=TOP, anchor=W)
 		
 		c5 = Checkbutton(frame1, text="Position Restrained MD"+steps_status_done(4), variable=check_var5, command=lambda: progress.to_do_update(4, check_var5.get()))
@@ -1427,7 +1427,7 @@ def steps_status_bar(var, bar, variable_list=[]):
 	
 	bar.configure(value=percent)
 
-##Steps mark work as done
+##Steps mark work as done.
 def steps_status_done(step_nr):
 	if progress.status[step_nr] == 1:
 		return " [done]"
@@ -1528,6 +1528,9 @@ def dynamics(help_clean = ""):
 			progress.status[3] = 1
 			progress.to_do[3] = 0
 			save_options()
+	elif status[0] == "ok" and stop == 0 and progress.to_do[3] == 0 and progress.status[3] == 0:
+		shutil.copy(project_name+"_b4em.gro",project_name+"_b4pr.gro")
+		
 	
 	##PR
 	if status[0] == "ok" and stop == 0 and progress.to_do[4] == 1:
