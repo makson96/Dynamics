@@ -412,8 +412,20 @@ class Gromacs_input:
 
 class ProDy:
 	def start(self):
-		print "start"
-	
+		#Prepare ensemble
+		model = prody.parsePDB(project_name+"_multimodel.pdb")
+		model
+		ensemble = prody.Ensemble(project_name+' ensemble')
+		ensemble.setCoords(model.getCoords())
+		ensemble.addCoordset(model.getCoordsets())
+		ensemble.iterpose()
+		#PCA calculations
+		pca = prody.PCA(project_name)
+		pca.buildCovariance(ensemble)
+		pca.calcModes()
+		pca
+		#Write NMD file
+		prody.writeNMD(project_name+'.nmd', pca[:3], model)
 
 ##This class create and maintain abstraction mdp file representatives. em.mdp, pr.mdp, md.mdp
 class Mdp_config:
