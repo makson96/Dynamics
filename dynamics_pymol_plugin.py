@@ -29,7 +29,7 @@ try:
 	import prody
 	prody_true = 1
 except:
-	prody_true = 0 
+	prody_true = 0
 
 ##This class is responsible for interface to GROMACS. It will read all important data from GROMACS tools.
 class Gromacs_output:
@@ -410,6 +410,11 @@ class Gromacs_input:
 			status = ["fail", "Unable to generate multimodel PDB file"]
 		return status
 
+class ProDy:
+	def start(self):
+		print "start"
+	
+
 ##This class create and maintain abstraction mdp file representatives. em.mdp, pr.mdp, md.mdp
 class Mdp_config:
 	
@@ -587,6 +592,10 @@ morse = no"""
 	global gromacs, gromacs2
 	gromacs = Gromacs_output()
 	gromacs2 = Gromacs_input()
+	
+	if prody_true == 1:
+		global prody_input
+		prody_input = ProDy()
 
 	##Creating objects - data from those windows will be used by rootWindow
 	global calculationW, waterW, restraintsW
@@ -1080,6 +1089,7 @@ class RestraintsWindow:
 			
 	##This function will activ or disable restraints button in main window based on check box
 	def check(self, check, config_button):
+		global md_file, progress
 		if check == 1:
 			config_button.configure(state=ACTIVE)
 			md_file.options[2][0] = "define"
@@ -1562,13 +1572,15 @@ def dynamics(help_clean = ""):
 	##Trjconv
 	if status[0] == "ok" and stop == 0 and progress.to_do[7] == 1:
 		status = gromacs2.trjconv(file_path, gromacs, project_name)
-	
-	##Showing multimodel
-	if status[0] == "ok" and stop == 0 and progress.to_do[7] == 1:
-		show_multipdb()
 		progress.status[7] = 1
 		progress.to_do[7] = 0
 		save_options()
+	
+	##Showing multimodel
+	if status[0] == "ok" and stop == 0 and progress.results_format == 0:
+		show_multipdb()
+	elif status[0] == "ok" and stop == 0 and progress.results_format == 1:
+		prody_input.start()
 	elif status[0] == "fail":
 		print status[1]
 		if help_name.count(help_clean) != 1 and clean_name.count(help_clean) != 1:
