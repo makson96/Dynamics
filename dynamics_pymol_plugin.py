@@ -311,6 +311,7 @@ class Gromacs_input:
 		try:
 			os.remove(project_name+"_em.tpr")
 			os.remove(project_name+"_em.trr")
+			os.remove(project_name+"_b4pr.gro")
 		except:
 			pass
 
@@ -332,6 +333,7 @@ class Gromacs_input:
 		try:
 			os.remove(project_name+"_pr.tpr")
 			os.remove(project_name+"_pr.trr")
+			os.remove(project_name+"_b4md.gro")
 		except:
 			pass
 		
@@ -1357,7 +1359,7 @@ def steps_configure(master, restraints_button):
 		c4 = Checkbutton(frame1, text="Energy Minimization (optional)"+steps_status_done(3), variable=check_var4, command=lambda: progress.to_do_update(3, check_var4.get()))
 		c4.pack(side=TOP, anchor=W)
 		
-		c5 = Checkbutton(frame1, text="Position Restrained MD"+steps_status_done(4), variable=check_var5, command=lambda: progress.to_do_update(4, check_var5.get()))
+		c5 = Checkbutton(frame1, text="Position Restrained MD (optional)"+steps_status_done(4), variable=check_var5, command=lambda: progress.to_do_update(4, check_var5.get()))
 		c5.pack(side=TOP, anchor=W)
 		
 		c6 = Checkbutton(frame1, text="Restraints (optional)"+steps_status_done(5), variable=check_var6, command=lambda: restraintsW.check(check_var6.get(), restraints_button))
@@ -1529,8 +1531,7 @@ def dynamics(help_clean = ""):
 			progress.to_do[3] = 0
 			save_options()
 	elif status[0] == "ok" and stop == 0 and progress.to_do[3] == 0 and progress.status[3] == 0:
-		shutil.copy(project_name+"_b4em.gro",project_name+"_b4pr.gro")
-		
+		shutil.copy(project_name+"_b4em.gro",project_name+"_b4pr.gro")	
 	
 	##PR
 	if status[0] == "ok" and stop == 0 and progress.to_do[4] == 1:
@@ -1539,6 +1540,8 @@ def dynamics(help_clean = ""):
 			progress.status[4] = 1
 			progress.to_do[4] = 0
 			save_options()
+	elif status[0] == "ok" and stop == 0 and progress.to_do[4] == 0 and progress.status[4] == 0:
+		shutil.copy(project_name+"_b4pr.gro",project_name+"_b4md.gro")
 	
 	##Restraints
 	if status[0] == "ok" and stop == 0 and progress.to_do[5] == 1:
