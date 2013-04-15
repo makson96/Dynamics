@@ -1339,10 +1339,10 @@ def steps_configure(master, restraints_button):
 		frame1 = Frame(root)
 		frame1.pack(side=TOP)
 
-		c1 = Checkbutton(frame1, text="Save configuration files", variable=check_var1, command=lambda: progress.to_do_update(0, check_var1.get()))
+		c1 = Checkbutton(frame1, text="Save configuration files"+steps_status_done(0), variable=check_var1, command=lambda: progress.to_do_update(0, check_var1.get()))
 		c1.pack(side=TOP, anchor=W)
 		
-		c2 = Checkbutton(frame1, text="Generate topology file from pdb", variable=check_var2, command=lambda: progress.to_do_update(1, check_var2.get()))
+		c2 = Checkbutton(frame1, text="Generate topology file from pdb"+steps_status_done(1), variable=check_var2, command=lambda: progress.to_do_update(1, check_var2.get()))
 		c2.pack(side=TOP, anchor=W)
 		
 		r1 = Radiobutton(frame1, text="Use pdb2gmx tool", value=0, variable=v1, command=lambda: progress.x2top_update(v1.get()))
@@ -1351,22 +1351,22 @@ def steps_configure(master, restraints_button):
 		r2 = Radiobutton(frame1, text="Use x2top tool", value=1, variable=v1, command=lambda: progress.x2top_update(v1.get()))
 		r2.pack(side=TOP, anchor=W)
 		
-		c3 = Checkbutton(frame1, text="Adding Water Box", variable=check_var3, command=lambda: progress.to_do_update(2, check_var3.get()))
+		c3 = Checkbutton(frame1, text="Adding Water Box"+steps_status_done(2), variable=check_var3, command=lambda: progress.to_do_update(2, check_var3.get()))
 		c3.pack(side=TOP, anchor=W)
 		
-		c4 = Checkbutton(frame1, text="Energy Minimization", variable=check_var4, command=lambda: progress.to_do_update(3, check_var4.get()))
+		c4 = Checkbutton(frame1, text="Energy Minimization"+steps_status_done(3), variable=check_var4, command=lambda: progress.to_do_update(3, check_var4.get()))
 		c4.pack(side=TOP, anchor=W)
 		
-		c5 = Checkbutton(frame1, text="Position Restrained MD", variable=check_var5, command=lambda: progress.to_do_update(4, check_var5.get()))
+		c5 = Checkbutton(frame1, text="Position Restrained MD"+steps_status_done(4), variable=check_var5, command=lambda: progress.to_do_update(4, check_var5.get()))
 		c5.pack(side=TOP, anchor=W)
 		
-		c6 = Checkbutton(frame1, text="Restraints (optional)", variable=check_var6, command=lambda: restraintsW.check(check_var6.get(), restraints_button))
+		c6 = Checkbutton(frame1, text="Restraints (optional)"+steps_status_done(5), variable=check_var6, command=lambda: restraintsW.check(check_var6.get(), restraints_button))
 		c6.pack(side=TOP, anchor=W)
 		
-		c7 = Checkbutton(frame1, text="Molecular Dynamics Simulation", variable=check_var7, command=lambda: progress.to_do_update(6, check_var7.get()))
+		c7 = Checkbutton(frame1, text="Molecular Dynamics Simulation"+steps_status_done(6), variable=check_var7, command=lambda: progress.to_do_update(6, check_var7.get()))
 		c7.pack(side=TOP, anchor=W)
 		
-		c8 = Checkbutton(frame1, text="Generate multimodel PDB", variable=check_var8, command=lambda: progress.to_do_update(7, check_var8.get()))
+		c8 = Checkbutton(frame1, text="Generate multimodel PDB"+steps_status_done(7), variable=check_var8, command=lambda: progress.to_do_update(7, check_var8.get()))
 		c8.pack(side=TOP, anchor=W)
 		
 		l1 = Label(frame1, text="Simulation Progress:")
@@ -1426,6 +1426,13 @@ def steps_status_bar(var, bar, variable_list=[]):
 		progress.resume = 0
 	
 	bar.configure(value=percent)
+
+##Steps mark work as done
+def steps_status_done(step_nr):
+	if progress.status[step_nr] == 1:
+		return " [done]"
+	elif progress.status[step_nr] == 0:
+		return ""
 
 ##This function will receive status from gromacs2 class and change it to global variable.
 def status_update(input_status):
