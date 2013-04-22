@@ -413,7 +413,7 @@ class Gromacs_input:
 class ProDy:
 	def start(self):
 		#Prepare ensemble
-		model = prody.parsePDB(project_name+"_multimodel.pdb")
+		model = prody.parsePDB(project_name+"_multimodel.pdb", subset='calpha')
 		model
 		ensemble = prody.Ensemble(project_name+' ensemble')
 		ensemble.setCoords(model.getCoords())
