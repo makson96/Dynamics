@@ -18,7 +18,7 @@ from ttk import Progressbar, Scrollbar
 import tkSimpleDialog, tkMessageBox, tkFileDialog
 ##Import libraries from PyMOL specific work. Detect if running as a plugin. If true set plugin variable to 1.
 try:
-	from pymol import cmd, stored
+	from pymol import cmd, stored, cgo
 	cmd.get_version()
 	plugin = 1
 except:
@@ -410,8 +410,19 @@ class Gromacs_input:
 			status = ["fail", "Unable to generate multimodel PDB file"]
 		return status
 
-class ProDy:
-	def start(self):
+##This class will handle PCA by ProDy python library and show vectors from NMD file.
+class Vectors:
+	
+	nmd_name = []
+	nmd_atomnames = []
+	nmd_resnames = []
+	nmd_resids = []
+	nmd_bfactors = []
+	nmd_coordinates = []
+	nmd_mode = []
+	
+	##Change Multimodel PDB file into NMD vector file
+	def prody(self):
 		#Prepare ensemble
 		model = prody.parsePDB(project_name+"_multimodel.pdb", subset='calpha')
 		model
@@ -426,6 +437,105 @@ class ProDy:
 		pca
 		#Write NMD file
 		prody.writeNMD(project_name+'.nmd', pca[:3], model)
+	
+	##Read NMD file	
+	def nmd_format(self):
+		file_nmd = open(project_name+'.nmd',"r")
+		list_nmd = file_nmd.readlines()
+
+		self.nmd_mode=[]
+		self.nmd_scale_mode=[]
+		for line in list_nmd:
+			split_line = line.split()
+			if split_line[0] == "name":
+				self.nmd_name = split_line
+				self.nmd_name.pop(0)
+			elif split_line[0] == "atomnames":
+				self.nmd_atomnames = split_line
+				self.nmd_atomnames.pop(0)
+			elif split_line[0] == "resnames":
+				self.nmd_resnames = split_line
+				self.nmd_resnames.pop(0)
+			elif split_line[0] == "resids":
+				self.nmd_resids = split_line
+				self.nmd_resids.pop(0)
+			elif split_line[0] == "bfactors":
+				self.nmd_bfactors = split_line
+				self.nmd_bfactors.pop(0)
+			elif split_line[0] == "coordinates":
+				self.nmd_coordinates = split_line
+				self.nmd_coordinates.pop(0)
+			elif split_line[0] == "mode":
+				pre_mode = split_line
+				self.nmd_mode.append(pre_mode[3:])
+				self.nmd_scale_mode.append(pre_mode[2])
+	
+	##Show vectors from NMD file
+	def show_vectors(self):
+		hr,hg,hb= [1.0, 1.0, 1.0]
+		tr,tg,tb= [1.0, 1.0, 1.0]
+
+		x1=[]
+		y1=[]
+		z1=[]
+
+		coor = "x"
+		for coordinate in self.nmd_coordinates:
+			if coor == "x":
+				x1.append(float(coordinate))
+				coor = "y"
+			elif coor == "y":
+				y1.append(float(coordinate))
+				coor = "z"
+			elif coor == "z":
+				z1.append(float(coordinate))
+				coor = "x"
+
+		x2=[]
+		y2=[]
+		z2=[]
+
+		coor = "x"
+		coor_nr = 0
+		round_nr = 0
+		for mode in self.nmd_mode[0]:
+			if coor == "x":
+				x2.append((float(mode) + x1[coor_nr]))
+				coor = "y"
+			elif coor == "y":
+				y2.append((float(mode) + y1[coor_nr]))
+				coor = "z"
+			elif coor == "z":
+				z2.append((float(mode) + z1[coor_nr]))
+				coor = "x"
+			round_nr = round_nr + 1
+			if round_nr == 3:
+				round_nr = 0
+				coor_nr = coor_nr + 1
+
+		coor_nr = 0
+		for position in x1:
+			arrow=[]
+			arrow_head_length = 0.3
+			arrow_tail_radius = 0.2
+			arrow_head_radius= 0.3
+	
+			vectorx=x2[coor_nr]-x1[coor_nr]
+			vectory=y2[coor_nr]-y1[coor_nr]
+			vectorz=z2[coor_nr]-z1[coor_nr]
+
+			x3=x2[coor_nr] - (vectorx * (arrow_head_length))
+			y3=y2[coor_nr] - (vectory * (arrow_head_length))
+			z3=z2[coor_nr] - (vectorz * (arrow_head_length))
+	
+			tail = [cgo.CYLINDER, x1[coor_nr],y1[coor_nr],z1[coor_nr],x3,y3,z3,arrow_tail_radius,tr,tg,tb,tr,tg,tb]
+
+			arrow.extend(tail)
+
+			head=[cgo.CONE, x3, y3, z3, x2[coor_nr], y2[coor_nr], z2[coor_nr], arrow_head_radius, 0.0, hr, hg, hb, hr, hg, hb, 1.0, 1.0 ]
+			arrow.extend(head)
+			cmd.load_cgo(arrow,"Mode Vector "+ str(coor_nr))
+			coor_nr = coor_nr+1
 
 ##This class create and maintain abstraction mdp file representatives. em.mdp, pr.mdp, md.mdp
 class Mdp_config:
@@ -606,8 +716,8 @@ morse = no"""
 	gromacs2 = Gromacs_input()
 	
 	if prody_true == 1:
-		global prody_input
-		prody_input = ProDy()
+		global vectors_prody
+		vectors_prody = Vectors()
 
 	##Creating objects - data from those windows will be used by rootWindow
 	global calculationW, waterW, restraintsW
@@ -1592,7 +1702,10 @@ def dynamics(help_clean = ""):
 	if status[0] == "ok" and stop == 0 and progress.results_format == 0:
 		show_multipdb()
 	elif status[0] == "ok" and stop == 0 and progress.results_format == 1:
-		prody_input.start()
+		show_multipdb()
+		vectors_prody.prody()
+		vectors_prody.nmd_format()
+		vectors_prody.show_vectors()
 	elif status[0] == "fail":
 		print status[1]
 		if help_name.count(help_clean) != 1 and clean_name.count(help_clean) != 1:
