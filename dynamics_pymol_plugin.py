@@ -1775,7 +1775,7 @@ def load_file(file_path):
 
 ##Save all settings to options.pickle file
 def save_options():
-	print "saving options"
+	print "updating project files"
 	if os.path.isdir(project_dir) == False:
 		os.makedirs(project_dir)
 	destination_option = file(project_dir + "options.pickle", "w")
