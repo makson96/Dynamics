@@ -494,19 +494,22 @@ class Vectors:
 		x2=[]
 		y2=[]
 		z2=[]
+		
+		#This factor is provided to make vector length more like in NMWiz. More investigation is needed to get exact formula.
+		approximation_factor = 16.6
 
 		coor = "x"
 		coor_nr = 0
 		round_nr = 0
 		for mode in self.nmd_mode[0]:
 			if coor == "x":
-				x2.append((float(mode) + x1[coor_nr]))
+				x2.append(float(mode) * float(self.nmd_scale_mode[0]) * approximation_factor + x1[coor_nr])
 				coor = "y"
 			elif coor == "y":
-				y2.append((float(mode) + y1[coor_nr]))
+				y2.append(float(mode) * float(self.nmd_scale_mode[0]) * approximation_factor + y1[coor_nr])
 				coor = "z"
 			elif coor == "z":
-				z2.append((float(mode) + z1[coor_nr]))
+				z2.append(float(mode) * float(self.nmd_scale_mode[0]) * approximation_factor + z1[coor_nr])
 				coor = "x"
 			round_nr = round_nr + 1
 			if round_nr == 3:
@@ -1685,10 +1688,10 @@ def dynamics(help_clean = ""):
 	if status[0] == "ok" and stop == 0 and progress.results_format == 0:
 		show_multipdb()
 	elif status[0] == "ok" and stop == 0 and progress.results_format == 1:
-		show_multipdb()
 		vectors_prody.prody()
 		vectors_prody.nmd_format()
 		vectors_prody.show_vectors()
+		show_multipdb()
 	elif status[0] == "fail":
 		print status[1]
 		if help_name.count(help_clean) != 1 and clean_name.count(help_clean) != 1:
