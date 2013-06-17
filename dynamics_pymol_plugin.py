@@ -1000,6 +1000,7 @@ class CalculationWindow:
 			
 		
 		root = Tk()
+		balloon = Pmw.Balloon(root)
 		root.wm_title("Calculation Window")
 		frame1 = Frame(root)
 		frame1.pack(side=TOP)
@@ -1038,7 +1039,13 @@ class CalculationWindow:
 			tasks_nr = tasks_nr + task
 		self.tasks_to_do = tasks_nr
 		thread.start_new_thread(self.bar_update, ())
-	
+
+		#Tooltips
+		balloon.bind(exit_button, "Exit the Plugin")
+		balloon.bind(save_button, "Save current project to tar.bz2 archive")
+		balloon.bind(stop_button, "Cease calculations")
+		balloon.bind(start_button, "Start/Resume calculations")
+
 		root.mainloop()
 
 	##This function will update status bar during molecular dynamics simulation
