@@ -515,26 +515,9 @@ class Vectors:
 
 		coor_nr = 0
 		for position in x1:
-			arrow=[]
-			arrow_head_length = 0.3
-			arrow_tail_radius = 0.2
-			arrow_head_radius= 0.3
-	
-			vectorx=x2[coor_nr]-x1[coor_nr]
-			vectory=y2[coor_nr]-y1[coor_nr]
-			vectorz=z2[coor_nr]-z1[coor_nr]
-
-			x3=x2[coor_nr] - (vectorx * (arrow_head_length))
-			y3=y2[coor_nr] - (vectory * (arrow_head_length))
-			z3=z2[coor_nr] - (vectorz * (arrow_head_length))
-	
-			tail = [cgo.CYLINDER, x1[coor_nr],y1[coor_nr],z1[coor_nr],x3,y3,z3,arrow_tail_radius,tr,tg,tb,tr,tg,tb]
-
-			arrow.extend(tail)
-
-			head=[cgo.CONE, x3, y3, z3, x2[coor_nr], y2[coor_nr], z2[coor_nr], arrow_head_radius, 0.0, hr, hg, hb, hr, hg, hb, 1.0, 1.0 ]
-			arrow.extend(head)
-			cmd.load_cgo(arrow,"Mode Vector "+ str(coor_nr))
+			arrow_head_radius= 0.15
+			cone=[cgo.CONE, x1[coor_nr], y1[coor_nr], z1[coor_nr], x2[coor_nr], y2[coor_nr], z2[coor_nr], arrow_head_radius, 0.0, hr, hg, hb, hr, hg, hb, 1.0, 1.0 ]
+			cmd.load_cgo(cone,"Mode Vector "+ str(coor_nr))
 			coor_nr = coor_nr+1
 
 ##This class create and maintain abstraction mdp file representatives. em.mdp, pr.mdp, md.mdp
