@@ -54,6 +54,9 @@ class Gromacs_output:
 			version = lista_gromacs[4].split("  ")
 			gromacs_version = "GROMACS " + version[15]
 			print "Found " + gromacs_version
+			#Warn about issues with GROMACS 4.6.0
+			if gromacs_version == "GROMACS VERSION 4.6":
+				print "Warning. GROMACS 4.6.0 may fail. Please upgrade to newer version of GROMACS"
 		else:
 			print "GROMACS not detected."
 			import platform
