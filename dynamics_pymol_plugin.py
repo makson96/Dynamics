@@ -15,7 +15,7 @@ import subprocess, time, os, shutil, thread, pickle
 ##Import libraries for tk graphic interface
 from Tkinter import *
 from ttk import Progressbar, Scrollbar
-import tkSimpleDialog, tkMessageBox, tkFileDialog
+import tkSimpleDialog, tkMessageBox, tkFileDialog, Pmw
 ##Import libraries from PyMOL specific work. Detect if running as a plugin. If true set plugin variable to 1.
 try:
 	from pymol import cmd, stored, cgo
@@ -727,6 +727,7 @@ morse = no"""
 def rootWindow():
 
 	root = Tk()
+	balloon = Pmw.Balloon(root)
 	root.wm_title("Dynamics"+plugin_ver)
 	
 	##Detect list of PyMOL loaded PDB files if no files than list "nothing"
@@ -787,7 +788,7 @@ def rootWindow():
 	frame1_1 = Frame(frame1, borderwidth=1, relief=RAISED)
 	frame1_1.pack(side=LEFT)
 	
-	w1 = Label(frame1_1, text="Molecules")
+	w1 = Label(frame1_1, text="Molecules", font = "bold")
 	w1.pack(side=TOP)
 	
 	frame1_1a = Frame(frame1_1)
@@ -798,6 +799,8 @@ def rootWindow():
 		for molecule in allNames:
 			radio_button1 = Radiobutton(frame1_1a, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button, v5_results, radiobutton_results_format))
 			radio_button1.pack(side=TOP, anchor=W)
+			#Tooltip
+			balloon.bind(radio_button1, "Select molecule for calculations")
 	#If no loaded PDB files, than add button to choose one
 	else:
 		w1_1 = Label(frame1_1a, text="Choose PDB file")
@@ -808,6 +811,8 @@ def rootWindow():
 		label1.pack(side=LEFT)
 		button_e1 = Button(frame1_1_1, text = "Browse", command=lambda: select_file(v1_name))
 		button_e1.pack(side=LEFT)
+		#Tooltip
+		balloon.bind(button_e1, "Select molecule for calculations")
 	
 	#List of previous projects
 	if os.path.isdir(dynamics_dir) == True:
@@ -833,27 +838,33 @@ def rootWindow():
 				else:
 					radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button, v5_results, radiobutton_results_format))
 					radio_button1.pack(side=TOP, anchor=W)
+					#Tooltip
+					balloon.bind(radio_button1, "Select molecule for calculations")
 	
 	#List of group for final model
-	w2 = Label(frame1_1, text="Group")
+	w2 = Label(frame1_1, text="Group", font = "bold")
 	w2.pack(side=TOP)
 	for group in gromacs.group_list:
 		radio_button2 = Radiobutton(frame1_1, text=group[1], value=group[0], variable=v2_group, command=lambda: gromacs2.update(v2_group.get(), gromacs2.box_type, gromacs2.box_distance, gromacs2.box_density))
 		radio_button2.pack(side=TOP, anchor=W)
+		#Tooltip
+		balloon.bind(radio_button2, "Select group of atoms for final display")
 	
 	frame1_2 = Frame(frame1, borderwidth=1, relief=RAISED)
 	frame1_2.pack(side=LEFT)
 	
 	#List of available force fields
-	w3 = Label(frame1_2, text="Force fields", anchor=E)
+	w3 = Label(frame1_2, text="Force fields", anchor=E, font = "bold")
 	w3.pack(side=TOP)
 
 	for force in gromacs.force_list:
 		radio_button3 = Radiobutton(frame1_2, text=force[1], value=force[0], variable=v3_force, command=lambda : waterW.change(v4_water, water_v, v3_force.get()))
 		radio_button3.pack(side=TOP, anchor=W)
+		#Tooltip
+		balloon.bind(radio_button3, "Select force field which will be used for dynamics simulation")
 
 	#Label of choosen water model
-	w4 = Label(frame1_2, text="Water Model", anchor=E)
+	w4 = Label(frame1_2, text="Water Model", anchor=E, font = "bold")
 	w4.pack(side=TOP)
 	
 	frame1_2_1 = Frame(frame1_2)
@@ -873,7 +884,7 @@ def rootWindow():
 	frame1_3_1 = Frame(frame1_3, borderwidth=1, relief=RAISED)
 	frame1_3_1.pack(side=TOP)
 	
-	w4 = Label(frame1_3_1, text="Configuration")
+	w4 = Label(frame1_3_1, text="Configuration", font = "bold")
 	w4.pack(side=TOP)
 	
 	#Button for configuration of Simulation Steps
@@ -924,7 +935,7 @@ def rootWindow():
 	frame2.pack(side=TOP)
 	
 	#Additional Buttons
-	quit_button = Button(frame2, text = "Cancel", command=root.destroy)
+	quit_button = Button(frame2, text = "Quit", command=root.destroy)
 	quit_button.pack(side=LEFT)
 	
 	clean_button = Button(frame2, text = "Clean", command=cleanMessage)
@@ -944,7 +955,22 @@ def rootWindow():
 	
 	#Initial configuration
 	set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button, v5_results, radiobutton_results_format)
-		
+	
+	#Tooltips
+	balloon.bind(water_button, "Choose one of the Water Models for dynamics simulation")
+	balloon.bind(waterbox_button, "Configure Water Model parameters")
+	balloon.bind(steps_button, "Select calculations which needs to be performed for dynamics simulation")
+	balloon.bind(em_button2, "Configure Energy Minimization parameters")
+	balloon.bind(pr_button2, "Configure Position Restrained MD parameters")
+	balloon.bind(md_button2, "Configure Molecular Dynamics Simulation parameters")
+	balloon.bind(check1_button, "Selecet which atoms should be restrainted (unlock in Simulation Steps)")
+	balloon.bind(quit_button, "Exit the Plugin")
+	balloon.bind(clean_button, "Remove all temporary files (including previous projects)")
+	balloon.bind(help_button, "Display short help")
+	balloon.bind(save_button, "Save current project to tar.bz2 archive")
+	balloon.bind(load_button, "Load tar.bz2 archive with project files for further processing")
+	balloon.bind(count_button, "Go to the next window and perform Molecular Dynamics Simulation")
+	
 	root.mainloop()
 
 ##Molecular Dynamics Performing window
