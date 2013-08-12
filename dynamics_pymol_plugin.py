@@ -1059,19 +1059,13 @@ class CalculationWindow:
 			self.queue_status.put(status[1])
 			if stop == 1:
 				self.queue_status.put("User Stoped")
-		if self.bar_var.get() == "Finished!":
+		if self.bar_var.get() == "Finished!" or percent == 100:
 			print "Finished!"
 			percent = 100
 			self.queue_percent.put(percent)
-			if plugin == 0:
-				root = Tk()
-				file = tkFileDialog.asksaveasfile(parent=root, mode='w' ,title='Choose final multimodel file to save')
-				try:
-					os.remove(file.name)
-					shutil.copy(project_dir + project_name + "_multimodel.pdb", file.name+".pdb")
-				except:
-					pass
-				root.destroy()
+			interpretation = InterpretationWindow()
+			interpretation()
+			#print "int1"
 		elif error != "":
 			self.queue_status.put("Fatal Error")
 			root = Tk()
@@ -1109,6 +1103,111 @@ class CalculationWindow:
 			stop = 1
 			self.stop_button.configure(state=DISABLED)
 			self.start_button.configure(state=ACTIVE)
+
+##This window will allow to manipulate final molecule to interprate MD simulation results
+class InterpretationWindow:
+	
+	def __init__(self):
+		#print "int2"
+		if plugin == 0:
+			self.shell()
+		elif plugin == 1:
+			root = Tk()
+			self.window(root)
+			root.mainloop()
+	
+	def shell(self):
+		root = Tk()
+		file = tkFileDialog.asksaveasfile(parent=root, mode='w' ,title='Choose final multimodel file to save')
+		try:
+			os.remove(file.name)
+			shutil.copy(project_dir + project_name + "_multimodel.pdb", file.name+".pdb")
+		except:
+			pass
+		root.destroy()
+	
+	def window(self, root):
+		root.wm_title("MD Interpretation")
+		tentry_value = StringVar(root)
+		tentry_value.set("0.0")
+		sentry_value = StringVar(root)
+		sentry_value.set("1.0")
+		
+		frame1 = Frame(root)
+		frame1.pack(side=TOP)
+		alabel = Label(frame1, text="Animation", font = "bold")
+		alabel.pack()
+		frame1_1 = Frame(frame1)
+		frame1_1.pack(side=TOP)
+		play_button = Button(frame1_1, text = "PLAY")#, command=lambda : )
+		play_button.pack(side=LEFT)
+		pause_button = Button(frame1_1, text = "PAUSE")#, command=lambda : )
+		pause_button.pack(side=LEFT)
+		frame1_2 = Frame(frame1)
+		frame1_2.pack(side=TOP, anchor=W)
+		tlabel = Label(frame1_2, text="Time [ns]")
+		tlabel.pack(side=LEFT)
+		tentry = Entry(frame1_2, textvariable=tentry_value)
+		tentry.pack(side=LEFT)
+		tok_button = Button(frame1_2, text = "OK")#, command=lambda : )
+		tok_button.pack(side=LEFT)
+		frame1_3 = Frame(frame1)
+		frame1_3.pack(side=TOP, anchor=W)
+		mlabel = Label(frame1_3, text="Model Type")
+		mlabel.pack(side=LEFT)
+		lines_button = Button(frame1_3, text = "Lines")#, command=lambda : )
+		lines_button.pack(side=LEFT)
+		sticks_button = Button(frame1_3, text = "Sticks")#, command=lambda : )
+		sticks_button.pack(side=LEFT)
+		ribbon_button = Button(frame1_3, text = "Ribbon")#, command=lambda : )
+		ribbon_button.pack(side=LEFT)
+		cartoon_button = Button(frame1_3, text = "Cartoon")#, command=lambda : )
+		cartoon_button.pack(side=LEFT)
+		
+		vlabel = Label(frame1, text="Vectors (Require ProDy)", font = "bold")
+		vlabel.pack()
+		frame1_4 = Frame(frame1)
+		frame1_4.pack(side=TOP, anchor=W)
+		modlabel = Label(frame1_4, text="Mode Nr")
+		modlabel.pack(side=LEFT)
+		one_button = Button(frame1_4, text = "1")#, command=lambda : )
+		one_button.pack(side=LEFT)
+		two_button = Button(frame1_4, text = "2")#, command=lambda : )
+		two_button.pack(side=LEFT)
+		three_button = Button(frame1_4, text = "3")#, command=lambda : )
+		three_button.pack(side=LEFT)
+		frame1_5 = Frame(frame1)
+		frame1_5.pack(side=TOP, anchor=W)
+		slabel = Label(frame1_5, text="Scale")
+		slabel.pack(side=LEFT)
+		sentry = Entry(frame1_5, textvariable=sentry_value)
+		sentry.pack(side=LEFT)
+		sok_button = Button(frame1_5, text = "OK")#, command=lambda : )
+		sok_button.pack(side=LEFT)
+		frame1_6 = Frame(frame1)
+		frame1_6.pack(side=TOP, anchor=W)
+		modlabel = Label(frame1_6, text="Color")
+		modlabel.pack(side=LEFT)
+		gray_button = Button(frame1_6, text = "Gray")#, command=lambda : )
+		gray_button.pack(side=LEFT)
+		red_button = Button(frame1_6, text = "Red")#, command=lambda : )
+		red_button.pack(side=LEFT)
+		blue_button = Button(frame1_6, text = "Blue")#, command=lambda : )
+		blue_button.pack(side=LEFT)
+		
+		exit_button = Button(frame1, text = "Exit", command=root.destroy)
+		exit_button.pack()
+		
+		if prody_true != 1:
+			print "No ProDy found"
+			one_button.configure(state=DISABLED)
+			two_button.configure(state=DISABLED)
+			three_button.configure(state=DISABLED)
+			sok_button.configure(state=DISABLED)
+			gray_button.configure(state=DISABLED)
+			red_button.configure(state=DISABLED)
+			blue_button.configure(state=DISABLED)
+		
 
 ##Gather all water options windows in one class
 class WaterWindows:
