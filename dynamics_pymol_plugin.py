@@ -11,7 +11,7 @@ plugin_ver = " 2.0.0pre"
 
 ##--Import libraries--
 ##Import nativ python libraries
-import subprocess, time, os, shutil, thread, pickle
+import subprocess, time, os, shutil, thread, pickle, Queue
 ##Import libraries for tk graphic interface
 from Tkinter import *
 from ttk import Progressbar, Scrollbar
@@ -571,6 +571,7 @@ class Progress_status:
 	resume = 0
 	x2top = 0
 	results_format = 0
+	steps = 7
 	
 	def to_do_update(self, position, value):
 		if type(position) == type(1):
@@ -599,7 +600,7 @@ class Progress_status:
 ##init function - puts plugin into menu and starts 'init_function' after clicking.
 def __init__(self):
 	self.menuBar.addmenuitem("Plugin", "command", "dynamics"+plugin_ver, label = "dynamics"+plugin_ver,
-	command = init_function)#rootWindow)
+	command = init_function)
 
 ##This function will initialize all plugin stufs
 def init_function(shell=0):
@@ -982,24 +983,23 @@ class CalculationWindow:
 	start_button = ""
 	stop_button = ""
 	
+	def __init__(self):
+		self.queue_status = Queue.Queue()
+		self.queue_percent = Queue.Queue()
+	
+	##This will prevent Calculation Window to display if non protein has been selected
 	def check_window(self, master):
 		if project_name != "nothing":
-			self.window(master)
+			master.destroy()
+			root = Tk()
+			self.window(root)
+			root.mainloop()
 		elif project_name == "nothing":
 			no_molecule_warning()
 	
 	##This function will create main Calculation Window
-	def window(self, master):
+	def window(self, root):
 		print project_name
-		master.destroy()
-
-		if project_name == 'nothing':
-			global error, status
-			status = ["fail", "No molecule was selected"]
-			error = "No molecule was selected in the main window. Simulation can not proceed."
-			
-		
-		root = Tk()
 		balloon = Pmw.Balloon(root)
 		root.wm_title("Calculation Window")
 		frame1 = Frame(root)
@@ -1039,6 +1039,7 @@ class CalculationWindow:
 			tasks_nr = tasks_nr + task
 		self.tasks_to_do = tasks_nr
 		thread.start_new_thread(self.bar_update, ())
+		self.bar_display(root)
 
 		#Tooltips
 		balloon.bind(exit_button, "Exit the Plugin")
@@ -1046,24 +1047,22 @@ class CalculationWindow:
 		balloon.bind(stop_button, "Cease calculations")
 		balloon.bind(start_button, "Start/Resume calculations")
 
-		root.mainloop()
-
 	##This function will update status bar during molecular dynamics simulation
 	def bar_update(self):
 		global error
 		percent = 0.0
 		while stop == 1:
-			time.sleep(1)
+			time.sleep(0.5)
 		while self.bar_var.get() != "Finished!" and error == "" and percent != 100:
-			steps_status_bar("only_bar", self.bar_widget)
-			self.bar_var.set(status[1])
+			percent = steps_status_bar("only_bar")
+			self.queue_percent.put(percent)
+			self.queue_status.put(status[1])
 			if stop == 1:
-				self.bar_var.set("User Stoped")
-			time.sleep(1)
+				self.queue_status.put("User Stoped")
 		if self.bar_var.get() == "Finished!":
 			print "Finished!"
-			self.bar_widget.configure(value=100)
-			self.bar_widget.update_idletasks()
+			percent = 100
+			self.queue_percent.put(percent)
 			if plugin == 0:
 				root = Tk()
 				file = tkFileDialog.asksaveasfile(parent=root, mode='w' ,title='Choose final multimodel file to save')
@@ -1074,7 +1073,7 @@ class CalculationWindow:
 					pass
 				root.destroy()
 		elif error != "":
-			self.bar_var.set("Fatal Error")
+			self.queue_status.put("Fatal Error")
 			root = Tk()
 			root.wm_title("GROMACS Error Message")
 			frame = Frame(root)
@@ -1085,7 +1084,19 @@ class CalculationWindow:
 			ok_button.pack()
 			root.mainloop()
 			error = ""
-
+	
+	##This function will update status bar in thread safe manner
+	def bar_display(self, root):
+		try:
+			while 1:
+				status = self.queue_status.get_nowait()
+				percent = self.queue_percent.get_nowait()
+				self.bar_var.set(status)
+				self.bar_widget.configure(value=percent)
+		except Queue.Empty:
+			pass
+		root.after(100, self.bar_display, root)
+	
 	##This function will change global value if stop is clicked during simulation
 	def start_counting(self, value):
 		global stop
@@ -1532,30 +1543,30 @@ def steps_configure(master, restraints_button):
 		progress_bar = Progressbar(frame1)
 		progress_bar.pack(side=TOP)
 		if check_var9.get() == 1:
-			steps_status_bar(check_var9.get(), progress_bar, variable_list)
+			percent = steps_status_bar(check_var9.get(), variable_list)
+			progress_bar.configure(value=percent)
 		
-		c9 = Checkbutton(frame1, text="Resume Simulation", variable=check_var9, command=lambda: steps_status_bar(check_var9.get(), progress_bar, variable_list))
+		c9 = Checkbutton(frame1, text="Resume Simulation", variable=check_var9, command=lambda: steps_click_resume(check_var9.get(), progress_bar, variable_list))
 		c9.pack(side=TOP, anchor=W)
 		
-		b1 = Button(root, text="OK", command=root.destroy)
+		b1 = Button(root, text="OK", command=lambda: steps_click_ok (root))
 		b1.pack(side=TOP)
 	elif project_name == "nothing":
 		no_molecule_warning()
 
-##This function will show current progress on Progress Bar and operate with Steps Simulation Window for "Resume Simulation" button.
-def steps_status_bar(var, bar, variable_list=[]):
-	percent = 0.0
-	to_do_nr = 0
-	task_nr = 0
-	for step in progress.status:
-		if step == 0 and progress.to_do[to_do_nr] == 1:
-			task_nr = task_nr + 1
-		elif step == 1:
-			task_nr = task_nr + 1
-			percent = percent + 100
-		to_do_nr = to_do_nr + 1
-	percent = percent / task_nr
+##This function will update status bar if checkbutton is clicked
+def steps_click_resume(var, bar, variable_list=[]):
+	percent = steps_status_bar(var, variable_list)
+	bar.configure(value=percent)
 
+##This function will close steps window and update number of steps to do
+def steps_click_ok (root):
+	root.destroy()
+	progress.steps = sum(progress.to_do)
+
+##This function will show current progress on Progress Bar and operate with Steps Simulation Window for "Resume Simulation" button.
+def steps_status_bar(var, variable_list=[]):
+	percent = 0.0
 	if var == 1:
 		to_do_nr = 0
 		for step in progress.status:
@@ -1563,7 +1574,7 @@ def steps_status_bar(var, bar, variable_list=[]):
 				progress.to_do[to_do_nr] = 0
 				progress.to_do = progress.to_do
 				variable_list[to_do_nr].set(0)
-			elif step == 0 and to_do_nr != 5:
+			elif step == 0 and to_do_nr != 5: #Exclud optional steps (5 = restraints)
 				progress.to_do[to_do_nr] = 1
 				progress.to_do = progress.to_do
 				variable_list[to_do_nr].set(1)
@@ -1580,8 +1591,13 @@ def steps_status_bar(var, bar, variable_list=[]):
 				variable.set(0)
 			to_do_nr = to_do_nr + 1
 		progress.resume = 0
+
+	if progress.steps != 0:
+		percent = ((progress.steps - sum(progress.to_do)) * 100) / progress.steps
+	else:
+		percent = 100
 	
-	bar.configure(value=percent)
+	return percent
 
 ##Steps mark work as done.
 def steps_status_done(step_nr):
@@ -1892,7 +1908,6 @@ def dynamics_cmd(name, options=["load_file"]):
 			os.makedirs(project_dir)
 		create_config_files()
 	elif plugin == 0:
-		#print dynamics_dir
 		load_file(options[0])
 	project_name, project_dir = dynamics()
 	return project_name, project_dir
