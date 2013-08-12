@@ -566,11 +566,10 @@ class Mdp_config:
 ##Status and to_do maintaining class
 class Progress_status:
 	
-	status= [0,0,0,0,0,0,0,0]
-	to_do = [1,1,1,1,1,0,1,1]
+	status= [0,0,0,0,0,0,0,0,0]
+	to_do = [1,1,1,1,1,0,1,1,1]
 	resume = 0
 	x2top = 0
-	results_format = 0
 	steps = 7
 	
 	def to_do_update(self, position, value):
@@ -582,11 +581,6 @@ class Progress_status:
 	def x2top_update(self, value):
 		if type(value) == type(1):
 			self.x2top = value
-			
-	def results_format_update(self, value):
-		if type(value) == type(1):
-			self.results_format = value
-		print self.results_format
 	
 	def to_do_status(self):
 		to_do = []
@@ -773,9 +767,6 @@ def rootWindow():
 	water_v = StringVar(root)
 	water_v.set(gromacs.water_list[0][1])
 	
-	v5_results = IntVar(root)
-	v5_results.set(0)
-	
 	##Start drawing interface
 	frame0 = Frame(root)
 	frame0.pack(side=TOP)
@@ -798,7 +789,7 @@ def rootWindow():
 	#List of PyMOL loaded PDB files
 	if allNames[0] != "nothing":
 		for molecule in allNames:
-			radio_button1 = Radiobutton(frame1_1a, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button, v5_results, radiobutton_results_format))
+			radio_button1 = Radiobutton(frame1_1a, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button, prody_button))
 			radio_button1.pack(side=TOP, anchor=W)
 			#Tooltip
 			balloon.bind(radio_button1, "Select molecule for calculations")
@@ -837,7 +828,7 @@ def rootWindow():
 				if molecule1[0] == "gromacs":
 					pass
 				else:
-					radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button, v5_results, radiobutton_results_format))
+					radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button, prody_button))
 					radio_button1.pack(side=TOP, anchor=W)
 					#Tooltip
 					balloon.bind(radio_button1, "Select molecule for calculations")
@@ -923,14 +914,12 @@ def rootWindow():
 	check1_button = Button(frame1_3_1, text = "Configure", command=lambda: restraintsW.window(root))
 	check1_button.pack(side=TOP)
 	
-	#Radiobutton for choosing form of results
-	re_label = Label(frame1_3_1, text="Form of results")
+	#Button for ProDy options
+	re_label = Label(frame1_3_1, text="Vectors Options")
 	re_label.pack(side=TOP)
 	
-	radiobutton_results_format = Radiobutton(frame1_3_1, text="Animation", value=0, variable=v5_results, command=lambda: progress.results_format_update(v5_results.get()))
-	radiobutton_results_format.pack(side=TOP, anchor=W)
-	radiobutton_results_format = Radiobutton(frame1_3_1, text="Vectors", value=1, variable=v5_results, command=lambda: progress.results_format_update(v5_results.get()))
-	radiobutton_results_format.pack(side=TOP, anchor=W) 
+	prody_button = Button(frame1_3_1, text = "Configure")#, command=lambda: )
+	prody_button.pack(side=TOP)
 	
 	frame2 = Frame(root)
 	frame2.pack(side=TOP)
@@ -955,7 +944,7 @@ def rootWindow():
 	count_button.pack(side=LEFT)
 	
 	#Initial configuration
-	set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button, v5_results, radiobutton_results_format)
+	set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button, prody_button)
 	
 	#Tooltips
 	balloon.bind(water_button, "Choose one of the Water Models for dynamics simulation")
@@ -1063,9 +1052,6 @@ class CalculationWindow:
 			print "Finished!"
 			percent = 100
 			self.queue_percent.put(percent)
-			interpretation = InterpretationWindow()
-			interpretation()
-			#print "int1"
 		elif error != "":
 			self.queue_status.put("Fatal Error")
 			root = Tk()
@@ -1108,7 +1094,6 @@ class CalculationWindow:
 class InterpretationWindow:
 	
 	def __init__(self):
-		#print "int2"
 		if plugin == 0:
 			self.shell()
 		elif plugin == 1:
@@ -1405,12 +1390,12 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
 		v3_force.set(gromacs.force_list[gromacs2.force-1][0])
 		v4_water.set(gromacs.water_list[gromacs2.water-1][0])
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
-		radio_button1 = Radiobutton(frame1_1a, text=project_name, value=project_name, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, config_button_restraints, v5_results, radiobutton_results_format))
+		radio_button1 = Radiobutton(frame1_1a, text=project_name, value=project_name, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, config_button_restraints, prody_button))
 		radio_button1.pack(side=TOP, anchor=W)
 	root.destroy()
 
 ##This function sets variables after choosing new molecule
-def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_restraints, v5_results, radiobutton_results_format):
+def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_restraints, prody_button):
 	print "Set Variables"
 	##Set project name and dir
 	if name != "":
@@ -1430,16 +1415,12 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
 		config_button_restraints.configure(state=DISABLED)
 	elif progress.to_do[5] == 1:
 		config_button_restraints.configure(state=ACTIVE)
-	##Correct set of results format
-	if prody_true == 1:
-		v5_results.set(progress.results_format)
-	else:
-		radiobutton_results_format.configure(state=DISABLED)
-		progress.results_format = 0
-		v5_results.set(progress.results_format)
+	##Disable configuration of ProDy (Vectors) if ProDy is not installed
+	if prody_true != 1:
+		prody_button.configure(state=DISABLED)
 	##If Resume is zero than initial Steps are all ON
 	if progress.resume == 0:
-		progress.to_do = [1,1,1,1,1,0,1,1]
+		progress.to_do = [1,1,1,1,1,0,1,1,1]
 
 ##This function creates files needed by the project
 def create_config_files():
@@ -1515,7 +1496,7 @@ def mdp_configure(config_name, master):
 		sb = Scrollbar(root2, orient=VERTICAL)
 		sb.pack(side=RIGHT, fill=Y)
 		
-		canvas = Canvas(root2, width=400)#sw.window)
+		canvas = Canvas(root2, width=400)
 		canvas.pack(side=TOP, fill="both", expand=True)
 		frame1 = Frame(canvas)
 		frame1.pack(side=TOP)
@@ -1598,9 +1579,11 @@ def steps_configure(master, restraints_button):
 		check_var7.set(progress.to_do[6])
 		check_var8 = IntVar(root)
 		check_var8.set(progress.to_do[7])
-		#Variable for Resume Simulation
 		check_var9 = IntVar(root)
-		check_var9.set(progress.resume)
+		check_var9.set(progress.to_do[8])
+		#Variable for Resume Simulation
+		check_var10 = IntVar(root)
+		check_var10.set(progress.resume)
 	
 		frame1 = Frame(root)
 		frame1.pack(side=TOP)
@@ -1635,17 +1618,20 @@ def steps_configure(master, restraints_button):
 		c8 = Checkbutton(frame1, text="Generate multimodel PDB"+steps_status_done(7), variable=check_var8, command=lambda: progress.to_do_update(7, check_var8.get()))
 		c8.pack(side=TOP, anchor=W)
 		
+		c9 = Checkbutton(frame1, text="Calculate vectors using ProDy"+steps_status_done(8), variable=check_var9, command=lambda: progress.to_do_update(8, check_var9.get()))
+		c9.pack(side=TOP, anchor=W)
+		
 		l1 = Label(frame1, text="Simulation Progress:")
 		l1.pack(side=TOP)
 		
-		variable_list = [check_var1, check_var2, check_var3, check_var4, check_var5, check_var6, check_var7, check_var8]
+		variable_list = [check_var1, check_var2, check_var3, check_var4, check_var5, check_var6, check_var7, check_var8, check_var9]
 		progress_bar = Progressbar(frame1)
 		progress_bar.pack(side=TOP)
-		if check_var9.get() == 1:
-			percent = steps_status_bar(check_var9.get(), variable_list)
+		if check_var10.get() == 1:
+			percent = steps_status_bar(check_var10.get(), variable_list)
 			progress_bar.configure(value=percent)
 		
-		c9 = Checkbutton(frame1, text="Resume Simulation", variable=check_var9, command=lambda: steps_click_resume(check_var9.get(), progress_bar, variable_list))
+		c9 = Checkbutton(frame1, text="Resume Simulation", variable=check_var10, command=lambda: steps_click_resume(check_var10.get(), progress_bar, variable_list))
 		c9.pack(side=TOP, anchor=W)
 		
 		b1 = Button(root, text="OK", command=lambda: steps_click_ok (root))
@@ -1681,7 +1667,7 @@ def steps_status_bar(var, variable_list=[]):
 		progress.resume = 1
 	elif var == 0:
 		percent = 0.0
-		progress.to_do = [1,1,1,1,1,0,1,1]
+		progress.to_do = [1,1,1,1,1,0,1,1,1]
 		to_do_nr = 0
 		for variable in variable_list:
 			if to_do_nr != 5:
@@ -1835,19 +1821,25 @@ def dynamics(help_clean = ""):
 		progress.to_do[7] = 0
 		save_options()
 	
-	##Showing multimodel
-	if status[0] == "ok" and stop == 0 and progress.results_format == 0:
-		show_multipdb()
-	elif status[0] == "ok" and stop == 0 and progress.results_format == 1:
+	##Displaying final window
+	if status[0] == "ok" and stop == 0 and progress.to_do[8] == 1:
 		vectors_prody.prody()
 		vectors_prody.nmd_format()
 		vectors_prody.show_vectors()
-		show_multipdb()
+		progress.status[8] = 1
+		progress.to_do[8] = 0
+		save_options()
 	elif status[0] == "fail":
 		print status[1]
 		if help_name.count(help_clean) != 1 and clean_name.count(help_clean) != 1:
 			error_message()
-		status = ["ok", ""]
+	
+	##Showing multimodel and interpretation window
+	if status[0] == "ok" and stop == 0 and progress.status[7] = 1:
+		show_multipdb()
+		interpretation = InterpretationWindow()
+		interpretation()
+		
 	return project_name, project_dir
 
 ##Checking if given varaibles are correct - security
