@@ -1821,7 +1821,7 @@ def dynamics(help_clean = ""):
 		progress.to_do[7] = 0
 		save_options()
 	
-	##Displaying final window
+	##Calculating vectors
 	if status[0] == "ok" and stop == 0 and progress.to_do[8] == 1:
 		vectors_prody.prody()
 		vectors_prody.nmd_format()
@@ -1829,16 +1829,16 @@ def dynamics(help_clean = ""):
 		progress.status[8] = 1
 		progress.to_do[8] = 0
 		save_options()
+	
+	##Showing multimodel and interpretation window
+	if status[0] == "ok" and stop == 0 and progress.status[7] == 1:
+		show_multipdb()
+		interpretation = InterpretationWindow()
+		interpretation()
 	elif status[0] == "fail":
 		print status[1]
 		if help_name.count(help_clean) != 1 and clean_name.count(help_clean) != 1:
 			error_message()
-	
-	##Showing multimodel and interpretation window
-	if status[0] == "ok" and stop == 0 and progress.status[7] = 1:
-		show_multipdb()
-		interpretation = InterpretationWindow()
-		interpretation()
 		
 	return project_name, project_dir
 
