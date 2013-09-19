@@ -423,6 +423,7 @@ class Vectors:
 	nmd_bfactors = []
 	nmd_coordinates = []
 	nmd_mode = []
+	#vectors_dict = {}
 	
 	##Change Multimodel PDB file into NMD vector file
 	def prody(self):
@@ -474,9 +475,10 @@ class Vectors:
 				self.nmd_scale_mode.append(pre_mode[2])
 	
 	##Show vectors from NMD file
-	def show_vectors(self):
-		hr,hg,hb= [1.0, 1.0, 1.0]
-		tr,tg,tb= [1.0, 1.0, 1.0]
+	def show_vectors(self, color="gray", scale = 1.0):
+		color1 = list(cmd.get_color_tuple(color)) #PyMOL API
+		color2 = list(cmd.get_color_tuple(color)) #PyMOL API
+		arrow_head_radius= 0.15
 
 		x1=[]
 		y1=[]
@@ -506,24 +508,28 @@ class Vectors:
 		round_nr = 0
 		for mode in self.nmd_mode[0]:
 			if coor == "x":
-				x2.append(float(mode) * float(self.nmd_scale_mode[0]) * approximation_factor + x1[coor_nr])
+				x2.append(float(mode) * float(self.nmd_scale_mode[0]) * approximation_factor * scale + x1[coor_nr])
 				coor = "y"
 			elif coor == "y":
-				y2.append(float(mode) * float(self.nmd_scale_mode[0]) * approximation_factor + y1[coor_nr])
+				y2.append(float(mode) * float(self.nmd_scale_mode[0]) * approximation_factor * scale + y1[coor_nr])
 				coor = "z"
 			elif coor == "z":
-				z2.append(float(mode) * float(self.nmd_scale_mode[0]) * approximation_factor + z1[coor_nr])
+				z2.append(float(mode) * float(self.nmd_scale_mode[0]) * approximation_factor * scale + z1[coor_nr])
 				coor = "x"
 			round_nr = round_nr + 1
 			if round_nr == 3:
 				round_nr = 0
 				coor_nr = coor_nr + 1
-
+			
 		coor_nr = 0
 		for position in x1:
-			arrow_head_radius= 0.15
-			cone=[cgo.CONE, x1[coor_nr], y1[coor_nr], z1[coor_nr], x2[coor_nr], y2[coor_nr], z2[coor_nr], arrow_head_radius, 0.0, hr, hg, hb, hr, hg, hb, 1.0, 1.0 ]
-			cmd.load_cgo(cone,"Mode Vector "+ str(coor_nr))
+			try:
+				cmd.delete("Mode_Vector_"+ str(coor_nr))
+			except:
+				pass
+			cone=[cgo.CONE, x1[coor_nr], y1[coor_nr], z1[coor_nr], x2[coor_nr], y2[coor_nr], z2[coor_nr], arrow_head_radius, 0.0] + color1 + color2 + [1.0, 0.0 ]
+			cmd.load_cgo(cone,"Mode_Vector_"+ str(coor_nr))#, discrete=1) # PyMOL API
+			#self.vectors_dict["Mode_Vector_"+ str(coor_nr)] = cone
 			coor_nr = coor_nr+1
 
 ##This class create and maintain abstraction mdp file representatives. em.mdp, pr.mdp, md.mdp
@@ -1153,9 +1159,9 @@ class InterpretationWindow:
 		alabel.pack()
 		frame1_1 = Frame(frame1)
 		frame1_1.pack(side=TOP)
-		play_button = Button(frame1_1, text = "PLAY", command=cmd.mplay)
+		play_button = Button(frame1_1, text = "PLAY", command=cmd.mplay) #PyMOL API
 		play_button.pack(side=LEFT)
-		pause_button = Button(frame1_1, text = "PAUSE", command=cmd.mstop)
+		pause_button = Button(frame1_1, text = "PAUSE", command=cmd.mstop) #PyMOL API
 		pause_button.pack(side=LEFT)
 		frame1_2 = Frame(frame1)
 		frame1_2.pack(side=TOP, anchor=W)
@@ -1163,19 +1169,19 @@ class InterpretationWindow:
 		tlabel.pack(side=LEFT)
 		tentry = Entry(frame1_2, textvariable=tentry_value)
 		tentry.pack(side=LEFT)
-		tok_button = Button(frame1_2, text = "OK", command=lambda : cmd.frame(self.time2frames(tentry_value)))
+		tok_button = Button(frame1_2, text = "OK", command=lambda : cmd.frame(self.time2frames(tentry_value))) #PyMOL API
 		tok_button.pack(side=LEFT)
 		frame1_3 = Frame(frame1)
 		frame1_3.pack(side=TOP, anchor=W)
 		mlabel = Label(frame1_3, text="Model Type")
 		mlabel.pack(side=LEFT)
-		lines_button = Button(frame1_3, text = "Lines")#, command=lambda : )
+		lines_button = Button(frame1_3, text = "Lines", command=lambda : self.shape("lines"))
 		lines_button.pack(side=LEFT)
-		sticks_button = Button(frame1_3, text = "Sticks")#, command=lambda : )
+		sticks_button = Button(frame1_3, text = "Sticks", command=lambda : self.shape("sticks"))
 		sticks_button.pack(side=LEFT)
-		ribbon_button = Button(frame1_3, text = "Ribbon")#, command=lambda : )
+		ribbon_button = Button(frame1_3, text = "Ribbon", command=lambda : self.shape("ribbon"))
 		ribbon_button.pack(side=LEFT)
-		cartoon_button = Button(frame1_3, text = "Cartoon")#, command=lambda : )
+		cartoon_button = Button(frame1_3, text = "Cartoon", command=lambda : self.shape("cartoon"))
 		cartoon_button.pack(side=LEFT)
 		
 		vlabel = Label(frame1, text="Vectors (Require ProDy)", font = "bold")
@@ -1202,11 +1208,11 @@ class InterpretationWindow:
 		frame1_6.pack(side=TOP, anchor=W)
 		modlabel = Label(frame1_6, text="Color")
 		modlabel.pack(side=LEFT)
-		gray_button = Button(frame1_6, text = "Gray")#, command=lambda : )
+		gray_button = Button(frame1_6, text = "Gray", command=lambda : vectors_prody.show_vectors("gray"))
 		gray_button.pack(side=LEFT)
-		red_button = Button(frame1_6, text = "Red")#, command=lambda : )
+		red_button = Button(frame1_6, text = "Red", command=lambda : vectors_prody.show_vectors("red"))
 		red_button.pack(side=LEFT)
-		blue_button = Button(frame1_6, text = "Blue")#, command=lambda : )
+		blue_button = Button(frame1_6, text = "Blue", command=lambda : vectors_prody.show_vectors("blue"))
 		blue_button.pack(side=LEFT)
 		
 		exit_button = Button(frame1, text = "Exit", command=root.destroy)
@@ -1233,6 +1239,10 @@ class InterpretationWindow:
 		
 	def mode_update(self, text_var):
 		print "not yet ready"
+	
+	def shape(self, shape_type):
+		cmd.hide("everything", project_name+"_multimodel") #PyMOL API
+		cmd.show(shape_type, project_name+"_multimodel") #PyMOL API
 
 ##Gather all water options windows in one class
 class WaterWindows:
