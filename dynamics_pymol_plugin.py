@@ -1093,13 +1093,42 @@ class CalculationWindow:
 ##This window will allow to manipulate final molecule to interprate MD simulation results
 class InterpretationWindow:
 	
+	dt = 0.0
+	nsteps = 0.0
+	nstxout = 0.0
+	max_time = 0.0
+	
+	
 	def __init__(self):
+		self.md_time()
 		if plugin == 0:
 			self.shell()
 		elif plugin == 1:
 			root = Tk()
 			self.window(root)
 			root.mainloop()
+	
+	def md_time(self):
+		md_file = open(project_dir+"md.mdp", "r")
+		for lines in md_file.readlines():
+			splited_line = lines.split(" ")
+			if splited_line[0] == "dt":
+				dt = float(splited_line[2])
+				self.dt = dt
+				print "dt"
+				print dt
+			elif splited_line[0] == "nsteps":
+				nsteps = float(splited_line[2])
+				self.nsteps = nsteps
+				print "nsteps"
+				print nsteps
+			elif splited_line[0] == "nstxout":
+				nstxout = float(splited_line[2])
+				self.nstxout = nstxout
+				print "nstxout"
+				print nstxout
+		max_time = dt * nsteps
+		self.max_time = max_time
 	
 	def shell(self):
 		root = Tk()
@@ -1124,17 +1153,17 @@ class InterpretationWindow:
 		alabel.pack()
 		frame1_1 = Frame(frame1)
 		frame1_1.pack(side=TOP)
-		play_button = Button(frame1_1, text = "PLAY")#, command=lambda : )
+		play_button = Button(frame1_1, text = "PLAY", command=cmd.mplay)
 		play_button.pack(side=LEFT)
-		pause_button = Button(frame1_1, text = "PAUSE")#, command=lambda : )
+		pause_button = Button(frame1_1, text = "PAUSE", command=cmd.mstop)
 		pause_button.pack(side=LEFT)
 		frame1_2 = Frame(frame1)
 		frame1_2.pack(side=TOP, anchor=W)
-		tlabel = Label(frame1_2, text="Time [ns]")
+		tlabel = Label(frame1_2, text="Time [ps] (Max "+str(self.max_time)+" [ps])")
 		tlabel.pack(side=LEFT)
 		tentry = Entry(frame1_2, textvariable=tentry_value)
 		tentry.pack(side=LEFT)
-		tok_button = Button(frame1_2, text = "OK")#, command=lambda : )
+		tok_button = Button(frame1_2, text = "OK", command=lambda : cmd.frame(self.time2frames(tentry_value)))
 		tok_button.pack(side=LEFT)
 		frame1_3 = Frame(frame1)
 		frame1_3.pack(side=TOP, anchor=W)
@@ -1193,6 +1222,17 @@ class InterpretationWindow:
 			red_button.configure(state=DISABLED)
 			blue_button.configure(state=DISABLED)
 		
+	def frames2time(self, text_var):
+		print "not yet ready"
+		
+	def time2frames(self, text_var):
+		nsecond = float(text_var.get())
+		frame = self.nsecond / self.dt / self.nstxout	
+		frame = int(frame)
+		return frame
+		
+	def mode_update(self, text_var):
+		print "not yet ready"
 
 ##Gather all water options windows in one class
 class WaterWindows:
@@ -1829,16 +1869,16 @@ def dynamics(help_clean = ""):
 		progress.status[8] = 1
 		progress.to_do[8] = 0
 		save_options()
+	elif status[0] == "fail":
+		print status[1]
+		if help_name.count(help_clean) != 1 and clean_name.count(help_clean) != 1:
+			error_message()
 	
 	##Showing multimodel and interpretation window
 	if status[0] == "ok" and stop == 0 and progress.status[7] == 1:
 		show_multipdb()
 		interpretation = InterpretationWindow()
 		interpretation()
-	elif status[0] == "fail":
-		print status[1]
-		if help_name.count(help_clean) != 1 and clean_name.count(help_clean) != 1:
-			error_message()
 		
 	return project_name, project_dir
 
