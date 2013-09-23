@@ -1214,6 +1214,8 @@ class InterpretationWindow:
 		red_button.pack(side=LEFT)
 		blue_button = Button(frame1_6, text = "Blue", command=lambda : vectors_prody.show_vectors("blue"))
 		blue_button.pack(side=LEFT)
+		blue_button = Button(frame1_6, text = "Green", command=lambda : vectors_prody.show_vectors("green"))
+		blue_button.pack(side=LEFT)
 		
 		exit_button = Button(frame1, text = "Exit", command=root.destroy)
 		exit_button.pack()
