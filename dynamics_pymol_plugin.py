@@ -1035,6 +1035,7 @@ class CalculationWindow:
 		self.tasks_to_do = tasks_nr
 		thread.start_new_thread(self.bar_update, ())
 		self.bar_display(root)
+		#self.error_window(root)
 
 		#Tooltips
 		balloon.bind(exit_button, "Exit the Plugin")
@@ -1049,6 +1050,7 @@ class CalculationWindow:
 		while stop == 1:
 			time.sleep(0.5)
 		while self.bar_var.get() != "Finished!" and error == "" and percent != 100:
+			time.sleep(0.5)
 			percent = steps_status_bar("only_bar")
 			self.queue_percent.put(percent)
 			self.queue_status.put(status[1])
@@ -1058,29 +1060,34 @@ class CalculationWindow:
 			print "Finished!"
 			percent = 100
 			self.queue_percent.put(percent)
+			time.sleep(1.0)
 		elif error != "":
 			self.queue_status.put("Fatal Error")
-			root = Tk()
-			root.wm_title("GROMACS Error Message")
-			frame = Frame(root)
-			frame.pack()
-			w = Label(frame, text=error)
-			w.pack()
-			ok_button = Button(frame, text = "OK", command=root.destroy)
-			ok_button.pack()
-			root.mainloop()
-			error = ""
+			#error = ""
+			time.sleep(1.0)
 	
 	##This function will update status bar in thread safe manner
 	def bar_display(self, root):
 		try:
-			while 1:
-				status = self.queue_status.get_nowait()
-				percent = self.queue_percent.get_nowait()
-				self.bar_var.set(status)
-				self.bar_widget.configure(value=percent)
+			status = self.queue_status.get(block=False)
+			self.bar_var.set(status)
+		except Queue.Empty:
+			status = "No change"
+		try:
+			percent = self.queue_percent.get(block=False)
+			self.bar_widget.configure(value=percent)
 		except Queue.Empty:
 			pass
+		if status == "Fatal Error":
+			root1 = Tk()
+			root1.wm_title("GROMACS Error Message")
+			frame = Frame(root1)
+			frame.pack()
+			w = Label(frame, text=error)
+			w.pack()
+			ok_button = Button(frame, text = "OK", command=root1.destroy)
+			ok_button.pack()
+			root1.mainloop()
 		root.after(100, self.bar_display, root)
 	
 	##This function will change global value if stop is clicked during simulation
