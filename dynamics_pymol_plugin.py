@@ -1035,7 +1035,6 @@ class CalculationWindow:
 		self.tasks_to_do = tasks_nr
 		thread.start_new_thread(self.bar_update, ())
 		self.bar_display(root)
-		#self.error_window(root)
 
 		#Tooltips
 		balloon.bind(exit_button, "Exit the Plugin")
@@ -1063,7 +1062,6 @@ class CalculationWindow:
 			time.sleep(1.0)
 		elif error != "":
 			self.queue_status.put("Fatal Error")
-			#error = ""
 			time.sleep(1.0)
 	
 	##This function will update status bar in thread safe manner
