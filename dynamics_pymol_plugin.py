@@ -1049,7 +1049,7 @@ class CalculationWindow:
 		for task in progress.to_do:
 			tasks_nr = tasks_nr + task
 		self.tasks_to_do = tasks_nr
-		t1 = thread.start_new_thread(self.bar_update, ())
+		thread.start_new_thread(self.bar_update, ())
 		self.bar_display(root)
 
 		#Tooltips
@@ -1111,7 +1111,7 @@ class CalculationWindow:
 		global stop
 		if value == 1:
 			stop = 0
-			t2 = thread.start_new_thread(dynamics, ())
+			thread.start_new_thread(dynamics, ())
 			self.stop_button.configure(state=ACTIVE)
 			self.start_button.configure(state=DISABLED)
 		elif value == 0:
