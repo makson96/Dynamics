@@ -424,6 +424,9 @@ class Vectors:
 	nmd_coordinates = []
 	nmd_mode = []
 	#vectors_dict = {}
+	color="gray"
+	scale = 1.0
+	mode_nr = 0
 	
 	##Change Multimodel PDB file into NMD vector file
 	def prody(self):
@@ -475,9 +478,9 @@ class Vectors:
 				self.nmd_scale_mode.append(pre_mode[2])
 	
 	##Show vectors from NMD file
-	def show_vectors(self, color="gray", scale = 1.0):
-		color1 = list(cmd.get_color_tuple(color)) #PyMOL API
-		color2 = list(cmd.get_color_tuple(color)) #PyMOL API
+	def show_vectors(self):
+		color1 = list(cmd.get_color_tuple(self.color)) #PyMOL API
+		color2 = list(cmd.get_color_tuple(self.color)) #PyMOL API
 		arrow_head_radius= 0.15
 
 		x1=[]
@@ -506,15 +509,15 @@ class Vectors:
 		coor = "x"
 		coor_nr = 0
 		round_nr = 0
-		for mode in self.nmd_mode[0]:
+		for mode in self.nmd_mode[self.mode_nr]:
 			if coor == "x":
-				x2.append(float(mode) * float(self.nmd_scale_mode[0]) * approximation_factor * scale + x1[coor_nr])
+				x2.append(float(mode) * float(self.nmd_scale_mode[self.mode_nr]) * approximation_factor * self.scale + x1[coor_nr])
 				coor = "y"
 			elif coor == "y":
-				y2.append(float(mode) * float(self.nmd_scale_mode[0]) * approximation_factor * scale + y1[coor_nr])
+				y2.append(float(mode) * float(self.nmd_scale_mode[self.mode_nr]) * approximation_factor * self.scale + y1[coor_nr])
 				coor = "z"
 			elif coor == "z":
-				z2.append(float(mode) * float(self.nmd_scale_mode[0]) * approximation_factor * scale + z1[coor_nr])
+				z2.append(float(mode) * float(self.nmd_scale_mode[self.mode_nr]) * approximation_factor * self.scale + z1[coor_nr])
 				coor = "x"
 			round_nr = round_nr + 1
 			if round_nr == 3:
@@ -531,6 +534,19 @@ class Vectors:
 			cmd.load_cgo(cone,"Mode_Vector_"+ str(coor_nr))#, discrete=1) # PyMOL API
 			#self.vectors_dict["Mode_Vector_"+ str(coor_nr)] = cone
 			coor_nr = coor_nr+1
+		
+	def change_vectors_color(self, color):
+		self.color = color
+		self.show_vectors()
+			
+	def change_vectors_scale(self, scale):
+		scale = float(scale)
+		self.scale = scale
+		self.show_vectors()
+		
+	def change_vectors_mode_nr(self, mode_nr):
+		self.mode_nr = mode_nr
+		self.show_vectors()
 
 ##This class create and maintain abstraction mdp file representatives. em.mdp, pr.mdp, md.mdp
 class Mdp_config:
@@ -1195,11 +1211,11 @@ class InterpretationWindow:
 		frame1_4.pack(side=TOP, anchor=W)
 		modlabel = Label(frame1_4, text="Mode Nr")
 		modlabel.pack(side=LEFT)
-		one_button = Button(frame1_4, text = "1")#, command=lambda : )
+		one_button = Button(frame1_4, text = "1", command=lambda : vectors_prody.change_vectors_mode_nr(0))
 		one_button.pack(side=LEFT)
-		two_button = Button(frame1_4, text = "2")#, command=lambda : )
+		two_button = Button(frame1_4, text = "2", command=lambda : vectors_prody.change_vectors_mode_nr(1))
 		two_button.pack(side=LEFT)
-		three_button = Button(frame1_4, text = "3")#, command=lambda : )
+		three_button = Button(frame1_4, text = "3", command=lambda : vectors_prody.change_vectors_mode_nr(2))
 		three_button.pack(side=LEFT)
 		frame1_5 = Frame(frame1)
 		frame1_5.pack(side=TOP, anchor=W)
@@ -1207,19 +1223,19 @@ class InterpretationWindow:
 		slabel.pack(side=LEFT)
 		sentry = Entry(frame1_5, textvariable=sentry_value)
 		sentry.pack(side=LEFT)
-		sok_button = Button(frame1_5, text = "OK")#, command=lambda : )
+		sok_button = Button(frame1_5, text = "OK", command=lambda : vectors_prody.change_vectors_scale(sentry_value.get()))
 		sok_button.pack(side=LEFT)
 		frame1_6 = Frame(frame1)
 		frame1_6.pack(side=TOP, anchor=W)
 		modlabel = Label(frame1_6, text="Color")
 		modlabel.pack(side=LEFT)
-		gray_button = Button(frame1_6, text = "Gray", command=lambda : vectors_prody.show_vectors("gray"))
+		gray_button = Button(frame1_6, text = "Gray", command=lambda : vectors_prody.change_vectors_color("gray"))
 		gray_button.pack(side=LEFT)
-		red_button = Button(frame1_6, text = "Red", command=lambda : vectors_prody.show_vectors("red"))
+		red_button = Button(frame1_6, text = "Red", command=lambda : vectors_prody.change_vectors_color("red"))
 		red_button.pack(side=LEFT)
-		blue_button = Button(frame1_6, text = "Blue", command=lambda : vectors_prody.show_vectors("blue"))
+		blue_button = Button(frame1_6, text = "Blue", command=lambda : vectors_prody.change_vectors_color("blue"))
 		blue_button.pack(side=LEFT)
-		blue_button = Button(frame1_6, text = "Green", command=lambda : vectors_prody.show_vectors("green"))
+		blue_button = Button(frame1_6, text = "Green", command=lambda : vectors_prody.change_vectors_color("green"))
 		blue_button.pack(side=LEFT)
 		
 		exit_button = Button(frame1, text = "Exit", command=root.destroy)
