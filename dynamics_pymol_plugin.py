@@ -1102,7 +1102,6 @@ class CalculationWindow:
 			ok_button.pack()
 			root1.mainloop()
 		elif status == "Finished!"	and prody_true == 1:
-			#time.sleep(1.0)
 			root.destroy()
 		root.after(100, self.bar_display, root)
 	
@@ -1131,7 +1130,7 @@ class InterpretationWindow:
 	def __init__(self):
 		self.md_time()
 		if plugin == 0:
-			self.shell()
+			self.non_plugin()
 		elif plugin == 1:
 			root = Tk()
 			self.window(root)
@@ -1159,7 +1158,7 @@ class InterpretationWindow:
 		max_time = dt * nsteps
 		self.max_time = max_time
 	
-	def shell(self):
+	def non_plugin(self):
 		root = Tk()
 		file = tkFileDialog.asksaveasfile(parent=root, mode='w' ,title='Choose final multimodel file to save')
 		try:
@@ -1178,6 +1177,8 @@ class InterpretationWindow:
 		
 		frame1 = Frame(root)
 		frame1.pack(side=TOP)
+		
+		#Animation
 		alabel = Label(frame1, text="Animation", font = "bold")
 		alabel.pack()
 		frame1_1 = Frame(frame1)
@@ -1207,6 +1208,9 @@ class InterpretationWindow:
 		cartoon_button = Button(frame1_3, text = "Cartoon", command=lambda : self.shape("cartoon"))
 		cartoon_button.pack(side=LEFT)
 		
+		thread.start_new_thread(self.watch_frames, ())
+		
+		#Vectors
 		vlabel = Label(frame1, text="Vectors (Require ProDy)", font = "bold")
 		vlabel.pack()
 		frame1_4 = Frame(frame1)
@@ -1258,20 +1262,26 @@ class InterpretationWindow:
 			blue_button.configure(state=DISABLED)
 		
 	def frames2time(self, text_var):
-		print "not yet ready"
+		frame = float(text_var)
+		time = frame * self.dt * self.nstxout
+		return time
 		
 	def time2frames(self, text_var):
 		nsecond = float(text_var)
 		frame = nsecond / self.dt / self.nstxout	
 		frame = int(frame)
 		return frame
-		
-	def mode_update(self, text_var):
-		print "not yet ready"
 	
 	def shape(self, shape_type):
 		cmd.hide("everything", project_name+"_multimodel") #PyMOL API
 		cmd.show(shape_type, project_name+"_multimodel") #PyMOL API
+	
+	##This function will update displayd time (beware this is separate thread)
+	def watch_frames(self):
+		pymol_frame = cmd.get_frame() #PyMOL API
+		print "Frame"
+		print pymol_frame
+		time.sleep(10)
 
 ##Gather all water options windows in one class
 class WaterWindows:
