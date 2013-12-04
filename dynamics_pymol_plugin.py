@@ -1049,7 +1049,7 @@ class CalculationWindow:
 		for task in progress.to_do:
 			tasks_nr = tasks_nr + task
 		self.tasks_to_do = tasks_nr
-		thread.start_new_thread(self.bar_update, ())
+		t1 = thread.start_new_thread(self.bar_update, ())
 		self.bar_display(root)
 
 		#Tooltips
@@ -1058,7 +1058,7 @@ class CalculationWindow:
 		balloon.bind(stop_button, "Cease calculations")
 		balloon.bind(start_button, "Start/Resume calculations")
 
-	##This function will update status bar during molecular dynamics simulation
+	##This function will update status bar during molecular dynamics simulation (beware this is separate thread)
 	def bar_update(self):
 		global error
 		percent = 0.0
@@ -1075,7 +1075,6 @@ class CalculationWindow:
 			print "Finished!"
 			percent = 100
 			self.queue_percent.put(percent)
-			time.sleep(1.0)
 		elif error != "":
 			self.queue_status.put("Fatal Error")
 			time.sleep(1.0)
@@ -1090,7 +1089,7 @@ class CalculationWindow:
 		try:
 			percent = self.queue_percent.get(block=False)
 			self.bar_widget.configure(value=percent)
-		except Queue.Empty:
+		except:
 			pass
 		if status == "Fatal Error":
 			root1 = Tk()
@@ -1102,6 +1101,9 @@ class CalculationWindow:
 			ok_button = Button(frame, text = "OK", command=root1.destroy)
 			ok_button.pack()
 			root1.mainloop()
+		elif status == "Finished!"	and prody_true == 1:
+			#time.sleep(1.0)
+			root.destroy()
 		root.after(100, self.bar_display, root)
 	
 	##This function will change global value if stop is clicked during simulation
@@ -1109,7 +1111,7 @@ class CalculationWindow:
 		global stop
 		if value == 1:
 			stop = 0
-			thread.start_new_thread(dynamics, ())
+			t2 = thread.start_new_thread(dynamics, ())
 			self.stop_button.configure(state=ACTIVE)
 			self.start_button.configure(state=DISABLED)
 		elif value == 0:
@@ -1238,8 +1240,12 @@ class InterpretationWindow:
 		blue_button = Button(frame1_6, text = "Green", command=lambda : vectors_prody.change_vectors_color("green"))
 		blue_button.pack(side=LEFT)
 		
-		exit_button = Button(frame1, text = "Exit", command=root.destroy)
-		exit_button.pack()
+		frame1_7 = Frame(frame1)
+		frame1_7.pack(side=TOP)
+		exit_button = Button(frame1_7, text = "Exit", command=root.destroy)
+		exit_button.pack(side=LEFT)
+		save_button = Button(frame1_7, text = "Save", command=lambda : select_file_save(1))
+		save_button.pack(side=LEFT)
 		
 		if prody_true != 1:
 			print "No ProDy found"
