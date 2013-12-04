@@ -1174,7 +1174,7 @@ class InterpretationWindow:
 		tlabel.pack(side=LEFT)
 		tentry = Entry(frame1_2, textvariable=tentry_value)
 		tentry.pack(side=LEFT)
-		tok_button = Button(frame1_2, text = "OK", command=lambda : cmd.frame(self.time2frames(tentry_value))) #PyMOL API
+		tok_button = Button(frame1_2, text = "OK", command=lambda : cmd.frame(self.time2frames(tentry_value.get()))) #PyMOL API
 		tok_button.pack(side=LEFT)
 		frame1_3 = Frame(frame1)
 		frame1_3.pack(side=TOP, anchor=W)
@@ -1239,8 +1239,8 @@ class InterpretationWindow:
 		print "not yet ready"
 		
 	def time2frames(self, text_var):
-		nsecond = float(text_var.get())
-		frame = self.nsecond / self.dt / self.nstxout	
+		nsecond = float(text_var)
+		frame = nsecond / self.dt / self.nstxout	
 		frame = int(frame)
 		return frame
 		
