@@ -124,7 +124,7 @@ First argument after pydynamics command is path to saved Dynamics PyMOL Plugin p
 
 5. Changelog
 
-What's new in .2.0.0:
+What's new in 2.0.0:
 Plugin works with PyMOL Shell
 pydynamics works
 Added constraints (in Molecular Dynamics Simulation Configure)
