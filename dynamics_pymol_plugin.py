@@ -1125,9 +1125,11 @@ class InterpretationWindow:
 	nsteps = 0.0
 	nstxout = 0.0
 	max_time = 0.0
-	
+	tentry_value = ""
+	pause = 1
 	
 	def __init__(self):
+		self.queue_time = Queue.Queue()
 		self.md_time()
 		if plugin == 0:
 			self.non_plugin()
@@ -1170,8 +1172,8 @@ class InterpretationWindow:
 	
 	def window(self, root):
 		root.wm_title("MD Interpretation")
-		tentry_value = StringVar(root)
-		tentry_value.set("0.0")
+		self.tentry_value = StringVar(root)
+		self.tentry_value.set("0.0")
 		sentry_value = StringVar(root)
 		sentry_value.set("1.0")
 		
@@ -1183,17 +1185,17 @@ class InterpretationWindow:
 		alabel.pack()
 		frame1_1 = Frame(frame1)
 		frame1_1.pack(side=TOP)
-		play_button = Button(frame1_1, text = "PLAY", command=cmd.mplay) #PyMOL API
+		play_button = Button(frame1_1, text = "PLAY", command=lambda : self.pause_play(0))
 		play_button.pack(side=LEFT)
-		pause_button = Button(frame1_1, text = "PAUSE", command=cmd.mstop) #PyMOL API
+		pause_button = Button(frame1_1, text = "PAUSE", command=lambda : self.pause_play(1))
 		pause_button.pack(side=LEFT)
 		frame1_2 = Frame(frame1)
 		frame1_2.pack(side=TOP, anchor=W)
 		tlabel = Label(frame1_2, text="Time [ps] (Max "+str(self.max_time)+" [ps])")
 		tlabel.pack(side=LEFT)
-		tentry = Entry(frame1_2, textvariable=tentry_value)
+		tentry = Entry(frame1_2, textvariable=self.tentry_value)
 		tentry.pack(side=LEFT)
-		tok_button = Button(frame1_2, text = "OK", command=lambda : cmd.frame(self.time2frames(tentry_value.get()))) #PyMOL API
+		tok_button = Button(frame1_2, text = "OK", command=lambda : cmd.frame(self.time2frames(self.tentry_value.get()))) #PyMOL API
 		tok_button.pack(side=LEFT)
 		frame1_3 = Frame(frame1)
 		frame1_3.pack(side=TOP, anchor=W)
@@ -1209,6 +1211,7 @@ class InterpretationWindow:
 		cartoon_button.pack(side=LEFT)
 		
 		thread.start_new_thread(self.watch_frames, ())
+		self.display_time(root)
 		
 		#Vectors
 		vlabel = Label(frame1, text="Vectors (Require ProDy)", font = "bold")
@@ -1260,7 +1263,15 @@ class InterpretationWindow:
 			gray_button.configure(state=DISABLED)
 			red_button.configure(state=DISABLED)
 			blue_button.configure(state=DISABLED)
-		
+	
+	def pause_play(self, value):
+		if value == 1:
+			self.pause = 1
+			cmd.mstop() #PyMOL API
+		elif value == 0:
+			self.pause = 0
+			cmd.mplay() #PyMOL API
+	
 	def frames2time(self, text_var):
 		frame = float(text_var)
 		time = frame * self.dt * self.nstxout
@@ -1276,12 +1287,23 @@ class InterpretationWindow:
 		cmd.hide("everything", project_name+"_multimodel") #PyMOL API
 		cmd.show(shape_type, project_name+"_multimodel") #PyMOL API
 	
-	##This function will update displayd time (beware this is separate thread)
+	##This function will watch time (beware this is separate thread)
 	def watch_frames(self):
-		pymol_frame = cmd.get_frame() #PyMOL API
-		print "Frame"
-		print pymol_frame
-		time.sleep(10)
+		while 1:
+			pymol_frame = cmd.get_frame() #PyMOL API
+			pymol_time = self.frames2time(pymol_frame)
+			self.queue_time.put(pymol_time)
+			time.sleep(0.1)
+	
+	##This function will update display time in thread safe manner
+	def display_time(self, root):
+		try:
+			time = self.queue_time.get(block=False)
+		except Queue.Empty:
+			time = "No change"
+		if self.pause != 1:
+			self.tentry_value.set(time)
+		root.after(100, self.display_time, root)
 
 ##Gather all water options windows in one class
 class WaterWindows:
