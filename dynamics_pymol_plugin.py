@@ -850,7 +850,7 @@ def rootWindow():
 				if molecule1[0] == "gromacs":
 					pass
 				else:
-					radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button, prody_button))
+					radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button))
 					radio_button1.pack(side=TOP, anchor=W)
 					#Tooltip
 					balloon.bind(radio_button1, "Select molecule for calculations")
@@ -943,6 +943,10 @@ def rootWindow():
 	prody_button = Button(frame1_3_1, text = "Configure")#, command=lambda: )
 	prody_button.pack(side=TOP)
 	
+	##Disable configuration of ProDy (Vectors) if ProDy is not installed
+	if prody_true != 1:
+		prody_button.configure(state=DISABLED)
+	
 	frame2 = Frame(root)
 	frame2.pack(side=TOP)
 	
@@ -966,7 +970,7 @@ def rootWindow():
 	count_button.pack(side=LEFT)
 	
 	#Initial configuration
-	set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button, prody_button)
+	set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button)
 	
 	#Tooltips
 	balloon.bind(water_button, "Choose one of the Water Models for dynamics simulation")
@@ -1101,7 +1105,7 @@ class CalculationWindow:
 			ok_button = Button(frame, text = "OK", command=root1.destroy)
 			ok_button.pack()
 			root1.mainloop()
-		elif status == "Finished!"	and prody_true == 1:
+		elif status == "Finished!":
 			root.destroy()
 		root.after(100, self.bar_display, root)
 	
@@ -1244,8 +1248,8 @@ class InterpretationWindow:
 		red_button.pack(side=LEFT)
 		blue_button = Button(frame1_6, text = "Blue", command=lambda : vectors_prody.change_vectors_color("blue"))
 		blue_button.pack(side=LEFT)
-		blue_button = Button(frame1_6, text = "Green", command=lambda : vectors_prody.change_vectors_color("green"))
-		blue_button.pack(side=LEFT)
+		green_button = Button(frame1_6, text = "Green", command=lambda : vectors_prody.change_vectors_color("green"))
+		green_button.pack(side=LEFT)
 		
 		frame1_7 = Frame(frame1)
 		frame1_7.pack(side=TOP)
@@ -1263,6 +1267,7 @@ class InterpretationWindow:
 			gray_button.configure(state=DISABLED)
 			red_button.configure(state=DISABLED)
 			blue_button.configure(state=DISABLED)
+			green_button.configure(state=DISABLED)
 	
 	def pause_play(self, value):
 		if value == 1:
@@ -1506,7 +1511,7 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
 	root.destroy()
 
 ##This function sets variables after choosing new molecule
-def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_restraints, prody_button):
+def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_restraints):
 	print "Set Variables"
 	##Set project name and dir
 	if name != "":
@@ -1526,9 +1531,6 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
 		config_button_restraints.configure(state=DISABLED)
 	elif progress.to_do[5] == 1:
 		config_button_restraints.configure(state=ACTIVE)
-	##Disable configuration of ProDy (Vectors) if ProDy is not installed
-	if prody_true != 1:
-		prody_button.configure(state=DISABLED)
 	##If Resume is zero than initial Steps are all ON
 	if progress.resume == 0:
 		progress.to_do = [1,1,1,1,1,0,1,1,1]
@@ -1729,8 +1731,13 @@ def steps_configure(master, restraints_button):
 		c8 = Checkbutton(frame1, text="Generate multimodel PDB"+steps_status_done(7), variable=check_var8, command=lambda: progress.to_do_update(7, check_var8.get()))
 		c8.pack(side=TOP, anchor=W)
 		
-		c9 = Checkbutton(frame1, text="Calculate vectors using ProDy"+steps_status_done(8), variable=check_var9, command=lambda: progress.to_do_update(8, check_var9.get()))
+		c9 = Checkbutton(frame1, text="Calculate vectors using ProDy (optional)"+steps_status_done(8), variable=check_var9, command=lambda: progress.to_do_update(8, check_var9.get()))
 		c9.pack(side=TOP, anchor=W)
+		
+		if prody_true == 0:
+			check_var9.set(0)
+			c9.configure(state=DISABLED)
+			progress.to_do_update(8, 0)
 		
 		l1 = Label(frame1, text="Simulation Progress:")
 		l1.pack(side=TOP)
@@ -1742,8 +1749,8 @@ def steps_configure(master, restraints_button):
 			percent = steps_status_bar(check_var10.get(), variable_list)
 			progress_bar.configure(value=percent)
 		
-		c9 = Checkbutton(frame1, text="Resume Simulation", variable=check_var10, command=lambda: steps_click_resume(check_var10.get(), progress_bar, variable_list))
-		c9.pack(side=TOP, anchor=W)
+		c10 = Checkbutton(frame1, text="Resume Simulation", variable=check_var10, command=lambda: steps_click_resume(check_var10.get(), progress_bar, variable_list))
+		c10.pack(side=TOP, anchor=W)
 		
 		b1 = Button(root, text="OK", command=lambda: steps_click_ok (root))
 		b1.pack(side=TOP)
@@ -1933,7 +1940,7 @@ def dynamics(help_clean = ""):
 		save_options()
 	
 	##Calculating vectors
-	if status[0] == "ok" and stop == 0 and progress.to_do[8] == 1:
+	if status[0] == "ok" and stop == 0 and progress.to_do[8] == 1 and prody_true == 1:
 		vectors_prody.prody()
 		vectors_prody.nmd_format()
 		vectors_prody.show_vectors()
