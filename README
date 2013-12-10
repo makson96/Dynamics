@@ -1,4 +1,4 @@
-﻿Dynamics PyMOL Plugin Manual
+Dynamics PyMOL Plugin Manual
 v. 2.0.0pre
 
 University of Gdansk
@@ -25,7 +25,7 @@ Table of Content:
 
 1. Introduction
 
-PyMOL is powerful and easy to use open source tool for viewing and manipulating molecules. Thanks to its API capabilities it can be extended by developing third party plugins in high level programing language Python. This project is focused on developing plugin for PyMOL, which add molecular dynamics simulation feature. It is meant to be easy to use. The plugin uses GROMACS tools as a back-end. Project is developed as an open source and as such create full open source stack together with PyMOL and GROMACS. Because GROMACS can compile easily only on Unix like systems, the plugin also keep compatibility only with those. No Windows port is expected. Plugin is developed and maintained by Laboratory of Biomolecular Systems Simulation at University of Gdansk.
+PyMOL is powerful and easy to use open source tool for viewing and manipulating molecules. Thanks to its API capabilities it can be extended by developing third party plugins in high level programming language Python. This project is focused on developing plugin for PyMOL, which add molecular dynamics simulation feature. It is meant to be easy to use. The plugin uses GROMACS tools as a back-end. Project is developed as an open source and as such create full open source stack together with PyMOL and GROMACS. Because GROMACS can compile easily only on Unix like systems, the plugin also keep compatibility only with those. No Windows port is expected. Plugin is developed and maintained by Laboratory of Biomolecular Systems Simulation at University of Gdansk.
 
 2. Requirements and Installation
 
@@ -64,15 +64,15 @@ The last list in this column determine which part of molecule should be displaye
 
 3.2. Force Field and Water Model
 
-	The middle column is focused on force fields and water models for molecular dynamics simulation. The first radiobuttons list allows you to choose force field provided by GROMACS tool. Note that not all force fields can perform full molecular dynamics simulation for given molecule.
+	The middle column is focused on force fields and water models for molecular dynamics simulation. The first radio buttons list allows you to choose force field provided by GROMACS tool. Note that not all force fields can perform full molecular dynamics simulation for given molecule.
 
 	Below force fields there is a label with default water model for chosen force field. You can change it by clicking Choose... button. Note that every force field may have different available list of water models.
 
-	Next to the Choose... button there is a Configure button, which allows you to customise water box details. Here you can change shape of the box, water density which is given in g/L unit. You can also determine here the size of the water box, which is given in multiple of molecule size.
+	Next to the Choose... button there is a Configure button, which allows you to customize water box details. Here you can change shape of the box, water density which is given in g/L unit. You can also determine here the size of the water box, which is given in multiple of molecule size.
 
 3.3. Simulation Steps
 
-	The right column of plugin menu is devoted for advanced configuration. The first configuration option is Simulation Steps. Not all molecular dynamics calculation need to be done at once. To configure this aspect you can click Configure button below the label Simulation Steps. You will then get list of available steps. Select those, which you want to do. After calculation you can save results and finish work on other machine or resume work on the same computer later. To resume work in the main menu select molecule in left column from list Previous Projects and check box Resume in the Simulation Steps. You can also select here if you want to do restraints or not and chose if you want to use x2top instead of pdb2gmx for creating topology file.
+	The right column of plugin menu is devoted for advanced configuration. The first configuration option is Simulation Steps. Not all molecular dynamics calculations need to be done at once. To configure this aspect you can click Configure button below the label Simulation Steps. You will then get the list of available steps. Select those, which you want to do. After calculation you can save results and finish work on other machine or resume work on the same computer later. To resume work in the main menu select molecule in left column from list Previous Projects and check box Resume in the Simulation Steps. You can also select here if you want to do restraints or not and chose if you want to use x2top instead of pdb2gmx for creating topology file.
 
 3.4. Restraints
 
@@ -80,8 +80,8 @@ The last list in this column determine which part of molecule should be displaye
 
 3.5. Configuration
 
-	There are three more configuration option in the right column. The first configuration options is for Energy Minimalisation. This step is performed after adding molecule to water box. Some atoms in that system may collide. The purpose is to move water atoms a bit, so dynamics simulation will not start in very inconvenient energy state.
-	The second option is for Progression Restrained MD. This step keep molecule fix, while allow water molecules to moves. It will make water to fill any holes created by Energy Minimalisation.
+	There are three more configuration options in the right column. The first configuration option is for Energy Minimization. This step is performed after adding molecule to water box. Some atoms in that system may collide. The purpose is to move water atoms a bit, so dynamics simulation will not start in a very inconvenient energy state.
+	The second option is for Progression Restrained MD. This step keep molecule fix, while allow water molecules to moves. It will make water to fill any holes created by Energy Minimization.
 	The third option is for final Molecular Dynamics Simulation. You can also configure here constraints (Options for bonds).
 	To get exact info about available options look at GROMACS configuration MDP files options:
 http://manual.gromacs.org/current/online/mdp_opt.html
@@ -124,11 +124,13 @@ First argument after pydynamics command is path to saved Dynamics PyMOL Plugin p
 
 5. Changelog
 
-What's new in 1.2.0:
+What's new in 2.0.0:
 Plugin works with PyMOL Shell
 pydynamics works
 Added constraints (in Molecular Dynamics Simulation Configure)
 Lot of bugs fixed
+Added Vectors Options (in Configuration menu)
+Added Calculate vectors using ProDy option (in Simulation Steps Configure)
 
 Known issues:
 Saves from plugin 1.1 might not always work well
@@ -139,3 +141,4 @@ Saves from plugin 1.1 might not always work well
 	Software is created and maintained by Laboratory of Biomolecular Systems Simulation at University of Gdansk.
 Contributors:
 - Tomasz Makarewicz (btchtm@ug.gda.pl)
+- Sara Boch Kminikowska
