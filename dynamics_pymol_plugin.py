@@ -1105,9 +1105,10 @@ class CalculationWindow:
 			ok_button = Button(frame, text = "OK", command=root1.destroy)
 			ok_button.pack()
 			root1.mainloop()
-		elif status == "Finished!":
+		if status == "Finished!":
 			root.destroy()
-		root.after(100, self.bar_display, root)
+		else:
+			root.after(100, self.bar_display, root)
 	
 	##This function will change global value if stop is clicked during simulation
 	def start_counting(self, value):
