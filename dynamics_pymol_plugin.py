@@ -1957,7 +1957,10 @@ def dynamics(help_clean = ""):
 	if status[0] == "ok" and stop == 0 and progress.status[7] == 1:
 		show_multipdb()
 		interpretation = InterpretationWindow()
-		interpretation()
+		try:
+			interpretation()
+		except AttributeError:
+			pass
 		
 	return project_name, project_dir
 
