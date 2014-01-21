@@ -4,7 +4,7 @@
 ##This software (including its Debian packaging) is available to you under the terms of the GPL-3, see "/usr/share/common-licenses/GPL-3".
 ##Software is created and maintained by Laboratory of Biomolecular Systems Simulation at University of Gdansk.
 ##Contributors:
-##- Tomasz Makarewicz (btchtm@ug.gda.pl)
+##- Tomasz Makarewicz (btchtm@ug.edu.pl)
 
 ##Plugin Version
 plugin_ver = " 2.0.0pre"
@@ -2066,7 +2066,7 @@ def help_option():
 This software (including its Debian packaging) is available to you under the terms of the GPL-3, see "/usr/share/common-licenses/GPL-3".
 Software is created and maintained by Laboratory of Biomolecular Systems Simulation at University of Gdansk.
 Contributors:
-- Tomasz Makarewicz (tomaszm@biotech.ug.edu.pl)
+- Tomasz Makarewicz (btchtm@ug.edu.pl)
 
 Full manual is available to you on project website: https://github.com/tomaszmakarewicz/Dynamics/raw/master/manual.odt
 or as a file: /usr/share/doc/dynamics-pymol-plugin/manual.odt
