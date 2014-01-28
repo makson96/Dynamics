@@ -753,7 +753,7 @@ def rootWindow():
 		allNames1 = []
 		for name in allNames:
 			name1 = name.split("_")
-			if name1[-1] == "multimodel" or name1[-1] == "(sele)":
+			if name1[-1] == "multimodel" or name1[-1] == "(sele)" or (name1[0] == "Mode" and len(name1) == 3):
 				pass
 			else:
 				allNames1.append(name)
