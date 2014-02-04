@@ -211,6 +211,7 @@ class Gromacs_input:
 	box_distance = "0.5"
 	box_density = "1000"
 	restraints_nr = 1
+	command_distinction = "\n!************************!\n"
 
 	##This function will change given variabless stored by the class (needed for lambda statements)
 	def update(self, group, box_type, box_distance, box_density, root=""):
@@ -236,16 +237,36 @@ class Gromacs_input:
 			os.remove(project_name+".top")
 		except:
 			pass
-		Pdb2gmx = subprocess.call(gromacs.path+"echo -e '"+force+"' | pdb2gmx -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log.txt",
-		executable="/bin/bash", shell=True)
+		
+		command = gromacs.path+"echo -e '"+force+"' | pdb2gmx -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &>> log.txt"
+		logfile = open('log.txt', 'w')
+		logfile.write(self.command_distinction+command+self.command_distinction)
+		logfile.close()
+		
+		Pdb2gmx = subprocess.Popen(command, executable="/bin/bash", shell=True)
+		while Pdb2gmx.poll() is None:
+			if stop == 1:
+				Pdb2gmx.kill()
+				break
+			time.sleep(1.0)
 
 		if os.path.isfile(file_path+".gro") == True:
 			status = ["ok", ""]
 		else:
 			status = ["fail", "Warning. Trying to ignore unnecessary hydrogen atoms."]
 			status_update(status)
-			Pdb2gmx = subprocess.call(gromacs.path+"echo -e '"+force+"' | pdb2gmx -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &>> log.txt",
-			executable="/bin/bash", shell=True)
+			
+			command = gromacs.path+"echo -e '"+force+"' | pdb2gmx -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &>> log.txt"
+			logfile = open('log.txt', 'a')
+			logfile.write(self.command_distinction+command+self.command_distinction)
+			logfile.close()
+			
+			Pdb2gmx = subprocess.Popen(command, executable="/bin/bash", shell=True)
+			while Pdb2gmx.poll() is None:
+				if stop == 1:
+					Pdb2gmx.kill()
+					break
+				time.sleep(1.0)
 
 		if os.path.isfile(file_path+".gro") == True:
 			status = ["ok", "Calculated topology using Force fields"]
@@ -262,8 +283,18 @@ class Gromacs_input:
 			os.remove(project_name+".top")
 		except:
 			pass
-		X2top = subprocess.call(gromacs.path+"g_x2top -f "+project_name+".pdb -o "+project_name+".top &> log.txt",
-		executable="/bin/bash", shell=True)
+		
+		command = gromacs.path+"g_x2top -f "+project_name+".pdb -o "+project_name+".top &> log.txt"
+		logfile = open('log.txt', 'a')
+		logfile.write(self.command_distinction+command+self.command_distinction)
+		logfile.close()
+		
+		X2top = subprocess.Popen(command, executable="/bin/bash", shell=True)
+		while X2top.poll() is None:
+			if stop == 1:
+				X2top.kill()
+				break
+			time.sleep(1.0)
 
 		if os.path.isfile(file_path+".top") == True:
 			status = ["ok", "Calculating structure using trjconv."]
@@ -271,8 +302,18 @@ class Gromacs_input:
 			status = ["fail", "Unable to create topology file."]
 		status_update(status)
 		if 	 status[0] == "ok":
-			Trjconv = subprocess.call(gromacs.path+"echo -e 0 | trjconv -f "+project_name+".pdb -s "+project_name+".pdb -o "+project_name+".gro &>> log.txt",
-			executable="/bin/bash", shell=True)
+			
+			command = gromacs.path+"echo -e 0 | trjconv -f "+project_name+".pdb -s "+project_name+".pdb -o "+project_name+".gro &>> log.txt"
+			logfile = open('log.txt', 'a')
+			logfile.write(self.command_distinction+command+self.command_distinction)
+			logfile.close()
+			
+			Trjconv = subprocess.Popen(command, executable="/bin/bash", shell=True)
+			while Trjconv.poll() is None:
+				if stop == 1:
+					Trjconv.kill()
+					break
+				time.sleep(1.0)
 
 			if os.path.isfile(file_path+".gro") == True:
 				status = ["ok", "Calculated structure using trjconv."]
@@ -292,14 +333,32 @@ class Gromacs_input:
 		except:
 			pass
 		
+		command = gromacs.path+"editconf -f "+project_name+".gro -o "+project_name+"1.gro "+box_type+distance+density+" &>> log.txt"
+		logfile = open('log.txt', 'a')
+		logfile.write(self.command_distinction+command+self.command_distinction)
+		logfile.close()
+		
 		status_update(status)
-		Editconf = subprocess.call(gromacs.path+"editconf -f "+project_name+".gro -o "+project_name+"1.gro "+box_type+distance+density+" &>> log.txt",
-		executable="/bin/bash", shell=True)
+		Editconf = subprocess.Popen(command, executable="/bin/bash", shell=True)
+		while Editconf.poll() is None:
+			if stop == 1:
+				Editconf.kill()
+				break
+			time.sleep(1.0)
+		
+		command = gromacs.path+"genbox -cp "+project_name+"1.gro -cs -o "+project_name+"_b4em.gro -p "+project_name+".top &>> log.txt"
+		logfile = open('log.txt', 'a')
+		logfile.write(self.command_distinction+command+self.command_distinction)
+		logfile.close()
 		
 		status = ["ok", "Adding Water Box"]
 		status_update(status)
-		Genbox = subprocess.call(gromacs.path+"genbox -cp "+project_name+"1.gro -cs -o "+project_name+"_b4em.gro -p "+project_name+".top &>> log.txt",
-		executable="/bin/bash", shell=True)
+		Genbox = subprocess.Popen(command, executable="/bin/bash", shell=True)
+		while Genbox.poll() is None:
+			if stop == 1:
+				Genbox.kill()
+				break
+			time.sleep(1.0)
 		
 		if os.path.isfile(file_path+"1.gro") == True:
 			status = ["ok", "Water Box Added"]
@@ -317,11 +376,31 @@ class Gromacs_input:
 			os.remove(project_name+"_b4pr.gro")
 		except:
 			pass
+		
+		command = gromacs.path+"grompp -f em -c "+project_name+"_b4em -p "+project_name+" -o "+project_name+"_em &>> log.txt"
+		logfile = open('log.txt', 'a')
+		logfile.write(self.command_distinction+command+self.command_distinction)
+		logfile.close()
 
 		status_update(status)		
-		Grompp = subprocess.call(gromacs.path+"grompp -f em -c "+project_name+"_b4em -p "+project_name+" -o "+project_name+"_em &>> log.txt", executable="/bin/bash", shell=True)
-
-		Mdrun = subprocess.call(gromacs.path+"mdrun -nice 4 -s "+project_name+"_em -o "+project_name+"_em -c "+project_name+"_b4pr -v &>> log.txt", executable="/bin/bash", shell=True)
+		Grompp = subprocess.Popen(command, executable="/bin/bash", shell=True)
+		while Grompp.poll() is None:
+			if stop == 1:
+				Grompp.kill()
+				break
+			time.sleep(1.0)
+		
+		command = gromacs.path+"mdrun -nice 4 -s "+project_name+"_em -o "+project_name+"_em -c "+project_name+"_b4pr -v &>> log.txt"
+		logfile = open('log.txt', 'a')
+		logfile.write(self.command_distinction+command+self.command_distinction)
+		logfile.close()
+		
+		Mdrun = subprocess.Popen(command, executable="/bin/bash", shell=True)
+		while Mdrun.poll() is None:
+			if stop == 1:
+				Mdrun.kill()
+				break
+			time.sleep(1.0)
 		
 		if os.path.isfile(file_path+"_em.tpr") == True:
 			status = ["ok", "Energy Minimized"]
@@ -340,10 +419,30 @@ class Gromacs_input:
 		except:
 			pass
 		
+		command = gromacs.path+"grompp -f pr -c "+project_name+"_b4pr -r "+project_name+"_b4pr -p "+project_name+" -o "+project_name+"_pr &>> log.txt"
+		logfile = open('log.txt', 'a')
+		logfile.write(self.command_distinction+command+self.command_distinction)
+		logfile.close()
+		
 		status_update(status)
-		Grompp = subprocess.call(gromacs.path+"grompp -f pr -c "+project_name+"_b4pr -r "+project_name+"_b4pr -p "+project_name+" -o "+project_name+"_pr &>> log.txt", executable="/bin/bash", shell=True)
-
-		Mdrun = subprocess.call(gromacs.path+"mdrun -nice 4 -s "+project_name+"_pr -o "+project_name+"_pr -c "+project_name+"_b4md -v &>> log.txt", executable="/bin/bash", shell=True)
+		Grompp = subprocess.Popen(command, executable="/bin/bash", shell=True)
+		while Grompp.poll() is None:
+			if stop == 1:
+				Grompp.kill()
+				break
+			time.sleep(1.0)
+		
+		command = gromacs.path+"mdrun -nice 4 -s "+project_name+"_pr -o "+project_name+"_pr -c "+project_name+"_b4md -v &>> log.txt"
+		logfile = open('log.txt', 'a')
+		logfile.write(self.command_distinction+command+self.command_distinction)
+		logfile.close()
+		
+		Mdrun = subprocess.Popen(command, executable="/bin/bash", shell=True)
+		while Mdrun.poll() is None:
+			if stop == 1:
+				Mdrun.kill()
+				break
+			time.sleep(1.0)
 		
 		if os.path.isfile(file_path+"_pr.tpr") == True:
 			status = ["ok", "Position Restrained MD finished"]
@@ -359,9 +458,19 @@ class Gromacs_input:
 			os.remove("posre_2.itp")
 		except:
 			pass
+		
+		command = gromacs.path+"echo 0 | genrestr -f "+project_name+".pdb -o posre_2.itp -n index_dynamics.ndx &>> log.txt"
+		logfile = open('log.txt', 'a')
+		logfile.write(self.command_distinction+command+self.command_distinction)
+		logfile.close()
 			
 		status_update(status)
-		Genrestr = subprocess.call(gromacs.path+"echo 0 | genrestr -f "+project_name+".pdb -o posre_2.itp -n index_dynamics.ndx &>> log.txt", executable="/bin/bash", shell=True)
+		Genrestr = subprocess.Popen(command, executable="/bin/bash", shell=True)
+		while Genrestr.poll() is None:
+			if stop == 1:
+				Genrestr.kill()
+				break
+			time.sleep(1.0)
 		
 		if os.path.isfile("posre_2.itp") == True:
 			status = ["ok", "Added Restraints"]
@@ -381,10 +490,30 @@ class Gromacs_input:
 		except:
 			pass
 		
+		command = gromacs.path+"grompp -f md -c "+project_name+"_b4md  -p "+project_name+" -o "+project_name+"_md &>> log.txt"
+		logfile = open('log.txt', 'a')
+		logfile.write(self.command_distinction+command+self.command_distinction)
+		logfile.close()
+		
 		status_update(status)
-		Grompp = subprocess.call(gromacs.path+"grompp -f md -c "+project_name+"_b4md  -p "+project_name+" -o "+project_name+"_md &>> log.txt", executable="/bin/bash", shell=True)
-
-		Mdrun = subprocess.call(gromacs.path+"mdrun -nice 4 -s "+project_name+"_md -o "+project_name+"_md -c "+project_name+"_after_md -v &>> log.txt", executable="/bin/bash", shell=True)
+		Grompp = subprocess.Popen(command, executable="/bin/bash", shell=True)
+		while Grompp.poll() is None:
+			if stop == 1:
+				Grompp.kill()
+				break
+			time.sleep(1.0)
+		
+		command = gromacs.path+"mdrun -nice 4 -s "+project_name+"_md -o "+project_name+"_md -c "+project_name+"_after_md -v &>> log.txt"
+		logfile = open('log.txt', 'a')
+		logfile.write(self.command_distinction+command+self.command_distinction)
+		logfile.close()
+		
+		Mdrun = subprocess.Popen(command, executable="/bin/bash", shell=True)
+		while Mdrun.poll() is None:
+			if stop == 1:
+				Mdrun.kill()
+				break
+			time.sleep(1.0)
 	
 		if os.path.isfile(file_path+"_md.tpr") == True:
 			status = ["ok", "Molecular Dynamics Simulation finished"]
@@ -403,9 +532,18 @@ class Gromacs_input:
 		if os.path.isfile(project_name+"_multimodel.pdb") == True:
 			os.remove(project_name+"_multimodel.pdb")
 		
+		command = gromacs.path+"echo "+str(self.group)+" | trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -app -o "+project_name+"_multimodel.pdb &>> log.txt"
+		logfile = open('log.txt', 'a')
+		logfile.write(self.command_distinction+command+self.command_distinction)
+		logfile.close()
+		
 		status_update(status)
-		Trjconv = subprocess.call(gromacs.path+"echo "+str(self.group)+" | trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -app -o "+project_name+"_multimodel.pdb &>> log.txt",
-		executable="/bin/bash", shell=True)
+		Trjconv = subprocess.Popen(command, executable="/bin/bash", shell=True)
+		while Trjconv.poll() is None:
+			if stop == 1:
+				Trjconv.kill()
+				break
+			time.sleep(1.0)
 		
 		if os.path.isfile(file_path+"_multimodel.pdb") == True:
 			status = ["ok", "Finished!"]
