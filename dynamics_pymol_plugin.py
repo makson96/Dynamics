@@ -207,8 +207,8 @@ class Gromacs_input:
 	force = 1
 	water = 1
 	group = 1
-	box_type = "triclinic"
-	box_distance = "0.5"
+	box_type = "dodecahedron"
+	box_distance = "0.6"
 	box_density = "1000"
 	restraints_nr = 1
 	command_distinction = "\n!************************!\n"
