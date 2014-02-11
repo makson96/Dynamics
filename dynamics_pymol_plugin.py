@@ -1135,6 +1135,7 @@ class CalculationWindow:
 	bar_widget = ""
 	start_button = ""
 	stop_button = ""
+	log_button = ""
 	
 	def __init__(self):
 		self.queue_status = Queue.Queue()
@@ -1186,6 +1187,11 @@ class CalculationWindow:
 			start_button.configure(state=DISABLED)
 		self.start_button = start_button
 		
+		log_button = Button(frame2, text = "LOG", command=lambda: logWindow(root))
+		log_button.pack(side=LEFT)
+		log_button.configure(state=DISABLED)
+		self.log_button = log_button
+		
 		#Updateing status bar
 		tasks_nr = 0.0
 		for task in progress.to_do:
@@ -1215,6 +1221,7 @@ class CalculationWindow:
 				self.queue_status.put("User Stoped")
 		if error != "":
 			self.queue_status.put("Fatal Error")
+			self.start_counting(0)
 	
 	##This function will update status bar in thread safe manner
 	def bar_display(self, root):
@@ -1251,10 +1258,12 @@ class CalculationWindow:
 			thread.start_new_thread(dynamics, ())
 			self.stop_button.configure(state=ACTIVE)
 			self.start_button.configure(state=DISABLED)
+			self.log_button.configure(state=DISABLED)
 		elif value == 0:
 			stop = 1
 			self.stop_button.configure(state=DISABLED)
 			self.start_button.configure(state=ACTIVE)
+			self.log_button.configure(state=ACTIVE)
 
 ##This window will allow to manipulate final molecule to interprate MD simulation results
 class InterpretationWindow:
@@ -1391,6 +1400,8 @@ class InterpretationWindow:
 		exit_button.pack(side=LEFT)
 		save_button = Button(frame1_7, text = "Save", command=lambda : select_file_save(1))
 		save_button.pack(side=LEFT)
+		log_button = Button(frame1_7, text = "Log", command=lambda: logWindow(root))
+		log_button.pack(side=LEFT)
 		
 		if prody_true != 1:
 			print "No ProDy found"
@@ -1961,6 +1972,41 @@ def helpWindow(master):
 	ok_button = Button(frame, text = "OK", command=root.destroy)
 	ok_button.pack()
 
+##Log window
+def logWindow(master):
+	root = Toplevel(master)
+	root.wm_title("Log Window")
+	
+	log_txt, log_long = log_option()
+	canvas_long = log_long * 19
+	print canvas_long
+	
+	sb = Scrollbar(root, orient=VERTICAL)
+	sb.pack(side=RIGHT, fill=Y)
+		
+	canvas = Canvas(root, width=600)
+	canvas.pack(side=TOP, fill="both", expand=True)
+	frame = Frame(canvas)
+	frame.pack(side=TOP)
+		
+	#attach canvas (with frame in it) to scrollbar
+	canvas.config(yscrollcommand=sb.set)
+	sb.config(command=canvas.yview)
+		
+	#bind frame with canvas
+	canvas.create_window((1,1), window=frame, anchor="nw", tags="frame")
+	frame.bind("<Configure>", canvas.config(scrollregion=(0, 0, 0, canvas_long)))
+	#canvas.config(scrollregion=canvas.bbox(ALL))
+	
+	#frame = Frame(root)
+	#frame.pack()
+	
+	w = Label(frame, text=log_txt)
+	w.pack()
+	
+	ok_button = Button(root, text = "OK", command=root.destroy)
+	ok_button.pack()
+
 ##Clean message in tkMessageBox
 def cleanMessage():
 	tkMessageBox.showinfo("Clean", "Temporary files are now removed!\nPlease restart plugin.")
@@ -2083,7 +2129,7 @@ def dynamics(help_clean = ""):
 		save_options()
 	elif status[0] == "fail":
 		print status[1]
-		if help_name.count(help_clean) != 1 and clean_name.count(help_clean) != 1:
+		if help_name.count(help_clean) != 1 and clean_name.count(help_clean) != 1 and stop == 0:
 			error_message()
 	
 	##Showing multimodel and interpretation window
@@ -2215,6 +2261,17 @@ Click Start button and wait till calculation is finished.
 Multimodel PDB file will be displayed in PyMOL viewer.
 You can click Play button in order to see animation."""
 	return help_message
+
+##Text from log
+def log_option():
+	log_file = open(project_dir + "log.txt","r")
+	log_message = log_file.read()
+	num_lines = 0
+	log_lines = log_message.split("\n")
+	for line in log_lines:
+		num_lines = num_lines + 1
+	del log_file
+	return log_message, num_lines
 
 ##Clean function
 def clean_option():
