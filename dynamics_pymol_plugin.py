@@ -1222,6 +1222,7 @@ class CalculationWindow:
 		if error != "":
 			self.queue_status.put("Fatal Error")
 			self.start_counting(0)
+			self.start_button.configure(state=DISABLED)
 	
 	##This function will update status bar in thread safe manner
 	def bar_display(self, root):
