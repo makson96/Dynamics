@@ -1202,24 +1202,19 @@ class CalculationWindow:
 
 	##This function will update status bar during molecular dynamics simulation (beware this is separate thread)
 	def bar_update(self):
-		global error
 		percent = 0.0
 		while stop == 1:
 			time.sleep(0.5)
-		while self.bar_var.get() != "Finished!" and error == "" and percent != 100:
+		while error == "" and percent != 100:
 			time.sleep(0.5)
 			percent = steps_status_bar("only_bar")
 			self.queue_percent.put(percent)
-			self.queue_status.put(status[1])
-			if stop == 1:
+			if stop == 0:
+				self.queue_status.put(status[1])
+			elif stop == 1:
 				self.queue_status.put("User Stoped")
-		if self.bar_var.get() == "Finished!" or percent == 100:
-			print "Finished!"
-			percent = 100
-			self.queue_percent.put(percent)
-		elif error != "":
+		if error != "":
 			self.queue_status.put("Fatal Error")
-			time.sleep(1.0)
 	
 	##This function will update status bar in thread safe manner
 	def bar_display(self, root):
