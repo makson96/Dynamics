@@ -689,38 +689,33 @@ class Vectors:
 ##This class create and maintain abstraction mdp file representatives. em.mdp, pr.mdp, md.mdp
 class Mdp_config:
 	
-	config = ""
+	external_file=0
 	options = [[]]
 	file_name = ""
 	
 	def __init__(self, file_name, init_config, external_file=0):
-		if external_file == 0:
-			self.config = "title = "+project_name+"_"+file_name+"\n"+init_config
-		elif external_file == 1:
-			self.config = init_config
 		self.file_name = file_name
-		list1 = self.config.split("\n")
+		list1 = init_config.split("\n")
 		list2 = []
+		if self.external_file == 0:
+			list2.append(["title", project_name+"_"+file_name])
 		for line in list1:
 			list2.append(line.split(" = "))
 		self.options = list2			
 	
-	def update(self, values=""):
-		if values != "":
-			index_nr = 0
-			for option in self.options:
-				option[1] = values[index_nr]
-				index_nr = index_nr + 1
-		self.options = self.options
+	def update(self, value, option_nr, check=1):
+		self.options[option_nr][1] = value
+		if check == 0 and self.options[option_nr][0][0] != ";":
+			self.options[option_nr][0] = ";"+self.options[option_nr][0]
+		elif check != 0 and self.options[option_nr][0][0] == ";":
+			self.options[option_nr][0] = self.options[option_nr][0][1:]
+	
+	def save_file(self):
 		config = ""
 		for option in self.options:
 			config = config + option[0]+" = "+option[1]+"\n"
-		self.config = config
-		save_options()
-	
-	def save_file(self, project_dir):
 		mdp = open(project_dir+self.file_name, "w")
-		mdp.write(self.config)
+		mdp.write(config)
 		mdp.close() 
 
 ##Status and to_do maintaining class
@@ -1593,17 +1588,13 @@ class RestraintsWindow:
 		global md_file, progress
 		if check == 1:
 			config_button.configure(state=ACTIVE)
-			md_file.options[2][0] = "define"
-			md_file.options = md_file.options
-			md_file.update()
+			md_file.update(md_file.options[2][1], 2, 1)
 			gromacs.restraints_index()
 			progress.to_do[5] = 1
 			progress.to_do = progress.to_do
 		elif check == 0:
 			config_button.configure(state=DISABLED)
-			md_file.options[2][0] = ";define"
-			md_file.options = md_file.options
-			md_file.update()
+			md_file.update(md_file.options[2][1], 2, 0)
 			progress.to_do[5] = 0
 			progress.to_do = progress.to_do
 
@@ -1741,15 +1732,16 @@ def mdp_configure(config_name, master):
 			root2.wm_title("Molecular Dynamics Simulation Options")
 		
 		values_list = []
+		check_list = []
 		
 		if config_name == "em":
-			b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "em", root2))
+			b = Button(root2, text="OK", command=lambda: mdp_update(values_list, check_list, "em", root2))
 			b.pack(side=BOTTOM)
 		elif config_name == "pr":
-			b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "pr", root2))
+			b = Button(root2, text="OK", command=lambda: mdp_update(values_list, check_list, "pr", root2))
 			b.pack(side=BOTTOM)
 		elif config_name == "md":
-			b = Button(root2, text="OK", command=lambda: mdp_update(values_list, "md", root2))
+			b = Button(root2, text="OK", command=lambda: mdp_update(values_list, check_list, "md", root2))
 			b.pack(side=BOTTOM)
 		
 		sb = Scrollbar(root2, orient=VERTICAL)
@@ -1785,35 +1777,42 @@ def mdp_configure(config_name, master):
 			elif option == "constraints":
 				l1 = Label(frame2, text="Options for bonds")
 				l1.pack(side=TOP)
-			values_list.append(StringVar(root2)) #brilliant
+			values_list.append(StringVar(root2))
 			values_list[-1].set(value)
+			check_list.append(IntVar(root2))
 			if option[0] != ";":
-				l = Label(frame2, text=option, width=25, anchor=W)
-				l.pack(side=LEFT)
-				e = Entry(frame2, textvariable=values_list[-1])
-				e.pack(side=LEFT)
+				check_list[-1].set(1)
+				c1 = Checkbutton(frame2, text=option, variable=check_list[-1], width=25, anchor=W)
+				c1.pack(side=LEFT)
+			else:
+				check_list[-1].set(0)
+				c1 = Checkbutton(frame2, text=option, variable=check_list[-1], width=25, anchor=W)
+				c1.pack(side=LEFT)
+			e = Entry(frame2, textvariable=values_list[-1])
+			e.pack(side=LEFT)
 		
 		#bind canvas with frame1 2/2
-		frame1.bind("<Configure>", canvas.config(scrollregion=(0, 0, 0, len(values_list*26))))
+		frame1.bind("<Configure>", canvas.config(scrollregion=(0, 0, 0, len(values_list)*25)))
 	
 	elif project_name == "nothing":
 		no_molecule_warning()
 
 ##This function will update MDP class objects alfter closing "mdp_configure" window
-def mdp_update(values, mdp, root_to_kill=""):
+def mdp_update(values, check_list, mdp, root_to_kill=""):
 	try:
 		root_to_kill.destroy()
 	except:
 		pass
-	values2 = []
+	index_nr = 0
 	for value in values:
-		values2.append(value.get())
-	if mdp == "em":
-		em_file.update(values2)
-	elif mdp == "pr":
-		pr_file.update(values2)
-	elif mdp == "md":
-		md_file.update(values2)
+		if mdp == "em":
+			em_file.update(value.get(), index_nr, check_list[index_nr].get())
+		elif mdp == "pr":
+			pr_file.update(value.get(), index_nr, check_list[index_nr].get())
+		elif mdp == "md":
+			md_file.update(value.get(), index_nr, check_list[index_nr].get())
+		index_nr = index_nr + 1
+	save_options()
 
 ##This function will create Simulation Steps configuration window
 def steps_configure(master, restraints_button):
@@ -2158,9 +2157,9 @@ def check_variable(force):
 
 ##Saving configuration files
 def mdp_files():
-	em_file.save_file(project_dir)
-	pr_file.save_file(project_dir)
-	md_file.save_file(project_dir)
+	em_file.save_file()
+	pr_file.save_file()
+	md_file.save_file()
 
 ##Show multimodel PDB file in PyMOOL
 def show_multipdb():
