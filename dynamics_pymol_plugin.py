@@ -268,7 +268,7 @@ class Gromacs_input:
 					break
 				time.sleep(1.0)
 
-		if os.path.isfile(file_path+".gro") == True:
+		if os.path.isfile(file_path+".gro") == True and stop == 0:
 			status = ["ok", "Calculated topology using Force fields"]
 		else:
 			status = ["fail", "Force field unable to create topology file"]
@@ -296,7 +296,7 @@ class Gromacs_input:
 				break
 			time.sleep(1.0)
 
-		if os.path.isfile(file_path+".top") == True:
+		if os.path.isfile(file_path+".top") == True and stop == 0:
 			status = ["ok", "Calculating structure using trjconv."]
 		else:
 			status = ["fail", "Unable to create topology file."]
@@ -315,7 +315,7 @@ class Gromacs_input:
 					break
 				time.sleep(1.0)
 
-			if os.path.isfile(file_path+".gro") == True:
+			if os.path.isfile(file_path+".gro") == True and stop == 0:
 				status = ["ok", "Calculated structure using trjconv."]
 			else:
 				status = ["fail", "Unable to create structure file."]
@@ -360,7 +360,7 @@ class Gromacs_input:
 				break
 			time.sleep(1.0)
 		
-		if os.path.isfile(file_path+"1.gro") == True:
+		if os.path.isfile(file_path+"1.gro") == True and stop == 0:
 			status = ["ok", "Water Box Added"]
 		else:
 			status = ["fail", "Unable to add waterbox"]
@@ -402,7 +402,7 @@ class Gromacs_input:
 				break
 			time.sleep(1.0)
 		
-		if os.path.isfile(file_path+"_em.tpr") == True:
+		if os.path.isfile(file_path+"_em.tpr") == True and stop == 0:
 			status = ["ok", "Energy Minimized"]
 		else:
 			status = ["fail", "Unable to perform Energy Minimization"]
@@ -444,7 +444,7 @@ class Gromacs_input:
 				break
 			time.sleep(1.0)
 		
-		if os.path.isfile(file_path+"_pr.tpr") == True:
+		if os.path.isfile(file_path+"_pr.tpr") == True and stop == 0:
 			status = ["ok", "Position Restrained MD finished"]
 		else:
 			status = ["fail", "Unable to perform Position Restrained"]
@@ -472,7 +472,7 @@ class Gromacs_input:
 				break
 			time.sleep(1.0)
 		
-		if os.path.isfile("posre_2.itp") == True:
+		if os.path.isfile("posre_2.itp") == True and stop == 0:
 			status = ["ok", "Added Restraints"]
 			os.remove("posre.itp")
 			shutil.copy("posre_2.itp", "posre.itp")
@@ -515,7 +515,7 @@ class Gromacs_input:
 				break
 			time.sleep(1.0)
 	
-		if os.path.isfile(file_path+"_md.tpr") == True:
+		if os.path.isfile(file_path+"_md.tpr") == True and stop == 0:
 			status = ["ok", "Molecular Dynamics Simulation finished"]
 		else:
 			status = ["fail", "Unable to perform Molecular Dynamics Simulation"]
@@ -545,7 +545,7 @@ class Gromacs_input:
 				break
 			time.sleep(1.0)
 		
-		if os.path.isfile(file_path+"_multimodel.pdb") == True:
+		if os.path.isfile(file_path+"_multimodel.pdb") == True and stop == 0:
 			status = ["ok", "Finished!"]
 		else:
 			status = ["fail", "Unable to generate multimodel PDB file"]
