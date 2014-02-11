@@ -695,6 +695,7 @@ class Mdp_config:
 	
 	def __init__(self, file_name, init_config, external_file=0):
 		self.file_name = file_name
+		self.external_file = external_file
 		list1 = init_config.split("\n")
 		list2 = []
 		if self.external_file == 0:
