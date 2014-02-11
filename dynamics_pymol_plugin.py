@@ -1979,7 +1979,6 @@ def logWindow(master):
 	
 	log_txt, log_long = log_option()
 	canvas_long = log_long * 19
-	print canvas_long
 	
 	sb = Scrollbar(root, orient=VERTICAL)
 	sb.pack(side=RIGHT, fill=Y)
@@ -1996,10 +1995,6 @@ def logWindow(master):
 	#bind frame with canvas
 	canvas.create_window((1,1), window=frame, anchor="nw", tags="frame")
 	frame.bind("<Configure>", canvas.config(scrollregion=(0, 0, 0, canvas_long)))
-	#canvas.config(scrollregion=canvas.bbox(ALL))
-	
-	#frame = Frame(root)
-	#frame.pack()
 	
 	w = Label(frame, text=log_txt)
 	w.pack()
@@ -2223,15 +2218,8 @@ def load_options():
 	print "Project was created for Dynamics PyMOL Plugin"+options[0]+" and "+options[1]
 	if gromacs.version != options[1]:
 		print "GROMACS versions is different for loaded file."
-	if options[0][1:4] == "1.2":
-		print "1.2 compatibility layer"
-		gromacs2 = options[2]
-		em_file = options[3]
-		pr_file = options[4]
-		md_file = options[5]
-		progress = options[6]
 	
-	elif options[0][1:4] == "2.0":
+	if options[0][1:4] == "2.0":
 		print "2.0 compatibility layer"
 		gromacs2 = options[2]
 		em_file = options[3]
