@@ -229,7 +229,7 @@ class Gromacs_input:
 		print "gromacs update"
 
 	##This function will create initial topology and triectory using pdb file and choosen force field
-	def pdb2top(self, file_path, force, gromacs, project_name):
+	def pdb2top(self, file_path, gromacs, project_name):
 		status = ["ok", "Calculating topology using Force fields"]
 		status_update(status)
 		try:
@@ -238,7 +238,9 @@ class Gromacs_input:
 		except:
 			pass
 		
-		command = gromacs.path+"echo -e '"+force+"' | pdb2gmx -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &>> log.txt"
+		force_water = str(self.force) + "\n" + str(self.water)
+		
+		command = gromacs.path+"echo -e '"+force_water+"' | pdb2gmx -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &>> log.txt"
 		logfile = open('log.txt', 'w')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		logfile.close()
@@ -1481,13 +1483,29 @@ class WaterWindows:
 		v1 = IntVar(root)
 		v1.set(explicit)
 		
+		v2 = IntVar(root)
+		v2.set(0)
+		
+		frame2 = Frame(root)
+		
 		radio_button1 = Radiobutton(root, text="Explicit Solvent Simulation", value=1, variable=v1, command = lambda : self.change_e(v1.get()))
 		radio_button1.pack(side=TOP, anchor=W)
 		for water in gromacs.water_list:
-			radio_button2 = Radiobutton(root, text=water[1], value=water[0], variable=v4_water, command = lambda : self.change(v4_water, water_v))
+			frame2 = Frame(root, padx=10)
+			frame2.pack(anchor=W)
+			radio_button2 = Radiobutton(frame2, text=water[1], value=water[0], variable=v4_water, command = lambda : self.change(v4_water, water_v))
 			radio_button2.pack(side=TOP, anchor=W)
 		radio_button1 = Radiobutton(root, text="Implicit Solvent Simulation", value=0, variable=v1, command = lambda : self.change_e(v1.get()))
 		radio_button1.pack(side=TOP, anchor=W)
+		frame3 = Frame(root, padx=10)
+		frame3.pack(anchor=W)
+		radio_button3 = Radiobutton(frame3, text="Implicit Still", value=0, variable=v2, command = lambda : self.change_i(v2, water_v))
+		radio_button3.pack(side=TOP, anchor=W)
+		radio_button3 = Radiobutton(frame3, text="Implicit Hawkins-Cramer-Truhlar", value=1, variable=v2, command = lambda : self.change_i(v2, water_v))
+		radio_button3.pack(side=TOP, anchor=W)
+		radio_button3 = Radiobutton(frame3, text="Implicit Onufriev-Bashford-Case", value=2, variable=v2, command = lambda : self.change_i(v2, water_v))
+		radio_button3.pack(side=TOP, anchor=W)
+
 		ok_button = Button(root, text = "OK", command=root.destroy)
 		ok_button.pack(side=TOP)
 
@@ -1506,6 +1524,10 @@ class WaterWindows:
 		global explicit
 		explicit = value
 		print explicit
+	
+	##This function changes implicit water model
+	def change_i(self, int_variable, water_v):
+		print "not ready"
 
 	##Water box configuration window
 	def box(self, master):
@@ -2068,7 +2090,6 @@ def dynamics(help_clean = ""):
 	##Normal work
 	else:
 		file_path = project_dir + project_name
-		force = str(gromacs2.force) + "\n" + str(gromacs2.water)
 		os.chdir(project_dir)
 		stop = 0
 	
@@ -2082,16 +2103,10 @@ def dynamics(help_clean = ""):
 			progress.status = progress.status
 			progress.to_do = progress.to_do
 			save_options()
-
-	##Checking variables
-	if status[0] == "ok":
-		status = check_variable(force)
-	elif status[0] == "fail":
-		pass
 	
 	##Counting topology
 	if status[0] == "ok" and stop == 0 and progress.to_do[1] == 1 and progress.x2top == 0:
-		status = gromacs2.pdb2top(file_path, force, gromacs, project_name)
+		status = gromacs2.pdb2top(file_path, gromacs, project_name)
 		if status[0] == "ok":
 			progress.status[1] = 1
 			progress.to_do[1] = 0
@@ -2178,23 +2193,6 @@ def dynamics(help_clean = ""):
 			pass
 		
 	return project_name, project_dir
-
-##Checking if given varaibles are correct - security
-def check_variable(force):
-	status = ["ok", ""]
-	force_list = force.split("\n")
-	for value in force_list:
-		try:
-			int(value)
-		except:
-			status = ["fail", "Wrong Forcefield (check_variable)"]
-	try:
-		int(gromacs2.group)
-	except:
-		status = ["fail", "Wrong Group (check_variable)"]
-	if project_name != project_name.split(";")[0]:
-		status = ["fail", "Wrong Project Name (check_variable)"]
-	return status
 
 ##Saving configuration files
 def mdp_files():
