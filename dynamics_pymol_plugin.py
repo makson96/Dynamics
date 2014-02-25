@@ -561,7 +561,6 @@ class Vectors:
 	nmd_bfactors = []
 	nmd_coordinates = []
 	nmd_mode = []
-	#vectors_dict = {}
 	color="gray"
 	scale = 1.0
 	mode_nr = 0
@@ -669,8 +668,7 @@ class Vectors:
 			except:
 				pass
 			cone=[cgo.CONE, x1[coor_nr], y1[coor_nr], z1[coor_nr], x2[coor_nr], y2[coor_nr], z2[coor_nr], arrow_head_radius, 0.0] + color1 + color2 + [1.0, 0.0 ]
-			cmd.load_cgo(cone,"Mode_Vector_"+ str(coor_nr))#, discrete=1) # PyMOL API
-			#self.vectors_dict["Mode_Vector_"+ str(coor_nr)] = cone
+			cmd.load_cgo(cone,"Mode_Vector_"+ str(coor_nr)) # PyMOL API
 			coor_nr = coor_nr+1
 		
 	def change_vectors_color(self, color):
@@ -685,6 +683,18 @@ class Vectors:
 	def change_vectors_mode_nr(self, mode_nr):
 		self.mode_nr = mode_nr
 		self.show_vectors()
+
+	#This is the window to setup ProDy options
+	def window(self, master):
+		if project_name != "nothing":
+			root = Toplevel(master)
+			root.wm_title("Vectors Configuration")
+
+			ok_button = Button(root, text = "OK", command=root.destroy)
+			ok_button.pack(side=TOP)
+			
+		elif project_name == "nothing":
+			no_molecule_warning()
 
 ##This class create and maintain abstraction mdp file representatives. em.mdp, pr.mdp, md.mdp
 class Mdp_config:
@@ -858,6 +868,8 @@ morse = no"""
 	if prody_true == 1:
 		global vectors_prody
 		vectors_prody = Vectors()
+	else:
+		vectors_prody = ""
 
 	##Creating objects - data from those windows will be used by rootWindow
 	global calculationW, waterW, restraintsW
@@ -1074,7 +1086,7 @@ def rootWindow():
 	re_label = Label(frame1_3_1, text="Vectors Options")
 	re_label.pack(side=TOP)
 	
-	prody_button = Button(frame1_3_1, text = "Configure")#, command=lambda: )
+	prody_button = Button(frame1_3_1, text = "Configure", command=lambda: vectors_prody.window(root))
 	prody_button.pack(side=TOP)
 	
 	##Disable configuration of ProDy (Vectors) if ProDy is not installed
@@ -1120,6 +1132,10 @@ def rootWindow():
 	balloon.bind(save_button, "Save current project to tar.bz2 archive")
 	balloon.bind(load_button, "Load tar.bz2 archive with project files for further processing")
 	balloon.bind(count_button, "Go to the next window and perform Molecular Dynamics Simulation")
+	if prody_true == 1:
+		balloon.bind(prody_button, "Set vectors options")
+	else:
+		balloon.bind(prody_button, "In order to use this option install ProDy")
 	
 	root.mainloop()
 
@@ -1880,7 +1896,7 @@ def steps_configure(master, restraints_button):
 		c9 = Checkbutton(frame1, text="Calculate vectors using ProDy (optional)"+steps_status_done(8), variable=check_var9, command=lambda: progress.to_do_update(8, check_var9.get()))
 		c9.pack(side=TOP, anchor=W)
 		
-		if prody_true == 0:
+		if prody_true != 1:
 			check_var9.set(0)
 			c9.configure(state=DISABLED)
 			progress.to_do_update(8, 0)
