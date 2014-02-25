@@ -863,15 +863,15 @@ morse = no"""
 	if os.path.isdir(project_dir) == False:
 		os.makedirs(project_dir)
 	
-	global gromacs, gromacs2
+	##Gromacs variables
+	global gromacs, gromacs2, explicit
 	gromacs = Gromacs_output()
 	gromacs2 = Gromacs_input()
+	explicit = 1
 	
 	if prody_true == 1:
 		global vectors_prody
 		vectors_prody = Vectors()
-	else:
-		vectors_prody = ""
 
 	##Creating objects - data from those windows will be used by rootWindow
 	global calculationW, waterW, restraintsW
@@ -1477,9 +1477,17 @@ class WaterWindows:
 	def choose(self, v4_water, water_v, master):
 		root = Toplevel(master)
 		root.wm_title("Water Model")
+		
+		v1 = IntVar(root)
+		v1.set(explicit)
+		
+		radio_button1 = Radiobutton(root, text="Explicit Solvent Simulation", value=1, variable=v1, command = lambda : self.change_e(v1.get()))
+		radio_button1.pack(side=TOP, anchor=W)
 		for water in gromacs.water_list:
-			radio_button = Radiobutton(root, text=water[1], value=water[0], variable=v4_water, command = lambda : self.change(v4_water, water_v))
-			radio_button.pack(side=TOP, anchor=W)
+			radio_button2 = Radiobutton(root, text=water[1], value=water[0], variable=v4_water, command = lambda : self.change(v4_water, water_v))
+			radio_button2.pack(side=TOP, anchor=W)
+		radio_button1 = Radiobutton(root, text="Implicit Solvent Simulation", value=0, variable=v1, command = lambda : self.change_e(v1.get()))
+		radio_button1.pack(side=TOP, anchor=W)
 		ok_button = Button(root, text = "OK", command=root.destroy)
 		ok_button.pack(side=TOP)
 
@@ -1492,6 +1500,12 @@ class WaterWindows:
 		gromacs.water_update(force)
 		water_v.set(gromacs.water_list[v4_water.get()-1][1])
 		gromacs2.water = v4_water.get()
+	
+	##This function changes explicit to implicit and vice versa water model
+	def change_e(self, value):
+		global explicit
+		explicit = value
+		print explicit
 
 	##Water box configuration window
 	def box(self, master):
@@ -1877,13 +1891,13 @@ def steps_configure(master, restraints_button):
 		r2 = Radiobutton(frame1, text="Use x2top tool", value=1, variable=v1, command=lambda: progress.x2top_update(v1.get()))
 		r2.pack(side=TOP, anchor=W)
 		
-		c3 = Checkbutton(frame1, text="Adding Water Box"+steps_status_done(2), variable=check_var3, command=lambda: progress.to_do_update(2, check_var3.get()))
+		c3 = Checkbutton(frame1, text="Adding Water Box (only for explicit solvent)"+steps_status_done(2), variable=check_var3, command=lambda: progress.to_do_update(2, check_var3.get()))
 		c3.pack(side=TOP, anchor=W)
 		
 		c4 = Checkbutton(frame1, text="Energy Minimization (optional)"+steps_status_done(3), variable=check_var4, command=lambda: progress.to_do_update(3, check_var4.get()))
 		c4.pack(side=TOP, anchor=W)
 		
-		c5 = Checkbutton(frame1, text="Position Restrained MD (optional)"+steps_status_done(4), variable=check_var5, command=lambda: progress.to_do_update(4, check_var5.get()))
+		c5 = Checkbutton(frame1, text="Position Restrained MD (optional, only for explicit solvent)"+steps_status_done(4), variable=check_var5, command=lambda: progress.to_do_update(4, check_var5.get()))
 		c5.pack(side=TOP, anchor=W)
 		
 		c6 = Checkbutton(frame1, text="Restraints (optional)"+steps_status_done(5), variable=check_var6, command=lambda: restraintsW.check(check_var6.get(), restraints_button))
@@ -1902,6 +1916,14 @@ def steps_configure(master, restraints_button):
 			check_var9.set(0)
 			c9.configure(state=DISABLED)
 			progress.to_do_update(8, 0)
+		
+		if explicit !=1:
+			check_var3.set(0)
+			c3.configure(state=DISABLED)
+			progress.to_do_update(2, 0)
+			check_var5.set(0)
+			c5.configure(state=DISABLED)
+			progress.to_do_update(4, 0)
 		
 		l1 = Label(frame1, text="Simulation Progress:")
 		l1.pack(side=TOP)
@@ -2223,13 +2245,13 @@ def save_options():
 	if os.path.isdir(project_dir) == False:
 		os.makedirs(project_dir)
 	destination_option = file(project_dir + "options.pickle", "w")
-	pickle_list = [plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress]
+	pickle_list = [plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress, explicit]
 	pickle.dump(pickle_list, destination_option)
 	del destination_option
 
 ##Load all settings from options.pickle file	
 def load_options():
-	global gromacs2, em_file, pr_file, md_file, progress
+	global gromacs2, em_file, pr_file, md_file, progress, explicit
 	
 	pickle_file = file(project_dir +"options.pickle")
 	options = pickle.load(pickle_file)
@@ -2245,6 +2267,7 @@ def load_options():
 		pr_file = options[4]
 		md_file = options[5]
 		progress = options[6]
+		explicit = options[7]
 
 ##Text for "Help"
 def help_option():
