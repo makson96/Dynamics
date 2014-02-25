@@ -662,6 +662,7 @@ class Vectors:
 				coor_nr = coor_nr + 1
 			
 		coor_nr = 0
+		cam_possition = cmd.get_view(quiet=1) #PyMOL API
 		for position in x1:
 			try:
 				cmd.delete("Mode_Vector_"+ str(coor_nr))
@@ -670,6 +671,7 @@ class Vectors:
 			cone=[cgo.CONE, x1[coor_nr], y1[coor_nr], z1[coor_nr], x2[coor_nr], y2[coor_nr], z2[coor_nr], arrow_head_radius, 0.0] + color1 + color2 + [1.0, 0.0 ]
 			cmd.load_cgo(cone,"Mode_Vector_"+ str(coor_nr)) # PyMOL API
 			coor_nr = coor_nr+1
+		cmd.set_view(cam_possition) #PyMOL API
 		
 	def change_vectors_color(self, color):
 		self.color = color
