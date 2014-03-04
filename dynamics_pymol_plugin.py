@@ -492,6 +492,15 @@ class Gromacs_input:
 		except:
 			pass
 		
+		##Check if em and/or pr was done and adjust accordingly.
+		if not os.path.isfile(file_path+"_pr.tpr"):
+			if not os.path.isfile(file_path+"_em.tpr"):
+				#No em and pr
+				shutil.copy(project_name+"_b4em.gro", project_name+"_b4md.gro")
+			else:
+				#No pr
+				shutil.copy(project_name+"_b4pr.gro", project_name+"_b4md.gro")
+		
 		command = gromacs.path+"grompp -f md -c "+project_name+"_b4md  -p "+project_name+" -o "+project_name+"_md &>> log.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
