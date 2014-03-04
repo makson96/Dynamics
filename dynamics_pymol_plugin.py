@@ -379,6 +379,10 @@ class Gromacs_input:
 		except:
 			pass
 		
+		##Check if waterbox was added and adjust accordingly.
+		if not os.path.isfile(file_path+"_b4em.gro"):
+			shutil.copy(project_name+".gro", project_name+"_b4em.gro")
+		
 		command = gromacs.path+"grompp -f em -c "+project_name+"_b4em -p "+project_name+" -o "+project_name+"_em &>> log.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
@@ -493,8 +497,8 @@ class Gromacs_input:
 			pass
 		
 		##Check if em and/or pr was done and adjust accordingly.
-		if not os.path.isfile(file_path+"_pr.tpr"):
-			if not os.path.isfile(file_path+"_em.tpr"):
+		if not os.path.isfile(file_path+"_b4md.gro"):
+			if not os.path.isfile(file_path+"_b4pr.gro"):
 				#No em and pr
 				shutil.copy(project_name+"_b4em.gro", project_name+"_b4md.gro")
 			else:
@@ -727,7 +731,7 @@ class Mdp_config:
 			list2.append(line.split(" = "))
 		self.options = list2			
 	
-	def update(self, value, option_nr, check=1):
+	def update(self, option_nr, value, check=1):
 		self.options[option_nr][1] = value
 		if check == 0 and self.options[option_nr][0][0] != ";":
 			self.options[option_nr][0] = ";"+self.options[option_nr][0]
@@ -799,7 +803,15 @@ rlist = 1.0
 rcoulomb = 1.0
 rvdw = 1.0
 emtol = 1000.0
-emstep = 0.01"""
+emstep = 0.01
+implicit-solvent = no
+;gb-algorithm = Still
+;pbc = no
+;rgbradii = 0
+;nstlist = 0
+;rlist = 0
+;rcoulomb = 0
+;rvdw = 0"""
 
 	pr_init_config = """cpp = /usr/bin/cpp
 define = -DPOSRES
@@ -863,7 +875,13 @@ lincs-order = 4
 lincs-warnangle = 30
 morse = no
 implicit-solvent = no
-gb-algorithm: = Still"""
+;gb-algorithm = Still
+;pbc = no
+;rgbradii = 0
+;nstlist = 0
+;rlist = 0
+;rcoulomb = 0
+;rvdw = 0"""
 	
 	os.chdir(os.getenv("HOME"))
 	project_name = 'nothing'
@@ -1489,6 +1507,7 @@ class InterpretationWindow:
 class WaterWindows:
 	
 	implicit_buttons = []
+	explicit_buttons = []
 	
 	##Water chooser window
 	def choose(self, v4_water, water_v, master):
@@ -1500,16 +1519,22 @@ class WaterWindows:
 		
 		v2 = IntVar(root)
 		v2.set(0)
+
 		
-		frame1 = Frame(root, pady=10)
+		radio_button2 = Radiobutton(root, text="Explicit Solvent Simulation", value=1, variable=v1, command = lambda : self.change_e(v1.get(), v4_water, water_v))
+		radio_button2.pack(side=TOP, anchor=W)
+		
+		frame1 = Frame(root, padx=10)
 		frame1.pack(anchor=W)
+		
+		self.explicit_buttons = []
+		
 		for water in gromacs.water_list:
 			radio_button1 = Radiobutton(frame1, text=water[1], value=water[0], variable=v4_water, command = lambda : self.change(v4_water, water_v))
 			radio_button1.pack(side=TOP, anchor=W)
-		
-		radio_button2 = Radiobutton(root, text="Explicit Solvent Simulation", value=1, variable=v1, command = lambda : self.change_e(v1.get()))
-		radio_button2.pack(side=TOP, anchor=W)
-		radio_button2 = Radiobutton(root, text="Implicit Solvent Simulation", value=0, variable=v1, command = lambda : self.change_e(v1.get()))
+			self.explicit_buttons.append(radio_button1)
+
+		radio_button2 = Radiobutton(root, text="Implicit Solvent Simulation", value=0, variable=v1, command = lambda : self.change_e(v1.get(), v4_water, water_v))
 		radio_button2.pack(side=TOP, anchor=W)
 		
 		frame2 = Frame(root, padx=10)
@@ -1522,7 +1547,7 @@ class WaterWindows:
 		radio_button3_3.pack(side=TOP, anchor=W)
 		
 		self.implicit_buttons = [radio_button3_1, radio_button3_2, radio_button3_3]
-		self.change_e(explicit)
+		self.change_e(explicit, v4_water, water_v)
 
 		ok_button = Button(root, text = "OK", command=root.destroy)
 		ok_button.pack(side=TOP)
@@ -1534,29 +1559,50 @@ class WaterWindows:
 		else:
 			gromacs2.force = force
 		gromacs.water_update(force)
-		water_v.set(gromacs.water_list[v4_water.get()-1][1])
+		if explicit == 1:
+			water_v.set(gromacs.water_list[v4_water.get()-1][1])
+		elif explicit == 0:
+			water_v.set("Implicit Solvent")
 		gromacs2.water = v4_water.get()
 	
 	##This function changes explicit to implicit and vice versa water model
-	def change_e(self, value):
+	def change_e(self, value, v4_water, water_v):
 		global explicit
 		explicit = value
 		if explicit == 1:
 			for button in self.implicit_buttons:
 				button.configure(state=DISABLED)
-			#set implicit-solvent to no
+			for button in self.explicit_buttons:
+				button.configure(state=ACTIVE)
+			progress.to_do[2] = 1
+			progress.to_do[4] = 1
+			em_file.update(13, "no")
+			md_file.update(33, "no")
+
 		elif explicit == 0:
 			for button in self.implicit_buttons:
 				button.configure(state=ACTIVE)
+			for button in self.explicit_buttons:
+				button.configure(state=DISABLED)
 			progress.to_do[2] = 0
 			progress.to_do[4] = 0
-			#set implicit-solvent to GBSA
-		print explicit
+			em_file.update(13, "GBSA")
+			md_file.update(33, "GBSA")
+			v4_water.set(len(self.explicit_buttons))
+		
+		self.change(v4_water, water_v)
 	
 	##This function changes implicit water model
 	def change_i(self, int_variable):
-		print "not ready"
-		#set gb-algorithmto 0:Still; 1:HCT; 2:OBC
+		if int_variable.get() == 0:
+			em_file.update(14, "Still")
+			md_file.update(34, "Still")
+		elif int_variable.get() == 1:
+			em_file.update(14, "HCT")
+			md_file.update(34, "HCT")
+		elif int_variable.get() == 2:
+			em_file.update(14, "OBC")
+			md_file.update(34, "OBC")
 
 	##Water box configuration window
 	def box(self, master):
@@ -1672,13 +1718,13 @@ class RestraintsWindow:
 		global md_file, progress
 		if check == 1:
 			config_button.configure(state=ACTIVE)
-			md_file.update(md_file.options[2][1], 2, 1)
+			md_file.update(2, md_file.options[2][1], 1)
 			gromacs.restraints_index()
 			progress.to_do[5] = 1
 			progress.to_do = progress.to_do
 		elif check == 0:
 			config_button.configure(state=DISABLED)
-			md_file.update(md_file.options[2][1], 2, 0)
+			md_file.update(2, md_file.options[2][1], 0)
 			progress.to_do[5] = 0
 			progress.to_do = progress.to_do
 
@@ -1890,11 +1936,11 @@ def mdp_update(values, check_list, mdp, root_to_kill=""):
 	index_nr = 0
 	for value in values:
 		if mdp == "em":
-			em_file.update(value.get(), index_nr, check_list[index_nr].get())
+			em_file.update(index_nr, value.get(), check_list[index_nr].get())
 		elif mdp == "pr":
-			pr_file.update(value.get(), index_nr, check_list[index_nr].get())
+			pr_file.update(index_nr, value.get(), check_list[index_nr].get())
 		elif mdp == "md":
-			md_file.update(value.get(), index_nr, check_list[index_nr].get())
+			md_file.update(index_nr, value.get(), check_list[index_nr].get())
 		index_nr = index_nr + 1
 	save_options()
 
