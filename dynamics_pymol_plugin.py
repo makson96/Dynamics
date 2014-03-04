@@ -1484,6 +1484,8 @@ class InterpretationWindow:
 ##Gather all water options windows in one class
 class WaterWindows:
 	
+	implicit_buttons = []
+	
 	##Water chooser window
 	def choose(self, v4_water, water_v, master):
 		root = Toplevel(master)
@@ -1495,25 +1497,28 @@ class WaterWindows:
 		v2 = IntVar(root)
 		v2.set(0)
 		
-		frame2 = Frame(root)
-		
-		radio_button1 = Radiobutton(root, text="Explicit Solvent Simulation", value=1, variable=v1, command = lambda : self.change_e(v1.get()))
-		radio_button1.pack(side=TOP, anchor=W)
+		frame1 = Frame(root, pady=10)
+		frame1.pack(anchor=W)
 		for water in gromacs.water_list:
-			frame2 = Frame(root, padx=10)
-			frame2.pack(anchor=W)
-			radio_button2 = Radiobutton(frame2, text=water[1], value=water[0], variable=v4_water, command = lambda : self.change(v4_water, water_v))
-			radio_button2.pack(side=TOP, anchor=W)
-		radio_button1 = Radiobutton(root, text="Implicit Solvent Simulation", value=0, variable=v1, command = lambda : self.change_e(v1.get()))
-		radio_button1.pack(side=TOP, anchor=W)
-		frame3 = Frame(root, padx=10)
-		frame3.pack(anchor=W)
-		radio_button3 = Radiobutton(frame3, text="Implicit Still", value=0, variable=v2, command = lambda : self.change_i(v2, water_v))
-		radio_button3.pack(side=TOP, anchor=W)
-		radio_button3 = Radiobutton(frame3, text="Implicit Hawkins-Cramer-Truhlar", value=1, variable=v2, command = lambda : self.change_i(v2, water_v))
-		radio_button3.pack(side=TOP, anchor=W)
-		radio_button3 = Radiobutton(frame3, text="Implicit Onufriev-Bashford-Case", value=2, variable=v2, command = lambda : self.change_i(v2, water_v))
-		radio_button3.pack(side=TOP, anchor=W)
+			radio_button1 = Radiobutton(frame1, text=water[1], value=water[0], variable=v4_water, command = lambda : self.change(v4_water, water_v))
+			radio_button1.pack(side=TOP, anchor=W)
+		
+		radio_button2 = Radiobutton(root, text="Explicit Solvent Simulation", value=1, variable=v1, command = lambda : self.change_e(v1.get()))
+		radio_button2.pack(side=TOP, anchor=W)
+		radio_button2 = Radiobutton(root, text="Implicit Solvent Simulation", value=0, variable=v1, command = lambda : self.change_e(v1.get()))
+		radio_button2.pack(side=TOP, anchor=W)
+		
+		frame2 = Frame(root, padx=10)
+		frame2.pack(anchor=W)
+		radio_button3_1 = Radiobutton(frame2, text="Still", value=0, variable=v2)#, command = lambda : self.change_i(v2, water_v))
+		radio_button3_1.pack(side=TOP, anchor=W)
+		radio_button3_2 = Radiobutton(frame2, text="Hawkins-Cramer-Truhlar", value=1, variable=v2)#, command = lambda : self.change_i(v2, water_v))
+		radio_button3_2.pack(side=TOP, anchor=W)
+		radio_button3_3 = Radiobutton(frame2, text="Onufriev-Bashford-Case", value=2, variable=v2)#, command = lambda : self.change_i(v2, water_v))
+		radio_button3_3.pack(side=TOP, anchor=W)
+		
+		self.implicit_buttons = [radio_button3_1, radio_button3_2, radio_button3_3]
+		self.change_e(explicit)
 
 		ok_button = Button(root, text = "OK", command=root.destroy)
 		ok_button.pack(side=TOP)
@@ -1532,6 +1537,12 @@ class WaterWindows:
 	def change_e(self, value):
 		global explicit
 		explicit = value
+		if explicit == 1:
+			for button in self.implicit_buttons:
+				button.configure(state=DISABLED)
+		elif explicit == 0:
+			for button in self.implicit_buttons:
+				button.configure(state=ACTIVE)
 		print explicit
 	
 	##This function changes implicit water model
