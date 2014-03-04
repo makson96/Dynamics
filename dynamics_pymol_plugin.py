@@ -745,8 +745,10 @@ class Mdp_config:
 ##Status and to_do maintaining class
 class Progress_status:
 	
+	#0:Save configuration files; 1:Generate topology file from pdb; 2:Adding Water Box; 3:Energy Minimization; 4:Position Restrained MD; 5:Restraints; 6:Molecular Dynamics Simulation; 7:Generate multimodel PDB; 8:Calculate vectors using ProDy
 	status= [0,0,0,0,0,0,0,0,0]
 	to_do = [1,1,1,1,1,0,1,1,1]
+	
 	resume = 0
 	x2top = 0
 	steps = 7
@@ -859,7 +861,9 @@ continuation = no
 shake-tol = 0.0001
 lincs-order = 4
 lincs-warnangle = 30
-morse = no"""
+morse = no
+implicit-solvent = no
+gb-algorithm: = Still"""
 	
 	os.chdir(os.getenv("HOME"))
 	project_name = 'nothing'
@@ -1510,11 +1514,11 @@ class WaterWindows:
 		
 		frame2 = Frame(root, padx=10)
 		frame2.pack(anchor=W)
-		radio_button3_1 = Radiobutton(frame2, text="Still", value=0, variable=v2)#, command = lambda : self.change_i(v2, water_v))
+		radio_button3_1 = Radiobutton(frame2, text="Still", value=0, variable=v2, command = lambda : self.change_i(v2))
 		radio_button3_1.pack(side=TOP, anchor=W)
-		radio_button3_2 = Radiobutton(frame2, text="Hawkins-Cramer-Truhlar", value=1, variable=v2)#, command = lambda : self.change_i(v2, water_v))
+		radio_button3_2 = Radiobutton(frame2, text="Hawkins-Cramer-Truhlar", value=1, variable=v2, command = lambda : self.change_i(v2))
 		radio_button3_2.pack(side=TOP, anchor=W)
-		radio_button3_3 = Radiobutton(frame2, text="Onufriev-Bashford-Case", value=2, variable=v2)#, command = lambda : self.change_i(v2, water_v))
+		radio_button3_3 = Radiobutton(frame2, text="Onufriev-Bashford-Case", value=2, variable=v2, command = lambda : self.change_i(v2))
 		radio_button3_3.pack(side=TOP, anchor=W)
 		
 		self.implicit_buttons = [radio_button3_1, radio_button3_2, radio_button3_3]
@@ -1540,14 +1544,19 @@ class WaterWindows:
 		if explicit == 1:
 			for button in self.implicit_buttons:
 				button.configure(state=DISABLED)
+			#set implicit-solvent to no
 		elif explicit == 0:
 			for button in self.implicit_buttons:
 				button.configure(state=ACTIVE)
+			progress.to_do[2] = 0
+			progress.to_do[4] = 0
+			#set implicit-solvent to GBSA
 		print explicit
 	
 	##This function changes implicit water model
-	def change_i(self, int_variable, water_v):
+	def change_i(self, int_variable):
 		print "not ready"
+		#set gb-algorithmto 0:Still; 1:HCT; 2:OBC
 
 	##Water box configuration window
 	def box(self, master):
