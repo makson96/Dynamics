@@ -963,6 +963,9 @@ def rootWindow():
 	water_v = StringVar(root)
 	water_v.set(gromacs.water_list[0][1])
 	
+	time_entry_value = StringVar(root)
+	time_entry_value.set("10.0")
+	
 	##Start drawing interface
 	frame0 = Frame(root)
 	frame0.pack(side=TOP)
@@ -1111,11 +1114,24 @@ def rootWindow():
 	check1_button.pack(side=TOP)
 	
 	#Button for ProDy options
-	re_label = Label(frame1_3_1, text="Vectors Options")
-	re_label.pack(side=TOP)
-	
+	pro_label = Label(frame1_3_1, text="Vectors Options")
+	pro_label.pack(side=TOP)
 	prody_button = Button(frame1_3_1, text = "Configure", command=lambda: vectors_prody.window(root))
 	prody_button.pack(side=TOP)
+	
+	#Dynamics Simulation Time
+	time_label = Label(frame1_3_1, text="Dynamics Simulation Time")
+	time_label.pack(side=TOP)
+	
+	frame1_3_1_1 = Frame(frame1_3_1)
+	frame1_3_1_1.pack(side=TOP)
+	
+	time_entry = Entry(frame1_3_1_1, textvariable=time_entry_value)
+	time_entry.pack(side=LEFT)
+	time_label2 = Label(frame1_3_1_1, text="[ps]")
+	time_label2.pack(side=LEFT)
+	time_button = Button(frame1_3_1_1, text = "OK", command=lambda: md_file.update(5, str(float(time_entry_value.get())/float(md_file.options[4][1]))))
+	time_button.pack(side=LEFT)
 	
 	##Disable configuration of ProDy (Vectors) if ProDy is not installed
 	if prody_true != 1:
