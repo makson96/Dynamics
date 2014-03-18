@@ -735,7 +735,7 @@ class Mdp_config:
 		self.options[option_nr][1] = value
 		if check == 0 and self.options[option_nr][0][0] != ";":
 			self.options[option_nr][0] = ";"+self.options[option_nr][0]
-		elif check != 0 and self.options[option_nr][0][0] == ";":
+		elif check == 1 and self.options[option_nr][0][0] == ";":
 			self.options[option_nr][0] = self.options[option_nr][0][1:]
 	
 	def save_file(self):
@@ -807,11 +807,7 @@ emstep = 0.01
 implicit-solvent = no
 ;gb-algorithm = Still
 ;pbc = no
-;rgbradii = 0
-;nstlist = 0
-;rlist = 0
-;rcoulomb = 0
-;rvdw = 0"""
+;rgbradii = 0"""
 
 	pr_init_config = """cpp = /usr/bin/cpp
 define = -DPOSRES
@@ -878,10 +874,7 @@ implicit-solvent = no
 ;gb-algorithm = Still
 ;pbc = no
 ;rgbradii = 0
-;nstlist = 0
-;rlist = 0
-;rcoulomb = 0
-;rvdw = 0"""
+;comm_mode = ANGULAR"""
 	
 	os.chdir(os.getenv("HOME"))
 	project_name = 'nothing'
@@ -1521,7 +1514,7 @@ class WaterWindows:
 		v2.set(0)
 
 		
-		radio_button2 = Radiobutton(root, text="Explicit Solvent Simulation", value=1, variable=v1, command = lambda : self.change_e(v1.get(), v4_water, water_v))
+		radio_button2 = Radiobutton(root, text="Explicit Solvent Simulation", value=1, variable=v1, command = lambda : self.change_e(v1.get(), v4_water, water_v, v2))
 		radio_button2.pack(side=TOP, anchor=W)
 		
 		frame1 = Frame(root, padx=10)
@@ -1534,7 +1527,7 @@ class WaterWindows:
 			radio_button1.pack(side=TOP, anchor=W)
 			self.explicit_buttons.append(radio_button1)
 
-		radio_button2 = Radiobutton(root, text="Implicit Solvent Simulation", value=0, variable=v1, command = lambda : self.change_e(v1.get(), v4_water, water_v))
+		radio_button2 = Radiobutton(root, text="Implicit Solvent Simulation", value=0, variable=v1, command = lambda : self.change_e(v1.get(), v4_water, water_v, v2))
 		radio_button2.pack(side=TOP, anchor=W)
 		
 		frame2 = Frame(root, padx=10)
@@ -1547,7 +1540,7 @@ class WaterWindows:
 		radio_button3_3.pack(side=TOP, anchor=W)
 		
 		self.implicit_buttons = [radio_button3_1, radio_button3_2, radio_button3_3]
-		self.change_e(explicit, v4_water, water_v)
+		self.change_e(explicit, v4_water, water_v, v2)
 
 		ok_button = Button(root, text = "OK", command=root.destroy)
 		ok_button.pack(side=TOP)
@@ -1566,7 +1559,7 @@ class WaterWindows:
 		gromacs2.water = v4_water.get()
 	
 	##This function changes explicit to implicit and vice versa water model
-	def change_e(self, value, v4_water, water_v):
+	def change_e(self, value, v4_water, water_v, v2):
 		global explicit
 		explicit = value
 		if explicit == 1:
@@ -1576,8 +1569,26 @@ class WaterWindows:
 				button.configure(state=ACTIVE)
 			progress.to_do[2] = 1
 			progress.to_do[4] = 1
+			#em update
+			em_file.update(8, "1.0")
+			em_file.update(9, "1.0")
+			em_file.update(10, "1.0")
 			em_file.update(13, "no")
+			em_file.update(15, "no", 0)
+			em_file.update(16, "0", 0)
+			#md update
+			md_file.update(10, "10")
+			md_file.update(12, "1.0")
+			md_file.update(13, "1.0")
+			md_file.update(14, "1.0")
+			md_file.update(15, "berendsen")
+			md_file.update(16, "0.1 0.1")
+			md_file.update(17, "protein Non-Protein")
+			md_file.update(18, "300 300")
 			md_file.update(33, "no")
+			md_file.update(35, "no", 0)
+			md_file.update(36, "0", 0)
+			md_file.update(37, "ANGULAR", 0)
 
 		elif explicit == 0:
 			for button in self.implicit_buttons:
@@ -1586,9 +1597,29 @@ class WaterWindows:
 				button.configure(state=DISABLED)
 			progress.to_do[2] = 0
 			progress.to_do[4] = 0
+			#em update
+			em_file.update(8, "0")
+			em_file.update(9, "0")
+			em_file.update(10, "0")
 			em_file.update(13, "GBSA")
+			em_file.update(15, "no")
+			em_file.update(16, "0")
+			#md update
+			md_file.update(10, "0")
+			md_file.update(12, "0")
+			md_file.update(13, "0")
+			md_file.update(14, "0")
+			md_file.update(15, "berendsen", 0)
+			md_file.update(16, "0.1 0.1", 0)
+			md_file.update(17, "protein Non-Protein", 0)
+			md_file.update(18, "300 300", 0)
 			md_file.update(33, "GBSA")
+			md_file.update(35, "no")
+			md_file.update(36, "0")
+			md_file.update(37, "ANGULAR")
+			self.change_i(v2)
 			v4_water.set(len(self.explicit_buttons))
+
 		
 		self.change(v4_water, water_v)
 	
