@@ -1331,6 +1331,8 @@ class InterpretationWindow:
 	max_time = 0.0
 	tentry_value = ""
 	pause = 1
+	show_terminus = 0
+	show_acids = 0
 	
 	def __init__(self):
 		self.queue_time = Queue.Queue()
@@ -1413,6 +1415,14 @@ class InterpretationWindow:
 		ribbon_button.pack(side=LEFT)
 		cartoon_button = Button(frame1_3, text = "Cartoon", command=lambda : self.shape("cartoon"))
 		cartoon_button.pack(side=LEFT)
+		frame1_3_1 = Frame(frame1)
+		frame1_3_1.pack(side=TOP, anchor=W)
+		mlabel = Label(frame1_3_1, text="Labels")
+		mlabel.pack(side=LEFT)
+		lines_button = Button(frame1_3_1, text = "Terminus", command=lambda : self.label("terminus"))
+		lines_button.pack(side=LEFT)
+		sticks_button = Button(frame1_3_1, text = "Amino Acids", command=lambda : self.label("acids"))
+		sticks_button.pack(side=LEFT)
 		
 		thread.start_new_thread(self.watch_frames, ())
 		self.display_time(root)
@@ -1493,6 +1503,18 @@ class InterpretationWindow:
 	def shape(self, shape_type):
 		cmd.hide("everything", project_name+"_multimodel") #PyMOL API
 		cmd.show(shape_type, project_name+"_multimodel") #PyMOL API
+	
+	def label(self, name):
+		if name == "terminus":
+			if self.show_terminus == 0:
+				self.show_terminus = 1
+			elif self.show_terminus == 1:
+				self.show_terminus = 0
+		elif name == "acids":
+			if self.show_acids == 0:
+				self.show_acids = 1
+			elif self.show_acids == 1:
+				self.show_acids = 0
 	
 	##This function will watch time (beware this is separate thread)
 	def watch_frames(self):
