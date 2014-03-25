@@ -741,7 +741,11 @@ class Mdp_config:
 	def save_file(self):
 		config = ""
 		for option in self.options:
-			config = config + option[0]+" = "+option[1]+"\n"
+			#pass empty option
+			if option == ['']:
+				pass
+			else:
+				config = config + option[0]+" = "+option[1]+"\n"
 		mdp = open(project_dir+self.file_name, "w")
 		mdp.write(config)
 		mdp.close() 
@@ -988,7 +992,7 @@ def rootWindow():
 	#List of PyMOL loaded PDB files
 	if allNames[0] != "nothing":
 		for molecule in allNames:
-			radio_button1 = Radiobutton(frame1_1a, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button, prody_button))
+			radio_button1 = Radiobutton(frame1_1a, text=molecule, value=molecule, variable=v1_name, command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button))
 			radio_button1.pack(side=TOP, anchor=W)
 			#Tooltip
 			balloon.bind(radio_button1, "Select molecule for calculations")
@@ -1331,8 +1335,6 @@ class InterpretationWindow:
 	max_time = 0.0
 	tentry_value = ""
 	pause = 1
-	show_terminus = 0
-	show_acids = 0
 	
 	def __init__(self):
 		self.queue_time = Queue.Queue()
@@ -1419,10 +1421,12 @@ class InterpretationWindow:
 		frame1_3_1.pack(side=TOP, anchor=W)
 		mlabel = Label(frame1_3_1, text="Labels")
 		mlabel.pack(side=LEFT)
-		lines_button = Button(frame1_3_1, text = "Terminus", command=lambda : self.label("terminus"))
-		lines_button.pack(side=LEFT)
-		sticks_button = Button(frame1_3_1, text = "Amino Acids", command=lambda : self.label("acids"))
-		sticks_button.pack(side=LEFT)
+		end_button = Button(frame1_3_1, text = "Terminus", command=lambda : self.label("terminus"))
+		end_button.pack(side=LEFT)
+		acids_button = Button(frame1_3_1, text = "Amino Acids", command=lambda : self.label("acids"))
+		acids_button.pack(side=LEFT)
+		clear_button = Button(frame1_3_1, text = "Clear", command=lambda : self.label("clear"))
+		clear_button.pack(side=LEFT)
 		
 		thread.start_new_thread(self.watch_frames, ())
 		self.display_time(root)
@@ -1506,15 +1510,13 @@ class InterpretationWindow:
 	
 	def label(self, name):
 		if name == "terminus":
-			if self.show_terminus == 0:
-				self.show_terminus = 1
-			elif self.show_terminus == 1:
-				self.show_terminus = 0
+			cmd.label("n. ca and i. 1", '"N-terminus"') #PyMOL API
+			ca_number = cmd.count_atoms("name ca") #PyMOL API
+			cmd.label("n. ca and i. " + str(ca_number), '"C-terminus"') #PyMOL API
 		elif name == "acids":
-			if self.show_acids == 0:
-				self.show_acids = 1
-			elif self.show_acids == 1:
-				self.show_acids = 0
+			cmd.label("n. ca", "resn") #PyMOL API
+		elif name == "clear":
+			cmd.label("n. ca", "") #PyMOL API
 	
 	##This function will watch time (beware this is separate thread)
 	def watch_frames(self):
