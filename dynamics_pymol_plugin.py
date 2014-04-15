@@ -630,6 +630,9 @@ class Vectors:
 	scale = 1.0
 	mode_nr = 0
 	
+	calculation_type = 0
+	contact_map = 0
+	
 	##Change Multimodel PDB file into NMD vector file
 	def prody(self):
 		#Prepare ensemble
@@ -756,12 +759,35 @@ class Vectors:
 		if project_name != "nothing":
 			root = Toplevel(master)
 			root.wm_title("Vectors Configuration")
-
-			ok_button = Button(root, text = "OK", command=root.destroy)
+			
+			frame1 = Frame(root)
+			frame1.pack()
+			
+			v1 = IntVar(root)
+			v1.set(self.calculation_type)
+			v2 = IntVar(root)
+			v2.set(self.contact_map)
+			
+			radio_button0 = Radiobutton(frame1, text="PCA", value=0, variable=v1)
+			radio_button0.pack()
+			radio_button1 = Radiobutton(frame1, text="ANM", value=1, variable=v1)
+			radio_button1.pack()
+			radio_button2 = Radiobutton(frame1, text="GNM", value=2, variable=v1)
+			radio_button2.pack()
+			
+			c1 = Checkbutton(frame1, text="Show Contact Map", variable=v2)
+			c1.pack()
+			
+			ok_button = Button(frame1, text = "OK", command=lambda : self.options_change(v1, v2, root))
 			ok_button.pack(side=TOP)
 			
 		elif project_name == "nothing":
 			no_molecule_warning()
+	
+	def options_change(self, v1, v2, root):
+		self.calculation_type = v1.get()
+		self.contact_map = v2.get()
+		root.destroy()
 
 ##This class create and maintain abstraction mdp file representatives. em.mdp, pr.mdp, md.mdp
 class Mdp_config:
