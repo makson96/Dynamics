@@ -643,12 +643,28 @@ class Vectors:
 		ensemble.addCoordset(model.getCoordsets())
 		ensemble.iterpose()
 		#PCA calculations
-		pca = prody.PCA(project_name)
-		pca.buildCovariance(ensemble)
-		pca.calcModes()
-		pca
+		if self.calculation_type == 0:
+			pca = prody.PCA(project_name)
+			pca.buildCovariance(ensemble)
+			pca.calcModes()
+			write_nmd = pca
+		#ANM calculations
+		elif self.calculation_type == 1:
+			anm = prody.ANM(project_name)
+			anm.buildHessian(ensemble)
+			anm.calcModes()
+			anm
+			write_nmd = anm
+		#GNM calculations
+		elif self.calculation_type == 2:
+			gnm = prody.GNM(project_name)
+			gnm.buildKirchhoff(ensemble)
+			gnm.calcModes()
+			gnm
+			#prody.showContactMap(gnm)
+			write_nmd = gnm
 		#Write NMD file
-		prody.writeNMD(project_name+'.nmd', pca[:3], model)
+		prody.writeNMD(project_name+'.nmd', write_nmd[:3], model)
 	
 	##Read NMD file	
 	def nmd_format(self):
@@ -736,6 +752,7 @@ class Vectors:
 				cmd.delete("Mode_Vector_"+ str(coor_nr))
 			except:
 				pass
+
 			cone=[cgo.CONE, x1[coor_nr], y1[coor_nr], z1[coor_nr], x2[coor_nr], y2[coor_nr], z2[coor_nr], arrow_head_radius, 0.0] + color1 + color2 + [1.0, 0.0 ]
 			cmd.load_cgo(cone,"Mode_Vector_"+ str(coor_nr)) # PyMOL API
 			coor_nr = coor_nr+1
