@@ -259,7 +259,7 @@ class Gromacs_input:
 			status = ["fail", "Warning. Trying to ignore unnecessary hydrogen atoms."]
 			status_update(status)
 			
-			command = gromacs.path+"echo -e '"+force_water+"' | pdb2gmx -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log1.txt"
+			command = gromacs.path+"echo -e '"+force+"' | pdb2gmx -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log1.txt"
 			logfile = open('log.txt', 'a')
 			logfile.write(self.command_distinction+command+self.command_distinction)
 			
@@ -1144,7 +1144,7 @@ def rootWindow():
 	#Buttons to choose water model and configure water box
 	water_label = Label(frame1_2_1, textvariable=water_v)
 	water_label.pack(side=LEFT)
-	water_button = Button(frame1_2_1, text = "Choose...", command=lambda : waterW.choose(v4_water, water_v, root))
+	water_button = Button(frame1_2_1, text = "Choose...", command=lambda : waterW.choose(v4_water, water_v, waterbox_button, root))
 	water_button.pack(side=LEFT)
 	waterbox_button = Button(frame1_2_1, text = "Configure", command=lambda: waterW.box(root))
 	waterbox_button.pack(side=LEFT)
@@ -1619,7 +1619,7 @@ class WaterWindows:
 	explicit_buttons = []
 	
 	##Water chooser window
-	def choose(self, v4_water, water_v, master):
+	def choose(self, v4_water, water_v, waterbox_button, master):
 		root = Toplevel(master)
 		root.wm_title("Water Model")
 		
@@ -1642,6 +1642,7 @@ class WaterWindows:
 			radio_button1 = Radiobutton(frame1, text=water[1], value=water[0], variable=v4_water, command = lambda : self.change(v4_water, water_v))
 			radio_button1.pack(side=TOP, anchor=W)
 			self.explicit_buttons.append(radio_button1)
+		self.explicit_buttons.append(waterbox_button)
 
 		radio_button2 = Radiobutton(root, text="Implicit Solvent Simulation", value=0, variable=v1, command = lambda : self.change_e(v1.get(), v4_water, water_v, v2))
 		radio_button2.pack(side=TOP, anchor=W)
@@ -1734,7 +1735,8 @@ class WaterWindows:
 			md_file.update(36, "0")
 			md_file.update(37, "ANGULAR")
 			self.change_i(v2)
-			v4_water.set(len(self.explicit_buttons))
+			#in implicit solvent watermodel must be set to "None"
+			v4_water.set(len(self.explicit_buttons) - 1)
 
 		
 		self.change(v4_water, water_v)
