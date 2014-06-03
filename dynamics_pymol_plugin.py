@@ -35,7 +35,6 @@ except:
 class Gromacs_output:
 	
 	version = "GROMACS not found"
-	path = ""
 	force_list = []
 	water_list = []
 	group_list = []
@@ -44,7 +43,6 @@ class Gromacs_output:
 	def __init__(self):
 		global status
 		status = ["ok", ""]
-		gromacs_path = ""
 		print "Testing GROMACS installation and version"
 		subprocess.call("echo -e '1\n1' | pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
@@ -54,41 +52,17 @@ class Gromacs_output:
 			version = lista_gromacs[4].split("  ")
 			gromacs_version = "GROMACS " + version[15]
 			print "Found " + gromacs_version
-			#Warn about issues with GROMACS 4.6.0
+			#Warn about issues with specyfic GROMACS versions
 			if gromacs_version == "GROMACS VERSION 4.6":
 				print "Warning. GROMACS 4.6.0 may fail. Please upgrade to newer version of GROMACS"
 		else:
 			print "GROMACS not detected."
-			import platform
-			print "System: "+platform.platform()
-			if platform.system() == "Linux":
-				if platform.machine() == "i686":
-					gromacs_path = "export PATH="+dynamics_dir+'gromacs-4.5.5-linux-32/bin:"${PATH}"; export LD_LIBRARY_PATH='+dynamics_dir+"/gromacs-4.5.5-linux-32/lib; "
-					gromacs_version = "GROMACS 4.5.5"
-					if os.path.isdir(dynamics_dir+"gromacs-4.5.5-linux-32/") == False:
-						import urllib, tarfile
-						print "Downloading GROMACS 4.5.5 for your platform"
-						urllib.urlretrieve("http://ubuntuone.com/3MhyjK4mfavbCqdAzCbjA9", dynamics_dir+"gromacs-4.5.5-linux-32.tar.bz2")
-						tarfile.open(dir_path1+"gromacs-4.5.5-linux-32.tar.bz2").extractall(dynamics_dir+"gromacs-4.5.5-linux-32/")
-				elif platform.machine() == "x86_64":
-					gromacs_path = "export PATH="+dynamics_dir+'gromacs-4.5.5-linux-64/bin:"${PATH}"; export LD_LIBRARY_PATH='+dynamics_dir+"/gromacs-4.5.5-linux-64/lib; "
-					gromacs_version = "GROMACS 4.5.5"
-					if os.path.isdir(dynamics_dir+"gromacs-4.5.5-linux-64/") == False:
-						import urllib, tarfile
-						print "Downloading GROMACS 4.5.5 for your platform"
-						urllib.urlretrieve("http://ubuntuone.com/27vlaNtNV6mDHs7qu7qXYv", dynamics_dir+"gromacs-4.5.5-linux-64.tar.bz2")
-						tarfile.open(dynamics_dir+"gromacs-4.5.5-linux-64.tar.bz2").extractall(dynamics_dir+"gromacs-4.5.5-linux-64/")
-				else:
-					print "Please install and setup correctly GROMACS for your platform. Aborting."
-					status = ["fail", "Require GROMACS installation"]
-			else:
-				print "Please install and setup correctly GROMACS for your platform. Aborting."
-				status = ["fail", "Require GROMACS installation"]
-		self.path = gromacs_path
+			print "Please install and setup correctly GROMACS for your platform. Aborting."
+			status = ["fail", "Require GROMACS installation"]
 		if status[0] == "ok":
 			self.version = gromacs_version
 
-		subprocess.call(self.path+"echo -e '1\n1' | pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+		subprocess.call("echo -e '1\n1' | pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
 		
@@ -129,7 +103,7 @@ class Gromacs_output:
 			os.remove(dynamics_dir+"group_test2.pdb")
 		except:
 			pass
-		subprocess.call(self.path+"echo 1 | trjconv -f "+dynamics_dir+"group_test.pdb -s "+dynamics_dir+"group_test.pdb -o "+dynamics_dir+"group_test2.pdb &> "+dynamics_dir+"test_gromacs_group.txt",
+		subprocess.call("echo 1 | trjconv -f "+dynamics_dir+"group_test.pdb -s "+dynamics_dir+"group_test.pdb -o "+dynamics_dir+"group_test2.pdb &> "+dynamics_dir+"test_gromacs_group.txt",
 		executable="/bin/bash", shell=True)
 		group_test = open(dynamics_dir+"test_gromacs_group.txt","r")
 		group_test_list = group_test.readlines()
@@ -158,7 +132,7 @@ class Gromacs_output:
 	##This function will update water list if force field is changed.
 	def water_update(self, force_number):
 		print "Updateing available water models"
-		subprocess.call(self.path+"echo -e '"+str(force_number)+"\n1' | pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+		subprocess.call("echo -e '"+str(force_number)+"\n1' | pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
 
@@ -184,7 +158,7 @@ class Gromacs_output:
 	def restraints_index(self):
 		self.restraints = []
 		os.chdir(project_dir)
-		subprocess.call(self.path+"echo q | make_ndx -f "+project_name+".pdb -o index.ndx &> restraints.log", executable="/bin/bash", shell=True)	
+		subprocess.call("echo q | make_ndx -f "+project_name+".pdb -o index.ndx &> restraints.log", executable="/bin/bash", shell=True)	
 		index = open("index.ndx","r")
 		index_list = index.readlines()
 		index_position = 0
@@ -240,7 +214,7 @@ class Gromacs_input:
 		
 		force_water = str(self.force) + "\n" + str(self.water)
 		
-		command = gromacs.path+"echo -e '"+force_water+"' | pdb2gmx -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log.txt"
+		command = "echo -e '"+force_water+"' | pdb2gmx -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log.txt"
 		logfile = open('log.txt', 'w')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -259,7 +233,7 @@ class Gromacs_input:
 			status = ["fail", "Warning. Trying to ignore unnecessary hydrogen atoms."]
 			status_update(status)
 			
-			command = gromacs.path+"echo -e '"+force+"' | pdb2gmx -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log1.txt"
+			command = "echo -e '"+force+"' | pdb2gmx -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log1.txt"
 			logfile = open('log.txt', 'a')
 			logfile.write(self.command_distinction+command+self.command_distinction)
 			
@@ -291,7 +265,7 @@ class Gromacs_input:
 		except:
 			pass
 		
-		command = gromacs.path+"g_x2top -f "+project_name+".pdb -o "+project_name+".top &> log.txt"
+		command = "g_x2top -f "+project_name+".pdb -o "+project_name+".top &> log.txt"
 		logfile = open('log.txt', 'w')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -311,7 +285,7 @@ class Gromacs_input:
 		status_update(status)
 		if 	 status[0] == "ok":
 			
-			command = gromacs.path+"echo -e 0 | trjconv -f "+project_name+".pdb -s "+project_name+".pdb -o "+project_name+".gro &> log1.txt"
+			command = "echo -e 0 | trjconv -f "+project_name+".pdb -s "+project_name+".pdb -o "+project_name+".gro &> log1.txt"
 			logfile = open('log.txt', 'a')
 			logfile.write(self.command_distinction+command+self.command_distinction)
 			
@@ -345,7 +319,7 @@ class Gromacs_input:
 		except:
 			pass
 		
-		command = gromacs.path+"editconf -f "+project_name+".gro -o "+project_name+"1.gro "+box_type+distance+density+" &> log1.txt"
+		command = "editconf -f "+project_name+".gro -o "+project_name+"1.gro "+box_type+distance+density+" &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -362,7 +336,7 @@ class Gromacs_input:
 		logfile.close()
 		logfile1.close()
 		
-		command = gromacs.path+"genbox -cp "+project_name+"1.gro -cs -o "+project_name+"_b4em.gro -p "+project_name+".top &> log1.txt"
+		command = "genbox -cp "+project_name+"1.gro -cs -o "+project_name+"_b4em.gro -p "+project_name+".top &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -401,7 +375,7 @@ class Gromacs_input:
 		if not os.path.isfile(file_path+"_b4em.gro"):
 			shutil.copy(project_name+".gro", project_name+"_b4em.gro")
 		
-		command = gromacs.path+"grompp -f em -c "+project_name+"_b4em -p "+project_name+" -o "+project_name+"_em &> log1.txt"
+		command = "grompp -f em -c "+project_name+"_b4em -p "+project_name+" -o "+project_name+"_em &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 
@@ -418,7 +392,7 @@ class Gromacs_input:
 		logfile.close()
 		logfile1.close()
 		
-		command = gromacs.path+"mdrun -nice 4 -s "+project_name+"_em -o "+project_name+"_em -c "+project_name+"_b4pr -v &> log1.txt"
+		command = "mdrun -nice 4 -s "+project_name+"_em -o "+project_name+"_em -c "+project_name+"_b4pr -v &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -451,7 +425,7 @@ class Gromacs_input:
 		except:
 			pass
 		
-		command = gromacs.path+"grompp -f pr -c "+project_name+"_b4pr -r "+project_name+"_b4pr -p "+project_name+" -o "+project_name+"_pr &> log1.txt"
+		command = "grompp -f pr -c "+project_name+"_b4pr -r "+project_name+"_b4pr -p "+project_name+" -o "+project_name+"_pr &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -468,7 +442,7 @@ class Gromacs_input:
 		logfile.close()
 		logfile1.close()
 		
-		command = gromacs.path+"mdrun -nice 4 -s "+project_name+"_pr -o "+project_name+"_pr -c "+project_name+"_b4md -v &> log1.txt"
+		command = "mdrun -nice 4 -s "+project_name+"_pr -o "+project_name+"_pr -c "+project_name+"_b4md -v &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -499,7 +473,7 @@ class Gromacs_input:
 		except:
 			pass
 		
-		command = gromacs.path+"echo 0 | genrestr -f "+project_name+".pdb -o posre_2.itp -n index_dynamics.ndx &> log1.txt"
+		command = "echo 0 | genrestr -f "+project_name+".pdb -o posre_2.itp -n index_dynamics.ndx &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 			
@@ -543,7 +517,7 @@ class Gromacs_input:
 				#No pr
 				shutil.copy(project_name+"_b4pr.gro", project_name+"_b4md.gro")
 		
-		command = gromacs.path+"grompp -f md -c "+project_name+"_b4md  -p "+project_name+" -o "+project_name+"_md &> log1.txt"
+		command = "grompp -f md -c "+project_name+"_b4md  -p "+project_name+" -o "+project_name+"_md &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -560,7 +534,7 @@ class Gromacs_input:
 		logfile.close()
 		logfile1.close()
 		
-		command = gromacs.path+"mdrun -nice 4 -s "+project_name+"_md -o "+project_name+"_md -c "+project_name+"_after_md -v &> log1.txt"
+		command = "mdrun -nice 4 -s "+project_name+"_md -o "+project_name+"_md -c "+project_name+"_after_md -v &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -593,7 +567,7 @@ class Gromacs_input:
 		if os.path.isfile(project_name+"_multimodel.pdb") == True:
 			os.remove(project_name+"_multimodel.pdb")
 		
-		command = gromacs.path+"echo "+str(self.group)+" | trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -app -o "+project_name+"_multimodel.pdb &> log1.txt"
+		command = "echo "+str(self.group)+" | trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -app -o "+project_name+"_multimodel.pdb &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
