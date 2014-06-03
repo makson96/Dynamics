@@ -611,27 +611,30 @@ class Vectors:
 		ensemble.setCoords(model.getCoords())
 		ensemble.addCoordset(model.getCoordsets())
 		ensemble.iterpose()
-		#PCA calculations
-		if self.calculation_type == 0:
-			pca = prody.PCA(project_name)
-			pca.buildCovariance(ensemble)
-			pca.calcModes()
-			write_nmd = pca
 		#ANM calculations
-		elif self.calculation_type == 1:
+		if self.calculation_type == 0:
 			anm = prody.ANM(project_name)
 			anm.buildHessian(ensemble)
 			anm.calcModes()
 			anm
 			write_nmd = anm
+			if self.contact_map == 1:
+				prody.showContactMap(anm)
+		#PCA calculations
+		elif self.calculation_type == 1:
+			pca = prody.PCA(project_name)
+			pca.buildCovariance(ensemble)
+			pca.calcModes()
+			write_nmd = pca
 		#GNM calculations
 		elif self.calculation_type == 2:
 			gnm = prody.GNM(project_name)
 			gnm.buildKirchhoff(ensemble)
 			gnm.calcModes()
 			gnm
-			#prody.showContactMap(gnm)
 			write_nmd = gnm
+			if self.contact_map == 1:
+				prody.showContactMap(anm)
 		#Write NMD file
 		prody.writeNMD(project_name+'.nmd', write_nmd[:3], model)
 	
@@ -754,11 +757,11 @@ class Vectors:
 			v2 = IntVar(root)
 			v2.set(self.contact_map)
 			
-			radio_button0 = Radiobutton(frame1, text="PCA", value=0, variable=v1)
+			radio_button0 = Radiobutton(frame1, text="Anisotropic network model", value=0, variable=v1)
 			radio_button0.pack()
-			radio_button1 = Radiobutton(frame1, text="ANM", value=1, variable=v1)
+			radio_button1 = Radiobutton(frame1, text="Principal component analysis", value=1, variable=v1)
 			radio_button1.pack()
-			radio_button2 = Radiobutton(frame1, text="GNM", value=2, variable=v1)
+			radio_button2 = Radiobutton(frame1, text="Gaussian network model (experimental)", value=2, variable=v1)
 			radio_button2.pack()
 			
 			c1 = Checkbutton(frame1, text="Show Contact Map", variable=v2)
