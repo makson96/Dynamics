@@ -16,13 +16,8 @@ import subprocess, time, os, shutil, thread, pickle, Queue
 from Tkinter import *
 from ttk import Progressbar, Scrollbar
 import tkSimpleDialog, tkMessageBox, tkFileDialog, Pmw
-##Import libraries from PyMOL specific work. Detect if running as a plugin. If true set plugin variable to 1.
-try:
-	from pymol import cmd, stored, cgo
-	cmd.get_version()
-	plugin = 1
-except:
-	plugin = 0
+##Import libraries from PyMOL specific work.
+from pymol import cmd, stored, cgo
 
 ##Check for ProDy
 try:
@@ -853,7 +848,7 @@ def __init__(self):
 	command = init_function)
 
 ##This function will initialize all plugin stufs
-def init_function(shell=0):
+def init_function():
 	##Global variables
 	global help_name, clean_name, stop, status, error, em_init_config, pr_init_config, md_init_config, project_name, dynamics_dir, project_dir
 	help_name = ["-h", "h", "-help", "help"]
@@ -975,14 +970,8 @@ implicit-solvent = no
 	calculationW = CalculationWindow()
 	waterW = WaterWindows()
 	restraintsW = RestraintsWindow()
-	
 	##Start graphic interface
-	if shell == 0:
-		rootWindow()
-	
-	#This is for runnig program outside PyMOL
-	if plugin == 0:
-		return help_name, clean_name
+	rootWindow()
 
 ##--Graphic Interface--
 ##Root menu window
@@ -993,19 +982,16 @@ def rootWindow():
 	root.wm_title("Dynamics"+plugin_ver)
 	
 	##Detect list of PyMOL loaded PDB files if no files than list "nothing"
-	if plugin == 1:
-		allNames = cmd.get_names("objects") #PyMOL API
-		allNames1 = []
-		for name in allNames:
-			name1 = name.split("_")
-			if name1[-1] == "multimodel" or name1[-1] == "(sele)" or (name1[0] == "Mode" and len(name1) == 3):
-				pass
-			else:
-				allNames1.append(name)
-		allNames = allNames1
-		
-	elif plugin == 0:
-		allNames = ["nothing"]
+	allNames = cmd.get_names("objects") #PyMOL API
+	allNames1 = []
+	for name in allNames:
+		name1 = name.split("_")
+		if name1[-1] == "multimodel" or name1[-1] == "(sele)" or (name1[0] == "Mode" and len(name1) == 3):
+			pass
+		else:
+			allNames1.append(name)
+	allNames = allNames1
+	
 	if allNames == []:
 		allNames = ["nothing"]
 	
@@ -1406,12 +1392,9 @@ class InterpretationWindow:
 	def __init__(self):
 		self.queue_time = Queue.Queue()
 		self.md_time()
-		if plugin == 0:
-			self.non_plugin()
-		elif plugin == 1:
-			root = Tk()
-			self.window(root)
-			root.mainloop()
+		root = Tk()
+		self.window(root)
+		root.mainloop()
 	
 	def md_time(self):
 		md_file = open(project_dir+"md.mdp", "r")
@@ -1434,16 +1417,6 @@ class InterpretationWindow:
 				print nstxout
 		max_time = dt * nsteps
 		self.max_time = max_time
-	
-	def non_plugin(self):
-		root = Tk()
-		file = tkFileDialog.asksaveasfile(parent=root, mode='w' ,title='Choose final multimodel file to save')
-		try:
-			os.remove(file.name)
-			shutil.copy(project_dir + project_name + "_multimodel.pdb", file.name+".pdb")
-		except:
-			pass
-		root.destroy()
 	
 	def window(self, root):
 		root.wm_title("MD Interpretation")
@@ -1817,27 +1790,26 @@ class RestraintsWindow:
 			text.pack()
 			self.atom_list.append(text)
 			number = number + 1
-	
-		if plugin == 1:
-			select1 = Radiobutton(frame1, text="[ PyMol Selected ]", value=number, variable=self.check_var)
-			select1.pack()
-			text1 = Text(frame1)
+			
+		select1 = Radiobutton(frame1, text="[ PyMol Selected ]", value=number, variable=self.check_var)
+		select1.pack()
+		text1 = Text(frame1)
 		
-			stored.list=[]
-			cmd.iterate("(sele)","stored.list.append(ID)") #PyMOL API
+		stored.list=[]
+		cmd.iterate("(sele)","stored.list.append(ID)") #PyMOL API
 		
-			stored_string = ""
-			for atom in stored.list:
-				stored_string = stored_string + str(atom)
-				lengh = stored_string.split('\n')
-				if len(lengh[-1]) < 72:
-					stored_string = stored_string + "   "
-				else:
-					stored_string = stored_string + "\n"
+		stored_string = ""
+		for atom in stored.list:
+			stored_string = stored_string + str(atom)
+			lengh = stored_string.split('\n')
+			if len(lengh[-1]) < 72:
+				stored_string = stored_string + "   "
+			else:
+				stored_string = stored_string + "\n"
 		
-			text1.insert(END, stored_string)
-			text1.pack()
-			self.atom_list.append(text1)
+		text1.insert(END, stored_string)
+		text1.pack()
+		self.atom_list.append(text1)
 
 	##This function will modyfie index_dynamics.ndx file based on user choosed restraints		
 	def index(self, root_to_kill=""):
@@ -1981,10 +1953,9 @@ def create_config_files():
 	else:
 		md_file = Mdp_config("md.mdp",md_init_config, 0)
 	save_options()
-	if plugin == 1:
-		if project_name in cmd.get_names("objects"): #PyMOL API
-			cmd.save(project_dir+project_name+".pdb", project_name) #PyMOL API
-			print "cmd saved"
+	if project_name in cmd.get_names("objects"): #PyMOL API
+		cmd.save(project_dir+project_name+".pdb", project_name) #PyMOL API
+		print "cmd saved"
 
 #This function will create the window with configuration files based on MDP class
 def mdp_configure(config_name, master):
@@ -2417,12 +2388,11 @@ def mdp_files():
 
 ##Show multimodel PDB file in PyMOOL
 def show_multipdb():
-	if plugin == 1:
-		try:
-			cmd.hide("everything", project_name) #PyMOL API
-		except:
-			pass
-		cmd.load(project_name+"_multimodel.pdb") #PyMOL API
+	try:
+		cmd.hide("everything", project_name) #PyMOL API
+	except:
+		pass
+	cmd.load(project_name+"_multimodel.pdb") #PyMOL API
 
 ##Saving tar.bz file
 def save_file(destination_path):
@@ -2540,24 +2510,3 @@ def error_message():
 	for line in error_list:
 		error = error + line
 	print error
-
-##This function will set everything for running plugin in PyMOL Shell
-def dynamics_cmd(name, options=["load_file"]):
-	print "Dynamics PyMOL Shell"
-	init_function(1)
-	if plugin == 1:
-		project_name = name
-		dynamics_dir = os.getenv("HOME")+'/.dynamics/'
-		project_dir = dynamics_dir+project_name + '/'
-		##Creating directory for project
-		if os.path.isdir(project_dir) == False:
-			os.makedirs(project_dir)
-		create_config_files()
-	elif plugin == 0:
-		load_file(options[0])
-	project_name, project_dir = dynamics()
-	return project_name, project_dir
-	
-##--PyMOL Shell Interface-- - depreciated
-if plugin == 1:
-	cmd.extend("dynamics", dynamics_cmd) #PyMOL API
