@@ -2260,7 +2260,7 @@ def cleanMessage():
 def no_molecule_warning():
 	tkMessageBox.showinfo("No Molecule Selected", "Please choose any molecule before using this option.")
 
-##--Comand Line Interface--
+##This function will start real workflow of the plugin, once everything is set
 def dynamics(help_clean = ""):
 	print "Starting PyMOL plugin 'dynamics' ver."+plugin_ver+" by Tomasz Makarewicz"
 	global status, stop, gromacs, project_name
