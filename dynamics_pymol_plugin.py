@@ -853,9 +853,7 @@ def __init__(self):
 ##This function will initialize all plugin stufs
 def init_function():
 	##Global variables
-	global help_name, clean_name, stop, status, error, em_init_config, pr_init_config, md_init_config, project_name, dynamics_dir, project_dir
-	help_name = ["-h", "h", "-help", "help"]
-	clean_name = ["-c", "c", "clean", "-clean"]
+	global stop, status, error, em_init_config, pr_init_config, md_init_config, project_name, dynamics_dir, project_dir
 
 	stop = 1
 	status = ["ok", ""]
@@ -2264,23 +2262,13 @@ def no_molecule_warning():
 	tkMessageBox.showinfo("No Molecule Selected", "Please choose any molecule before using this option.")
 
 ##This function will start real workflow of the plugin, once everything is set
-def dynamics(help_clean = ""):
+def dynamics():
 	print "Starting PyMOL plugin 'dynamics' ver."+plugin_ver+" by Tomasz Makarewicz"
 	global status, stop, gromacs, project_name
 	
-	##If help is called
-	if help_name.count(help_clean) == 1:
-		print help_option()
-		status = ["fail", "Help printed"]
-	##If clean is called
-	elif clean_name.count(help_clean) == 1:
-		clean_option()
-		status = ["fail", "Cleaned"]
-	##Normal work
-	else:
-		file_path = project_dir + project_name
-		os.chdir(project_dir)
-		stop = 0
+	file_path = project_dir + project_name
+	os.chdir(project_dir)
+	stop = 0
 	
 	##Saving configuration files
 	if status[0] == "ok" and stop == 0 and progress.to_do[0] == 1:
@@ -2369,7 +2357,7 @@ def dynamics(help_clean = ""):
 		save_options()
 	elif status[0] == "fail":
 		print status[1]
-		if help_name.count(help_clean) != 1 and clean_name.count(help_clean) != 1 and stop == 0:
+		if stop == 0:
 			error_message()
 	
 	##Showing multimodel and interpretation window
