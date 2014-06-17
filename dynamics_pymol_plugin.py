@@ -429,7 +429,11 @@ class Mdp_config:
 		self.options = self.options
 		config = ""
 		for option in self.options:
-			config = config + option[0]+" = "+option[1]+"\n"
+			try:
+				config = config + option[0]+" = "+option[1]+"\n"
+			except IndexError:
+				print "Cannot parse: " + option[0]
+				print 'Make sure you separated option from value using " = " in your own mdp files.'
 		self.config = config
 		save_options()
 	
@@ -1149,6 +1153,10 @@ def create_config_files():
 	else:
 		load_options()
 	if os.path.isfile(dynamics_dir + "em.mdp"):
+		try:
+			os.makedirs(project_dir)
+		except:
+			pass
 		shutil.copy(dynamics_dir + "em.mdp", project_dir + "em.mdp")
 		em_file_config = open(dynamics_dir + "em.mdp", "r").read()
 		em_file = Mdp_config("em.mdp", em_file_config, 1)
@@ -1159,6 +1167,10 @@ def create_config_files():
 	else:
 		em_file = Mdp_config("em.mdp",em_init_config, 0)
 	if os.path.isfile(dynamics_dir + "pr.mdp"):
+		try:
+			os.makedirs(project_dir)
+		except:
+			pass
 		shutil.copy(dynamics_dir + "pr.mdp", project_dir + "pr.mdp")
 		pr_file_config = open(dynamics_dir + "pr.mdp", "r").read()
 		pr_file = Mdp_config("pr.mdp", pr_file_config, 1)
@@ -1169,6 +1181,10 @@ def create_config_files():
 	else:
 		pr_file = Mdp_config("pr.mdp",pr_init_config, 0)
 	if os.path.isfile(dynamics_dir + "md.mdp"):
+		try:
+			os.makedirs(project_dir)
+		except:
+			pass
 		shutil.copy(dynamics_dir + "md.mdp", project_dir + "md.mdp")
 		md_file_config = open(dynamics_dir + "md.mdp", "r").read()
 		md_file = Mdp_config("md.mdp", md_file_config, 1)
