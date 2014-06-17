@@ -7,7 +7,7 @@
 ##- Tomasz Makarewicz (tomaszm@biotech.ug.edu.pl)
 
 ##Plugin Version
-plugin_ver = " 1.2.0"
+plugin_ver = " 1.2.1pre"
 
 ##--Import libraries--
 ##Import nativ python libraries
@@ -1151,7 +1151,7 @@ def create_config_files():
 	if os.path.isfile(dynamics_dir + "em.mdp"):
 		shutil.copy(dynamics_dir + "em.mdp", project_dir + "em.mdp")
 		em_file_config = open(dynamics_dir + "em.mdp", "r").read()
-		em_file = Mdp_config("em.mdp",name, em_file_config, 1)
+		em_file = Mdp_config("em.mdp", em_file_config, 1)
 		print "Found em.mdp file. Using it instead of local configuration."
 	elif os.path.isfile(project_dir + "em.mdp"):
 		em_file_config = open(project_dir + "em.mdp", "r").read()
@@ -1161,7 +1161,7 @@ def create_config_files():
 	if os.path.isfile(dynamics_dir + "pr.mdp"):
 		shutil.copy(dynamics_dir + "pr.mdp", project_dir + "pr.mdp")
 		pr_file_config = open(dynamics_dir + "pr.mdp", "r").read()
-		pr_file = Mdp_config("pr.mdp",name, pr_file_config, 1)
+		pr_file = Mdp_config("pr.mdp", pr_file_config, 1)
 		print "Found pr.mdp file. Using it instead of local configuration."
 	elif os.path.isfile(project_dir + "pr.mdp"):
 		pr_file_config = open(project_dir + "pr.mdp", "r").read()
@@ -1171,7 +1171,7 @@ def create_config_files():
 	if os.path.isfile(dynamics_dir + "md.mdp"):
 		shutil.copy(dynamics_dir + "md.mdp", project_dir + "md.mdp")
 		md_file_config = open(dynamics_dir + "md.mdp", "r").read()
-		md_file = Mdp_config("md.mdp",name, md_file_config, 1)
+		md_file = Mdp_config("md.mdp", md_file_config, 1)
 		print "Found md.mdp file. Using it instead of local configuration."
 	elif os.path.isfile(project_dir + "md.mdp"):
 		md_file_config = open(project_dir + "md.mdp", "r").read()
