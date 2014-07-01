@@ -619,7 +619,7 @@ class Vectors:
 			anm
 			write_nmd = anm
 			if self.contact_map == 1:
-				show_contact_map(anm)
+				self.show_contact_map(anm)
 		#PCA calculations
 		elif self.calculation_type == 1:
 			pca = prody.PCA(project_name)
@@ -634,7 +634,7 @@ class Vectors:
 			gnm
 			write_nmd = gnm
 			if self.contact_map == 1:
-				show_contact_map(gnm)
+				self.show_contact_map(gnm)
 		#Write NMD file
 		prody.writeNMD(project_name+'.nmd', write_nmd[:3], model)
 	
@@ -677,6 +677,17 @@ class Vectors:
 		#pymol
 		contact_matrix = enm.getKirchhoff()
 		print contact_matrix
+		c_alpha_nr = 0
+		for c_alpha_list in contact_matrix:
+			c_alpha_nr = c_alpha_nr + 1
+			c_alpha_target_nr = 0
+			for c_alpha_1 in c_alpha_list:
+				c_alpha_target_nr = c_alpha_target_nr + 1
+				if c_alpha_nr != c_alpha_target_nr and c_alpha_1 <= 0:
+					cmd.select("a", "n. ca and i. "+str(c_alpha_nr)) #PyMOL API
+					cmd.select("b", "n. ca and i. "+str(c_alpha_target_nr)) #PyMOL API
+					cmd.distance("d", "a", "b") #PyMOL API
+					cmd.hide("labels", "d") #PyMOL API
 		
 	##Show vectors from NMD file
 	def show_vectors(self):
