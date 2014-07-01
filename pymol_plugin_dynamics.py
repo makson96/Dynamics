@@ -2382,9 +2382,8 @@ def dynamics():
 		if stop == 0:
 			error_message()
 	
-	##Showing multimodel and interpretation window
+	##Showing interpretation window
 	if status[0] == "ok" and stop == 0 and progress.status[7] == 1:
-		#show_multipdb()
 		interpretation = InterpretationWindow()
 		try:
 			interpretation()
