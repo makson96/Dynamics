@@ -619,7 +619,7 @@ class Vectors:
 			anm
 			write_nmd = anm
 			if self.contact_map == 1:
-				prody.showContactMap(anm)
+				show_contact_map(anm)
 		#PCA calculations
 		elif self.calculation_type == 1:
 			pca = prody.PCA(project_name)
@@ -634,7 +634,7 @@ class Vectors:
 			gnm
 			write_nmd = gnm
 			if self.contact_map == 1:
-				prody.showContactMap(anm)
+				show_contact_map(gnm)
 		#Write NMD file
 		prody.writeNMD(project_name+'.nmd', write_nmd[:3], model)
 	
@@ -670,6 +670,14 @@ class Vectors:
 				self.nmd_mode.append(pre_mode[3:])
 				self.nmd_scale_mode.append(pre_mode[2])
 	
+	##Show contact map
+	def show_contact_map(self, enm):
+		#matplotlib
+		prody.showContactMap(enm)
+		#pymol
+		contact_matrix = enm.getKirchhoff()
+		print contact_matrix
+		
 	##Show vectors from NMD file
 	def show_vectors(self):
 		color1 = list(cmd.get_color_tuple(self.color)) #PyMOL API
