@@ -684,10 +684,12 @@ class Vectors:
 			for c_alpha_1 in c_alpha_list:
 				c_alpha_target_nr = c_alpha_target_nr + 1
 				if c_alpha_nr != c_alpha_target_nr and c_alpha_1 <= 0:
-					cmd.select("a", "n. ca and i. "+str(c_alpha_nr)) #PyMOL API
-					cmd.select("b", "n. ca and i. "+str(c_alpha_target_nr)) #PyMOL API
-					cmd.distance("d", "a", "b") #PyMOL API
-					cmd.hide("labels", "d") #PyMOL API
+					cmd.select("sele1", "n. ca and i. "+str(c_alpha_nr)) #PyMOL API
+					cmd.select("sele2", "n. ca and i. "+str(c_alpha_target_nr)) #PyMOL API
+					print c_alpha_nr
+					print c_alpha_target_nr
+					cmd.distance("distance", "sele1", "sele2") #PyMOL API
+		cmd.hide("labels", "distance") #PyMOL API
 		
 	##Show vectors from NMD file
 	def show_vectors(self):
@@ -2362,6 +2364,7 @@ def dynamics():
 	##Trjconv
 	if status[0] == "ok" and stop == 0 and progress.to_do[7] == 1:
 		status = gromacs2.trjconv(file_path, project_name)
+		show_multipdb()
 		progress.status[7] = 1
 		progress.to_do[7] = 0
 		save_options()
@@ -2381,14 +2384,12 @@ def dynamics():
 	
 	##Showing multimodel and interpretation window
 	if status[0] == "ok" and stop == 0 and progress.status[7] == 1:
-		show_multipdb()
+		#show_multipdb()
 		interpretation = InterpretationWindow()
 		try:
 			interpretation()
 		except AttributeError:
 			pass
-		
-	return project_name, project_dir
 
 ##Saving configuration files
 def mdp_files():
