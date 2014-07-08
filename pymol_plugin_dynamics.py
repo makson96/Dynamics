@@ -602,6 +602,8 @@ class Vectors:
 	calculation_type = 0
 	contact_map = 0
 	
+	enm = 0
+	
 	##Change Multimodel PDB file into NMD vector file
 	def prody(self):
 		#Prepare ensemble
@@ -619,6 +621,7 @@ class Vectors:
 			anm
 			write_nmd = anm
 			if self.contact_map == 1:
+				self.enm = anm
 				self.show_contact_map(anm)
 		#PCA calculations
 		elif self.calculation_type == 1:
@@ -634,6 +637,7 @@ class Vectors:
 			gnm
 			write_nmd = gnm
 			if self.contact_map == 1:
+				self.enm = gnm
 				self.show_contact_map(gnm)
 		#Write NMD file
 		prody.writeNMD(project_name+'.nmd', write_nmd[:3], model)
@@ -670,11 +674,8 @@ class Vectors:
 				self.nmd_mode.append(pre_mode[3:])
 				self.nmd_scale_mode.append(pre_mode[2])
 	
-	##Show contact map
+	##Show contact map on PyMOL screen
 	def show_contact_map(self, enm):
-		#matplotlib
-		prody.showContactMap(enm)
-		#pymol
 		contact_matrix = enm.getKirchhoff()
 		print contact_matrix
 		c_alpha_nr = 0
@@ -692,6 +693,15 @@ class Vectors:
 		cmd.hide("labels", "contact_map") #PyMOL API
 		cmd.delete("sele1") #PyMOL API
 		cmd.delete("sele2") #PyMOL API
+	
+	##Show contact map/cross corelation as a graph
+	def graph_contact_map(self, plot_type):
+		if plot_type == "contact":
+			#matplotlib
+			prody.showContactMap(self.enm)
+		elif plot_type == "cross":
+			#matplotlib
+			prody.showCrossCorr(self.enm)
 		
 	##Show vectors from NMD file
 	def show_vectors(self):
@@ -1530,12 +1540,21 @@ class InterpretationWindow:
 		green_button.pack(side=LEFT)
 		
 		frame1_7 = Frame(frame1)
-		frame1_7.pack(side=TOP)
-		exit_button = Button(frame1_7, text = "Exit", command=root.destroy)
+		frame1_7.pack(side=TOP, anchor=W)
+		modlabel = Label(frame1_7, text="Plot results")
+		modlabel.pack(side=LEFT)
+		contact_button = Button(frame1_7, text = "Show Contact Map Graph", command=lambda : vectors_prody.graph_contact_map("contact"))
+		contact_button.pack(side=LEFT)
+		cross_button = Button(frame1_7, text = "Show Cross-correlations Graph", command=lambda : vectors_prody.graph_contact_map("cross"))
+		cross_button.pack(side=LEFT)
+		
+		frame1_8 = Frame(frame1)
+		frame1_8.pack(side=TOP)
+		exit_button = Button(frame1_8, text = "Exit", command=root.destroy)
 		exit_button.pack(side=LEFT)
-		save_button = Button(frame1_7, text = "Save", command=lambda : select_file_save(1))
+		save_button = Button(frame1_8, text = "Save", command=lambda : select_file_save(1))
 		save_button.pack(side=LEFT)
-		log_button = Button(frame1_7, text = "Log", command=lambda: logWindow(root))
+		log_button = Button(frame1_8, text = "Log", command=lambda: logWindow(root))
 		log_button.pack(side=LEFT)
 		
 		if prody_true != 1:
@@ -1548,6 +1567,9 @@ class InterpretationWindow:
 			red_button.configure(state=DISABLED)
 			blue_button.configure(state=DISABLED)
 			green_button.configure(state=DISABLED)
+		if prody_true !=1 or vectors_prody.contact_map !=1:
+			contact_button.configure(state=DISABLED)
+			cross_button.configure(state=DISABLED)
 	
 	def pause_play(self, value):
 		if value == 1:
