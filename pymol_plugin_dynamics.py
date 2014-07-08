@@ -684,8 +684,8 @@ class Vectors:
 			for c_alpha_1 in c_alpha_list:
 				c_alpha_target_nr = c_alpha_target_nr + 1
 				if c_alpha_nr != c_alpha_target_nr and c_alpha_1 <= 0:
-					cmd.select("sele1", "n. ca and i. "+str(c_alpha_nr)) #PyMOL API
-					cmd.select("sele2", "n. ca and i. "+str(c_alpha_target_nr)) #PyMOL API
+					cmd.select("sele1", "n. ca and "+project_name+"_multimodel and i. "+str(c_alpha_nr)) #PyMOL API
+					cmd.select("sele2", "n. ca and "+project_name+"_multimodel and i. "+str(c_alpha_target_nr)) #PyMOL API
 					print c_alpha_nr
 					print c_alpha_target_nr
 					cmd.distance("contact_map", "sele1", "sele2") #PyMOL API
@@ -1574,13 +1574,13 @@ class InterpretationWindow:
 	
 	def label(self, name):
 		if name == "terminus":
-			cmd.label("n. ca and i. 1", '"N-terminus"') #PyMOL API
-			ca_number = cmd.count_atoms("name ca") #PyMOL API
-			cmd.label("n. ca and i. " + str(ca_number), '"C-terminus"') #PyMOL API
+			cmd.label("n. ca and "+project_name+"_multimodel and i. 1", '"N-terminus"') #PyMOL API
+			ca_number = cmd.count_atoms("n. ca and "+project_name+"_multimodel") #PyMOL API
+			cmd.label("n. ca and "+project_name+"_multimodel and i. " + str(ca_number), '"C-terminus"') #PyMOL API
 		elif name == "acids":
-			cmd.label("n. ca", "resn") #PyMOL API
+			cmd.label("n. ca and "+project_name+"_multimodel", "resn") #PyMOL API
 		elif name == "clear":
-			cmd.label("n. ca", "") #PyMOL API
+			cmd.label("n. ca and "+project_name+"_multimodel", "") #PyMOL API
 	
 	##This function will watch time (beware this is separate thread)
 	def watch_frames(self):
