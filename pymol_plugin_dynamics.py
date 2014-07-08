@@ -684,15 +684,16 @@ class Vectors:
 			c_alpha_target_nr = 0
 			for c_alpha_1 in c_alpha_list:
 				c_alpha_target_nr = c_alpha_target_nr + 1
-				if c_alpha_nr != c_alpha_target_nr and c_alpha_1 <= 0:
+				if c_alpha_nr != c_alpha_target_nr and float(c_alpha_1) < -0.5:
 					cmd.select("sele1", "n. ca and "+project_name+"_multimodel and i. "+str(c_alpha_nr)) #PyMOL API
 					cmd.select("sele2", "n. ca and "+project_name+"_multimodel and i. "+str(c_alpha_target_nr)) #PyMOL API
-					print c_alpha_nr
-					print c_alpha_target_nr
 					cmd.distance("contact_map", "sele1", "sele2") #PyMOL API
-		cmd.hide("labels", "contact_map") #PyMOL API
-		cmd.delete("sele1") #PyMOL API
-		cmd.delete("sele2") #PyMOL API
+		try:
+			cmd.hide("labels", "contact_map") #PyMOL API
+			cmd.delete("sele1") #PyMOL API
+			cmd.delete("sele2") #PyMOL API
+		except:
+			pass
 	
 	##Show contact map/cross corelation as a graph
 	def graph_contact_map(self, plot_type):
