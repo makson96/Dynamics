@@ -688,8 +688,10 @@ class Vectors:
 					cmd.select("sele2", "n. ca and i. "+str(c_alpha_target_nr)) #PyMOL API
 					print c_alpha_nr
 					print c_alpha_target_nr
-					cmd.distance("distance", "sele1", "sele2") #PyMOL API
-		cmd.hide("labels", "distance") #PyMOL API
+					cmd.distance("contact_map", "sele1", "sele2") #PyMOL API
+		cmd.hide("labels", "contact_map") #PyMOL API
+		cmd.delete("sele1") #PyMOL API
+		cmd.delete("sele2") #PyMOL API
 		
 	##Show vectors from NMD file
 	def show_vectors(self):
