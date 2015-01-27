@@ -50,6 +50,10 @@ class Gromacs_output:
 			#Warn about issues with specyfic GROMACS versions
 			if gromacs_version == "GROMACS VERSION 4.6":
 				print "Warning. GROMACS 4.6.0 may fail. Please upgrade to newer version of GROMACS"
+		elif lista_gromacs[0][0:8] == "GROMACS:":
+			version = lista_gromacs[0].split("VERSION ")
+			gromacs_version = "GROMACS " + version[1]
+			print "Found " + gromacs_version
 		else:
 			print "GROMACS not detected."
 			print "Please install and setup correctly GROMACS for your platform. Aborting."
