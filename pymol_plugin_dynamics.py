@@ -341,7 +341,6 @@ class Gromacs_input:
 			command = "gmx solvate -cp "+project_name+"1.gro -cs -o "+project_name+"_b4em.gro -p "+project_name+".top &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
-
 		
 		status = ["ok", "Adding Water Box"]
 		status_update(status)
@@ -570,7 +569,10 @@ class Gromacs_input:
 		if os.path.isfile(project_name+"_multimodel.pdb") == True:
 			os.remove(project_name+"_multimodel.pdb")
 		
-		command = "echo "+str(self.group)+" | trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -app -o "+project_name+"_multimodel.pdb &> log1.txt"
+		if gromacs.version[0:9] == "GROMACS 4":
+			command = "echo "+str(self.group)+" | trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -app -o "+project_name+"_multimodel.pdb &> log1.txt"
+		else:
+			command = "echo "+str(self.group)+" | trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -o "+project_name+"_multimodel.pdb &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
