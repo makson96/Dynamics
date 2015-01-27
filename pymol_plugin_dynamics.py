@@ -572,7 +572,7 @@ class Gromacs_input:
 		if gromacs.version[0:9] == "GROMACS 4":
 			command = "echo "+str(self.group)+" | trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -app -o "+project_name+"_multimodel.pdb &> log1.txt"
 		else:
-			command = "echo "+str(self.group)+" | trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -o "+project_name+"_multimodel.pdb &> log1.txt"
+			command = "echo "+str(self.group)+" | gmx trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -o "+project_name+"_multimodel.pdb &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -834,7 +834,7 @@ class Mdp_config:
 		self.external_file = external_file
 		list1 = init_config.split("\n")
 		list2 = []
-		if self.external_file == 0:
+		if self.external_file == 0 and gromacs.version[0:9] == "GROMACS 4": #title is obsolete for GROMACS 5
 			list2.append(["title", project_name+"_"+file_name])
 		for line in list1:
 			list2.append(line.split(" = "))
@@ -902,8 +902,28 @@ def init_function():
 	stop = 1
 	status = ["ok", ""]
 	error = ""
-
-	em_init_config = """cpp = /usr/bin/cpp
+	
+	os.chdir(os.getenv("HOME"))
+	project_name = 'nothing'
+	dynamics_dir = os.getenv("HOME")+'/.dynamics/'
+	project_dir = dynamics_dir+project_name + '/'
+	##Clean "nothing" temporary directory if present.
+	try:
+		shutil.rmtree(project_dir)
+	except:
+		pass
+	##Creating "nothing" temporary directories
+	if os.path.isdir(project_dir) == False:
+		os.makedirs(project_dir)
+	
+	##Gromacs variables
+	global gromacs, gromacs2, explicit
+	gromacs = Gromacs_output()
+	gromacs2 = Gromacs_input()
+	explicit = 1
+	
+	if gromacs.version[0:9] == "GROMACS 4":
+		em_init_config = """cpp = /usr/bin/cpp
 define = -DFLEX_SPC
 constraints = none
 integrator = steep
@@ -919,8 +939,7 @@ implicit-solvent = no
 ;gb-algorithm = Still
 ;pbc = no
 ;rgbradii = 0"""
-
-	pr_init_config = """cpp = /usr/bin/cpp
+		pr_init_config = """cpp = /usr/bin/cpp
 define = -DPOSRES
 constraints = all-bonds
 integrator = md
@@ -948,8 +967,7 @@ ref_p = 1.0
 gen_vel = yes
 gen_temp = 300.0
 gen_seed = 173529"""
-
-	md_init_config = """cpp = /usr/bin/cpp
+		md_init_config = """cpp = /usr/bin/cpp
 ;define = -DPOSRES
 integrator = md
 dt = 0.002
@@ -986,26 +1004,90 @@ implicit-solvent = no
 ;pbc = no
 ;rgbradii = 0
 ;comm_mode = ANGULAR"""
+	else:
+		em_init_config = """define = -DFLEX_SPC
+constraints = none
+integrator = steep
+nsteps = 100
+nstlist = 10
+ns_type = grid
+rlist = 1.0
+rcoulomb = 1.0
+rvdw = 1.0
+emtol = 1000.0
+emstep = 0.01
+implicit-solvent = no
+;gb-algorithm = Still
+;pbc = no
+;rgbradii = 0
+cutoff-scheme = Verlet"""
+		pr_init_config = """define = -DPOSRES
+constraints = all-bonds
+integrator = md
+dt = 0.002
+nsteps = 500
+nstcomm = 1
+nstxout = 10
+nstvout = 1000
+nstfout = 0
+nstlog = 10
+nstenergy = 10
+nstlist = 10
+ns_type = grid
+rlist = 1.0
+rcoulomb = 1.0
+rvdw = 1.0
+Tcoupl = v-rescale
+tau_t = 0.1 0.1
+tc-grps = protein Non-Protein
+ref_t = 300 300
+Pcoupl = no
+tau_p = 0.5
+compressibility = 4.5e-5
+ref_p = 1.0
+gen_vel = yes
+gen_temp = 300.0
+gen_seed = 173529
+cutoff-scheme = Verlet"""
+		md_init_config = """;define = -DPOSRES
+integrator = md
+dt = 0.002
+nsteps = 5000
+nstcomm = 1
+nstxout = 50
+nstvout = 0
+nstfout = 0
+nstlist = 10
+ns_type = grid
+rlist = 1.0
+rcoulomb = 1.0
+rvdw = 1.0
+Tcoupl = v-rescale
+tau_t = 0.1 0.1
+tc-grps = protein Non-Protein
+ref_t = 300 300
+Pcoupl = no
+tau_p = 0.5
+compressibility = 4.5e-5
+ref_p = 1.0
+gen_vel = yes
+gen_temp = 300.0
+gen_seed = 173529
+constraints = all-bonds
+constraint-algorithm = Lincs
+continuation = no
+shake-tol = 0.0001
+lincs-order = 4
+lincs-warnangle = 30
+morse = no
+implicit-solvent = no
+;gb-algorithm = Still
+;pbc = no
+;rgbradii = 0
+;comm_mode = ANGULAR
+cutoff-scheme = Verlet"""		
 	
-	os.chdir(os.getenv("HOME"))
-	project_name = 'nothing'
-	dynamics_dir = os.getenv("HOME")+'/.dynamics/'
-	project_dir = dynamics_dir+project_name + '/'
-	##Clean "nothing" temporary directory if present.
-	try:
-		shutil.rmtree(project_dir)
-	except:
-		pass
-	##Creating "nothing" temporary directories
-	if os.path.isdir(project_dir) == False:
-		os.makedirs(project_dir)
-	
-	##Gromacs variables
-	global gromacs, gromacs2, explicit
-	gromacs = Gromacs_output()
-	gromacs2 = Gromacs_input()
-	explicit = 1
-	
+	##Prody variables
 	if prody_true == 1:
 		global vectors_prody
 		vectors_prody = Vectors()
