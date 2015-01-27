@@ -335,9 +335,13 @@ class Gromacs_input:
 		logfile.close()
 		logfile1.close()
 		
-		command = "genbox -cp "+project_name+"1.gro -cs -o "+project_name+"_b4em.gro -p "+project_name+".top &> log1.txt"
+		if gromacs.version[0:9] == "GROMACS 4":
+			command = "genbox -cp "+project_name+"1.gro -cs -o "+project_name+"_b4em.gro -p "+project_name+".top &> log1.txt"
+		else:
+			command = "gmx solvate -cp "+project_name+"1.gro -cs -o "+project_name+"_b4em.gro -p "+project_name+".top &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
+
 		
 		status = ["ok", "Adding Water Box"]
 		status_update(status)
