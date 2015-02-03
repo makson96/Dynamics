@@ -1028,7 +1028,8 @@ implicit-solvent = no
 ;gb-algorithm = Still
 ;pbc = no
 ;rgbradii = 0
-cutoff-scheme = Verlet"""
+cutoff-scheme = Verlet
+coulombtype = PME"""
 		pr_init_config = """define = -DPOSRES
 constraints = all-bonds
 integrator = md
@@ -1056,7 +1057,8 @@ ref_p = 1.0
 gen_vel = yes
 gen_temp = 300.0
 gen_seed = 173529
-cutoff-scheme = Verlet"""
+cutoff-scheme = Verlet
+coulombtype = PME"""
 		md_init_config = """;define = -DPOSRES
 integrator = md
 dt = 0.002
@@ -1093,7 +1095,8 @@ implicit-solvent = no
 ;pbc = no
 ;rgbradii = 0
 ;comm_mode = ANGULAR
-cutoff-scheme = Verlet"""		
+cutoff-scheme = Verlet
+coulombtype = PME"""		
 	
 	##Prody variables
 	if prody_true == 1:
