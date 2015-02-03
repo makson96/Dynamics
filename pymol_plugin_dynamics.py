@@ -1799,27 +1799,50 @@ class WaterWindows:
 			progress.to_do[4] = 1
 			#em update
 			if not os.path.isfile(dynamics_dir + "em.mdp"):
-				em_file.update(8, "1.0")
-				em_file.update(9, "1.0")
-				em_file.update(10, "1.0")
-				em_file.update(13, "no")
-				em_file.update(15, "no", 0)
-				em_file.update(16, "0", 0)
+				parameter_nr = 0
+				for parameter in em_file.options:
+					if (parameter[0] == "rlist") or (parameter[0] == ";rlist"):
+						em_file.update(parameter_nr, "1.0")
+					elif (parameter[0] == "rcoulomb") or (parameter[0] == ";rcoulomb"):
+						em_file.update(parameter_nr, "1.0")
+					elif (parameter[0] == "rvdw") or (parameter[0] == ";rvdw"):
+						em_file.update(parameter_nr, "1.0")
+					elif (parameter[0] == "implicit-solvent") or (parameter[0] == ";implicit-solvent"):
+						em_file.update(parameter_nr, "no")
+					elif (parameter[0] == "pbc") or (parameter[0] == ";pbc"):
+						em_file.update(parameter_nr, "no", 0)
+					elif (parameter[0] == "rgbradii") or (parameter[0] == ";rgbradii"):
+						em_file.update(parameter_nr, "0", 0)
+					parameter_nr = parameter_nr + 1
 			#md update
 			if not os.path.isfile(dynamics_dir + "md.mdp"):
-				md_file.update(10, "10")
-				md_file.update(12, "1.0")
-				md_file.update(13, "1.0")
-				md_file.update(14, "1.0")
-				md_file.update(15, "berendsen")
-				md_file.update(16, "0.1 0.1")
-				md_file.update(17, "protein Non-Protein")
-				md_file.update(18, "300 300")
-				md_file.update(33, "no")
-				md_file.update(35, "no", 0)
-				md_file.update(36, "0", 0)
-				md_file.update(37, "ANGULAR", 0)
-
+				parameter_nr = 0
+				for parameter in md_file.options:
+					if (parameter[0] == "nstlist") or (parameter[0] == ";nstlist"):
+						md_file.update(parameter_nr, "10")
+					elif (parameter[0] == "rlist") or (parameter[0] == ";rlist"):
+						md_file.update(parameter_nr, "1.0")
+					elif (parameter[0] == "rcoulomb") or (parameter[0] == ";rcoulomb"):
+						md_file.update(parameter_nr, "1.0")
+					elif (parameter[0] == "rvdw") or (parameter[0] == ";rvdw"):
+						md_file.update(parameter_nr, "1.0")
+					elif (parameter[0] == "Tcoupl") or (parameter[0] == ";Tcoupl"):
+						md_file.update(parameter_nr, "berendsen")
+					elif (parameter[0] == "tau_t") or (parameter[0] == ";tau_t"):
+						md_file.update(parameter_nr, "0.1 0.1")
+					elif (parameter[0] == "tc-grps") or (parameter[0] == ";tc-grps"):
+						md_file.update(parameter_nr, "protein Non-Protein")
+					elif (parameter[0] == "ref_t") or (parameter[0] == ";ref_t"):
+						md_file.update(parameter_nr, "300 300")
+					elif (parameter[0] == "implicit-solvent") or (parameter[0] == ";implicit-solvent"):
+						md_file.update(parameter_nr, "no")
+					elif (parameter[0] == "pbc") or (parameter[0] == ";pbc"):
+						md_file.update(parameter_nr, "no", 0)
+					elif (parameter[0] == "rgbradii") or (parameter[0] == ";rgbradii"):
+						md_file.update(parameter_nr, "0", 0)
+					elif (parameter[0] == "comm_mode") or (parameter[0] == ";comm_mode"):
+						md_file.update(parameter_nr, "ANGULAR", 0)
+					parameter_nr = parameter_nr + 1
 		elif explicit == 0:
 			for button in self.implicit_buttons:
 				button.configure(state=ACTIVE)
@@ -1829,26 +1852,50 @@ class WaterWindows:
 			progress.to_do[4] = 0
 			#em update
 			if not os.path.isfile(dynamics_dir + "em.mdp"):
-				em_file.update(8, "0")
-				em_file.update(9, "0")
-				em_file.update(10, "0")
-				em_file.update(13, "GBSA")
-				em_file.update(15, "no")
-				em_file.update(16, "0")
+				parameter_nr = 0
+				for parameter in em_file.options:
+					if (parameter[0] == "rlist") or (parameter[0] == ";rlist"):
+						em_file.update(parameter_nr, "0")
+					elif (parameter[0] == "rcoulomb") or (parameter[0] == ";rcoulomb"):
+						em_file.update(parameter_nr, "0")
+					elif (parameter[0] == "rvdw") or (parameter[0] == ";rvdw"):
+						em_file.update(parameter_nr, "0")
+					elif (parameter[0] == "implicit-solvent") or (parameter[0] == ";implicit-solvent"):
+						em_file.update(parameter_nr, "GBSA")
+					elif (parameter[0] == "pbc") or (parameter[0] == ";pbc"):
+						em_file.update(parameter_nr, "no")
+					elif (parameter[0] == "rgbradii") or (parameter[0] == ";rgbradii"):
+						em_file.update(parameter_nr, "0")
+					parameter_nr = parameter_nr + 1
 			#md update
 			if not os.path.isfile(dynamics_dir + "md.mdp"):
-				md_file.update(10, "0")
-				md_file.update(12, "0")
-				md_file.update(13, "0")
-				md_file.update(14, "0")
-				md_file.update(15, "berendsen", 0)
-				md_file.update(16, "0.1 0.1", 0)
-				md_file.update(17, "protein Non-Protein", 0)
-				md_file.update(18, "300 300", 0)
-				md_file.update(33, "GBSA")
-				md_file.update(35, "no")
-				md_file.update(36, "0")
-				md_file.update(37, "ANGULAR")
+				parameter_nr = 0
+				for parameter in md_file.options:
+					if (parameter[0] == "nstlist") or (parameter[0] == ";nstlist"):
+						md_file.update(parameter_nr, "0")
+					elif (parameter[0] == "rlist") or (parameter[0] == ";rlist"):
+						md_file.update(parameter_nr, "0")
+					elif (parameter[0] == "rcoulomb") or (parameter[0] == ";rcoulomb"):
+						md_file.update(parameter_nr, "0")
+					elif (parameter[0] == "rvdw") or (parameter[0] == ";rvdw"):
+						md_file.update(parameter_nr, "0")
+					elif (parameter[0] == "Tcoupl") or (parameter[0] == ";Tcoupl"):
+						md_file.update(parameter_nr, "berendsen", 0)
+					elif (parameter[0] == "tau_t") or (parameter[0] == ";tau_t"):
+						md_file.update(parameter_nr, "0.1 0.1", 0)
+					elif (parameter[0] == "tc-grps") or (parameter[0] == ";tc-grps"):
+						md_file.update(parameter_nr, "protein Non-Protein", 0)
+					elif (parameter[0] == "ref_t") or (parameter[0] == ";ref_t"):
+						md_file.update(parameter_nr, "300 300", 0)
+					elif (parameter[0] == "implicit-solvent") or (parameter[0] == ";implicit-solvent"):
+						md_file.update(parameter_nr, "GBSA")
+					elif (parameter[0] == "pbc") or (parameter[0] == ";pbc"):
+						md_file.update(parameter_nr, "no")
+					elif (parameter[0] == "rgbradii") or (parameter[0] == ";rgbradii"):
+						md_file.update(parameter_nr, "0")
+					elif (parameter[0] == "comm_mode") or (parameter[0] == ";comm_mode"):
+						md_file.update(parameter_nr, "ANGULAR")
+					parameter_nr = parameter_nr + 1
 			self.change_i(v2)
 			#in implicit solvent watermodel must be set to "None"
 			v4_water.set(len(self.explicit_buttons) - 1)
@@ -1859,14 +1906,44 @@ class WaterWindows:
 	##This function changes implicit water model
 	def change_i(self, int_variable):
 		if int_variable.get() == 0:
-			em_file.update(14, "Still")
-			md_file.update(34, "Still")
+			if not os.path.isfile(dynamics_dir + "em.mdp"):
+				parameter_nr = 0
+				for parameter in em_file.options:
+					if (parameter[0] == "gb-algorithm") or (parameter[0] == ";gb-algorithm"):
+						em_file.update(parameter_nr, "Still")
+					parameter_nr = parameter_nr + 1
+			if not os.path.isfile(dynamics_dir + "md.mdp"):
+				parameter_nr = 0
+				for parameter in md_file.options:
+					if (parameter[0] == "gb-algorithm") or (parameter[0] == ";gb-algorithm"):
+						md_file.update(parameter_nr, "Still")
+					parameter_nr = parameter_nr + 1
 		elif int_variable.get() == 1:
-			em_file.update(14, "HCT")
-			md_file.update(34, "HCT")
+			if not os.path.isfile(dynamics_dir + "em.mdp"):
+				parameter_nr = 0
+				for parameter in em_file.options:
+					if (parameter[0] == "gb-algorithm") or (parameter[0] == ";gb-algorithm"):
+						em_file.update(parameter_nr, "HCT")
+					parameter_nr = parameter_nr + 1
+			if not os.path.isfile(dynamics_dir + "md.mdp"):
+				parameter_nr = 0
+				for parameter in md_file.options:
+					if (parameter[0] == "gb-algorithm") or (parameter[0] == ";gb-algorithm"):
+						md_file.update(parameter_nr, "HCT")
+					parameter_nr = parameter_nr + 1
 		elif int_variable.get() == 2:
-			em_file.update(14, "OBC")
-			md_file.update(34, "OBC")
+			if not os.path.isfile(dynamics_dir + "em.mdp"):
+				parameter_nr = 0
+				for parameter in em_file.options:
+					if (parameter[0] == "gb-algorithm") or (parameter[0] == ";gb-algorithm"):
+						em_file.update(parameter_nr, "OBC")
+					parameter_nr = parameter_nr + 1
+			if not os.path.isfile(dynamics_dir + "md.mdp"):
+				parameter_nr = 0
+				for parameter in md_file.options:
+					if (parameter[0] == "gb-algorithm") or (parameter[0] == ";gb-algorithm"):
+						md_file.update(parameter_nr, "OBC")
+					parameter_nr = parameter_nr + 1
 
 	##Water box configuration window
 	def box(self, master):
