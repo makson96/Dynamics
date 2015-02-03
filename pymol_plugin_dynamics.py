@@ -338,7 +338,15 @@ class Gromacs_input:
 		if gromacs.version[0:9] == "GROMACS 4":
 			command = "genbox -cp "+project_name+"1.gro -cs -o "+project_name+"_b4em.gro -p "+project_name+".top &> log1.txt"
 		else:
-			command = "gmx solvate -cp "+project_name+"1.gro -cs -o "+project_name+"_b4em.gro -p "+project_name+".top &> log1.txt"
+			water_name = gromacs.water_list[self.water-1][1][4:8].lower()
+			print water_name
+			if water_name == "tip4":
+				water_gro = "tip4p.gro"
+			elif water_name == "tip5":
+				water_gro = "tip5p.gro"
+			else:
+				water_gro = "spc216.gro"
+			command = "gmx solvate -cp "+project_name+"1.gro -cs "+water_gro+" -o "+project_name+"_b4em.gro -p "+project_name+".top &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
