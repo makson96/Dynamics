@@ -1798,25 +1798,27 @@ class WaterWindows:
 			progress.to_do[2] = 1
 			progress.to_do[4] = 1
 			#em update
-			em_file.update(8, "1.0")
-			em_file.update(9, "1.0")
-			em_file.update(10, "1.0")
-			em_file.update(13, "no")
-			em_file.update(15, "no", 0)
-			em_file.update(16, "0", 0)
+			if not os.path.isfile(dynamics_dir + "em.mdp"):
+				em_file.update(8, "1.0")
+				em_file.update(9, "1.0")
+				em_file.update(10, "1.0")
+				em_file.update(13, "no")
+				em_file.update(15, "no", 0)
+				em_file.update(16, "0", 0)
 			#md update
-			md_file.update(10, "10")
-			md_file.update(12, "1.0")
-			md_file.update(13, "1.0")
-			md_file.update(14, "1.0")
-			md_file.update(15, "berendsen")
-			md_file.update(16, "0.1 0.1")
-			md_file.update(17, "protein Non-Protein")
-			md_file.update(18, "300 300")
-			md_file.update(33, "no")
-			md_file.update(35, "no", 0)
-			md_file.update(36, "0", 0)
-			md_file.update(37, "ANGULAR", 0)
+			if not os.path.isfile(dynamics_dir + "md.mdp"):
+				md_file.update(10, "10")
+				md_file.update(12, "1.0")
+				md_file.update(13, "1.0")
+				md_file.update(14, "1.0")
+				md_file.update(15, "berendsen")
+				md_file.update(16, "0.1 0.1")
+				md_file.update(17, "protein Non-Protein")
+				md_file.update(18, "300 300")
+				md_file.update(33, "no")
+				md_file.update(35, "no", 0)
+				md_file.update(36, "0", 0)
+				md_file.update(37, "ANGULAR", 0)
 
 		elif explicit == 0:
 			for button in self.implicit_buttons:
@@ -1826,25 +1828,27 @@ class WaterWindows:
 			progress.to_do[2] = 0
 			progress.to_do[4] = 0
 			#em update
-			em_file.update(8, "0")
-			em_file.update(9, "0")
-			em_file.update(10, "0")
-			em_file.update(13, "GBSA")
-			em_file.update(15, "no")
-			em_file.update(16, "0")
+			if not os.path.isfile(dynamics_dir + "em.mdp"):
+				em_file.update(8, "0")
+				em_file.update(9, "0")
+				em_file.update(10, "0")
+				em_file.update(13, "GBSA")
+				em_file.update(15, "no")
+				em_file.update(16, "0")
 			#md update
-			md_file.update(10, "0")
-			md_file.update(12, "0")
-			md_file.update(13, "0")
-			md_file.update(14, "0")
-			md_file.update(15, "berendsen", 0)
-			md_file.update(16, "0.1 0.1", 0)
-			md_file.update(17, "protein Non-Protein", 0)
-			md_file.update(18, "300 300", 0)
-			md_file.update(33, "GBSA")
-			md_file.update(35, "no")
-			md_file.update(36, "0")
-			md_file.update(37, "ANGULAR")
+			if not os.path.isfile(dynamics_dir + "md.mdp"):
+				md_file.update(10, "0")
+				md_file.update(12, "0")
+				md_file.update(13, "0")
+				md_file.update(14, "0")
+				md_file.update(15, "berendsen", 0)
+				md_file.update(16, "0.1 0.1", 0)
+				md_file.update(17, "protein Non-Protein", 0)
+				md_file.update(18, "300 300", 0)
+				md_file.update(33, "GBSA")
+				md_file.update(35, "no")
+				md_file.update(36, "0")
+				md_file.update(37, "ANGULAR")
 			self.change_i(v2)
 			#in implicit solvent watermodel must be set to "None"
 			v4_water.set(len(self.explicit_buttons) - 1)
@@ -2071,8 +2075,6 @@ def create_config_files():
 		load_options()
 	if os.path.isfile(dynamics_dir + "em.mdp"):
 		shutil.copy(dynamics_dir + "em.mdp", project_dir + "em.mdp")
-		em_file_config = open(dynamics_dir + "em.mdp", "r").read()
-		em_file = Mdp_config("em.mdp",name, em_file_config, 1)
 		print "Found em.mdp file. Using it instead of local configuration."
 	elif os.path.isfile(project_dir + "em.mdp"):
 		em_file_config = open(project_dir + "em.mdp", "r").read()
@@ -2081,8 +2083,6 @@ def create_config_files():
 		em_file = Mdp_config("em.mdp",em_init_config, 0)
 	if os.path.isfile(dynamics_dir + "pr.mdp"):
 		shutil.copy(dynamics_dir + "pr.mdp", project_dir + "pr.mdp")
-		pr_file_config = open(dynamics_dir + "pr.mdp", "r").read()
-		pr_file = Mdp_config("pr.mdp",name, pr_file_config, 1)
 		print "Found pr.mdp file. Using it instead of local configuration."
 	elif os.path.isfile(project_dir + "pr.mdp"):
 		pr_file_config = open(project_dir + "pr.mdp", "r").read()
@@ -2091,8 +2091,6 @@ def create_config_files():
 		pr_file = Mdp_config("pr.mdp",pr_init_config, 0)
 	if os.path.isfile(dynamics_dir + "md.mdp"):
 		shutil.copy(dynamics_dir + "md.mdp", project_dir + "md.mdp")
-		md_file_config = open(dynamics_dir + "md.mdp", "r").read()
-		md_file = Mdp_config("md.mdp",name, md_file_config, 1)
 		print "Found md.mdp file. Using it instead of local configuration."
 	elif os.path.isfile(project_dir + "md.mdp"):
 		md_file_config = open(project_dir + "md.mdp", "r").read()
@@ -2517,9 +2515,12 @@ def dynamics():
 
 ##Saving configuration files
 def mdp_files():
-	em_file.save_file()
-	pr_file.save_file()
-	md_file.save_file()
+	if not os.path.isfile(dynamics_dir + "em.mdp"):
+		em_file.save_file()
+	if not os.path.isfile(dynamics_dir + "pr.mdp"):
+		pr_file.save_file()
+	if not os.path.isfile(dynamics_dir + "md.mdp"):
+		md_file.save_file()
 
 ##Show multimodel PDB file in PyMOOL
 def show_multipdb():
