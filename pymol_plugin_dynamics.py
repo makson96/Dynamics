@@ -352,10 +352,10 @@ class Gromacs_input:
 		
 		status = ["ok", "Adding Water Box"]
 		status_update(status)
-		Genbox = subprocess.Popen(command, executable="/bin/bash", shell=True)
-		while Genbox.poll() is None:
+		Solvate = subprocess.Popen(command, executable="/bin/bash", shell=True)
+		while Solvate.poll() is None:
 			if stop == 1:
-				Genbox.kill()
+				Solvate.kill()
 				break
 			time.sleep(1.0)
 		
@@ -367,7 +367,7 @@ class Gromacs_input:
 		if os.path.isfile(file_path+"1.gro") == True and stop == 0:
 			status = ["ok", "Water Box Added"]
 		else:
-			status = ["fail", "Unable to add waterbox"]
+			status = ["fail", "Unable to add water box"]
 		return status
 	
 	##This function will perform energy minimization	
