@@ -831,6 +831,7 @@ class Vectors:
 	def options_change(self, v1, v2, root):
 		self.calculation_type = v1.get()
 		self.contact_map = v2.get()
+		save_options()
 		root.destroy()
 	
 	def block_contact(self, block, contact_map_b, contact_map_v):
@@ -2656,13 +2657,13 @@ def save_options():
 	if os.path.isdir(project_dir) == False:
 		os.makedirs(project_dir)
 	destination_option = file(project_dir + "options.pickle", "w")
-	pickle_list = [plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress, explicit]
+	pickle_list = [plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress, explicit, vectors_prody]
 	pickle.dump(pickle_list, destination_option)
 	del destination_option
 
 ##Load all settings from options.pickle file	
 def load_options():
-	global gromacs2, em_file, pr_file, md_file, progress, explicit
+	global gromacs2, em_file, pr_file, md_file, progress, explicit, vectors_prody
 	
 	pickle_file = file(project_dir +"options.pickle")
 	options = pickle.load(pickle_file)
@@ -2679,6 +2680,7 @@ def load_options():
 		md_file = options[5]
 		progress = options[6]
 		explicit = options[7]
+		vectors_prody = options[8]
 
 ##Text for "Help"
 def help_option():
