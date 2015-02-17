@@ -619,6 +619,7 @@ class Vectors:
 	
 	calculation_type = 0
 	contact_map = 0
+	block_contact_map = 0
 	
 	enm = 0
 	
@@ -809,15 +810,17 @@ class Vectors:
 			v2 = IntVar(root)
 			v2.set(self.contact_map)
 			
-			radio_button0 = Radiobutton(frame1, text="Anisotropic network model", value=0, variable=v1)
+			radio_button0 = Radiobutton(frame1, text="Anisotropic network model", value=0, variable=v1, command = lambda : self.block_contact(0, c1, v2))
 			radio_button0.pack()
-			radio_button1 = Radiobutton(frame1, text="Principal component analysis", value=1, variable=v1)
+			radio_button1 = Radiobutton(frame1, text="Principal component analysis", value=1, variable=v1, command = lambda : self.block_contact(1, c1, v2))
 			radio_button1.pack()
-			radio_button2 = Radiobutton(frame1, text="Gaussian network model (experimental)", value=2, variable=v1)
+			radio_button2 = Radiobutton(frame1, text="Gaussian network model (experimental)", value=2, variable=v1, command = lambda : self.block_contact(0, c1, v2))
 			radio_button2.pack()
 			
 			c1 = Checkbutton(frame1, text="Show Contact Map", variable=v2)
 			c1.pack()
+			if self.block_contact_map == 1:
+				c1.configure(state=DISABLED)
 			
 			ok_button = Button(frame1, text = "OK", command=lambda : self.options_change(v1, v2, root))
 			ok_button.pack(side=TOP)
@@ -829,6 +832,15 @@ class Vectors:
 		self.calculation_type = v1.get()
 		self.contact_map = v2.get()
 		root.destroy()
+	
+	def block_contact(self, block, contact_map_b, contact_map_v):
+		self.block_contact_map = block
+		if block == 0:
+			contact_map_b.configure(state=ACTIVE)
+		elif block == 1:
+			contact_map_b.configure(state=DISABLED)
+			contact_map_v.set(0)
+			
 
 ##This class create and maintain abstraction mdp file representatives. em.mdp, pr.mdp, md.mdp
 class Mdp_config:
