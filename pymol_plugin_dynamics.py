@@ -7,7 +7,7 @@
 ##- Tomasz Makarewicz (btchtm@ug.edu.pl)
 
 ##Plugin Version
-plugin_ver = " 2.0.0"
+plugin_ver = " 2.1.0pre"
 
 ##--Import libraries--
 ##Import nativ python libraries
@@ -2672,7 +2672,16 @@ def load_options():
 	if gromacs.version != options[1]:
 		print "GROMACS versions is different for loaded file."
 	
-	if options[0][1:4] == "2.0":
+	if options[0][1:4] == "2.1":
+		print "2.1 compatibility layer"
+		gromacs2 = options[2]
+		em_file = options[3]
+		pr_file = options[4]
+		md_file = options[5]
+		progress = options[6]
+		explicit = options[7]
+		vectors_prody = options[8]
+	elif options[0][1:4] == "2.0":
 		print "2.0 compatibility layer"
 		gromacs2 = options[2]
 		em_file = options[3]
