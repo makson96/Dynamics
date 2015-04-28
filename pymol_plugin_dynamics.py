@@ -232,7 +232,7 @@ class Gromacs_input:
 			status = ["fail", "Warning. Trying to ignore unnecessary hydrogen atoms."]
 			status_update(status)
 			
-			command = "echo -e '"+force+"' | pdb2gmx -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log1.txt"
+			command = "echo -e '"+force_water+"' | pdb2gmx -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log1.txt"
 			logfile = open('log.txt', 'a')
 			logfile.write(self.command_distinction+command+self.command_distinction)
 			
