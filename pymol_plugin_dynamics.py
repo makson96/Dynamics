@@ -639,9 +639,7 @@ class Vectors:
 			anm.calcModes()
 			anm
 			write_nmd = anm
-			if self.contact_map == 1:
-				self.enm = anm
-				self.show_contact_map(anm)
+			self.enm = anm
 		#PCA calculations
 		elif self.calculation_type == 1:
 			pca = prody.PCA(project_name)
@@ -655,9 +653,7 @@ class Vectors:
 			gnm.calcModes()
 			gnm
 			write_nmd = gnm
-			if self.contact_map == 1:
-				self.enm = gnm
-				self.show_contact_map(gnm)
+			self.enm = gnm
 		#Write NMD file
 		prody.writeNMD(project_name+'.nmd', write_nmd[:3], model)
 	
@@ -694,8 +690,8 @@ class Vectors:
 				self.nmd_scale_mode.append(pre_mode[2])
 	
 	##Show contact map on PyMOL screen
-	def show_contact_map(self, enm):
-		contact_matrix = enm.getKirchhoff()
+	def show_contact_map(self, sensitivity):
+		contact_matrix = self.enm.getKirchhoff()
 		print contact_matrix
 		c_alpha_nr = 0
 		for c_alpha_list in contact_matrix:
@@ -703,7 +699,7 @@ class Vectors:
 			c_alpha_target_nr = 0
 			for c_alpha_1 in c_alpha_list:
 				c_alpha_target_nr = c_alpha_target_nr + 1
-				if c_alpha_nr != c_alpha_target_nr and float(c_alpha_1) < -0.5:
+				if c_alpha_nr != c_alpha_target_nr and float(c_alpha_1) < float(sensitivity):
 					cmd.select("sele1", "n. ca and "+project_name+"_multimodel and i. "+str(c_alpha_nr)) #PyMOL API
 					cmd.select("sele2", "n. ca and "+project_name+"_multimodel and i. "+str(c_alpha_target_nr)) #PyMOL API
 					cmd.distance("contact_map", "sele1", "sele2") #PyMOL API
@@ -1575,6 +1571,8 @@ class InterpretationWindow:
 		self.tentry_value.set("0.0")
 		sentry_value = StringVar(root)
 		sentry_value.set("1.0")
+		contact_entry_value = StringVar(root)
+		contact_entry_value.set("-0.5")
 		
 		frame1 = Frame(root)
 		frame1.pack(side=TOP)
@@ -1664,6 +1662,12 @@ class InterpretationWindow:
 		contact_button.pack(side=LEFT)
 		cross_button = Button(frame1_7, text = "Show Cross-correlations Graph", command=lambda : vectors_prody.graph_contact_map("cross"))
 		cross_button.pack(side=LEFT)
+		contact_pymol_button = Button(frame1_7, text = "Show Contact Map In PyMOL", command=lambda : vectors_prody.show_contact_map(contact_entry_value.get()))
+		contact_pymol_button.pack(side=LEFT)
+		contact_label = Label(frame1_7, text="Sensitivity")
+		contact_label.pack(side=LEFT)
+		contact_entry = Entry(frame1_7, textvariable=contact_entry_value)
+		contact_entry.pack(side=LEFT)
 		
 		frame1_8 = Frame(frame1)
 		frame1_8.pack(side=TOP)
@@ -1687,6 +1691,7 @@ class InterpretationWindow:
 		if prody_true !=1 or vectors_prody.contact_map !=1:
 			contact_button.configure(state=DISABLED)
 			cross_button.configure(state=DISABLED)
+			contact_pymol_button.configure(state=DISABLED)
 	
 	def pause_play(self, value):
 		if value == 1:
