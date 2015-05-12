@@ -2463,33 +2463,36 @@ def helpWindow(master):
 
 ##Log window
 def logWindow(master):
-	root = Toplevel(master)
-	root.wm_title("Log Window")
-	
-	log_txt, log_long = log_option()
-	canvas_long = log_long * 19
-	
-	sb = Scrollbar(root, orient=VERTICAL)
-	sb.pack(side=RIGHT, fill=Y)
+	if os.name == "posix":
+		subprocess.call("xdg-open " + project_dir + "log.txt", executable="/bin/bash", shell=True)
+	else:
+		root = Toplevel(master)
+		root.wm_title("Log Window")
 		
-	canvas = Canvas(root, width=600)
-	canvas.pack(side=TOP, fill="both", expand=True)
-	frame = Frame(canvas)
-	frame.pack(side=TOP)
+		log_txt, log_long = log_option()
+		canvas_long = log_long * 19
 		
-	#attach canvas (with frame in it) to scrollbar
-	canvas.config(yscrollcommand=sb.set)
-	sb.config(command=canvas.yview)
+		sb = Scrollbar(root, orient=VERTICAL)
+		sb.pack(side=RIGHT, fill=Y)
 		
-	#bind frame with canvas
-	canvas.create_window((1,1), window=frame, anchor="nw", tags="frame")
-	frame.bind("<Configure>", canvas.config(scrollregion=(0, 0, 0, canvas_long)))
-	
-	w = Label(frame, text=log_txt)
-	w.pack()
-	
-	ok_button = Button(root, text = "OK", command=root.destroy)
-	ok_button.pack()
+		canvas = Canvas(root, width=600)
+		canvas.pack(side=TOP, fill="both", expand=True)
+		frame = Frame(canvas)
+		frame.pack(side=TOP)
+		
+		#attach canvas (with frame in it) to scrollbar
+		canvas.config(yscrollcommand=sb.set)
+		sb.config(command=canvas.yview)
+		
+		#bind frame with canvas
+		canvas.create_window((1,1), window=frame, anchor="nw", tags="frame")
+		frame.bind("<Configure>", canvas.config(scrollregion=(0, 0, 0, canvas_long)))
+		
+		w = Label(frame, text=log_txt)
+		w.pack()
+		
+		ok_button = Button(root, text = "OK", command=root.destroy)
+		ok_button.pack()
 
 ##Clean message in tkMessageBox
 def cleanMessage():
