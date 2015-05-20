@@ -1111,6 +1111,7 @@ coulombtype = PME"""
 	if prody_true == 1:
 		global vectors_prody
 		vectors_prody = Vectors()
+		print "ProDy correctly imported"
 
 	##Creating objects - data from those windows will be used by rootWindow
 	global calculationW, waterW, restraintsW
@@ -2640,6 +2641,9 @@ def load_file(file_path):
 
 ##Save all settings to options.pickle file
 def save_options():
+	global vectors_prody
+	if prody_true == 0:
+		vectors_prody = 0
 	print "updating project files"
 	if os.path.isdir(project_dir) == False:
 		os.makedirs(project_dir)
@@ -2667,7 +2671,8 @@ def load_options():
 		md_file = options[5]
 		progress = options[6]
 		explicit = options[7]
-		vectors_prody = options[8]
+		if prody_true == 1 and options[8] != 0:
+			vectors_prody = options[8]
 	elif options[0][1:4] == "2.0":
 		print "2.0 compatibility layer"
 		gromacs2 = options[2]
@@ -2676,7 +2681,8 @@ def load_options():
 		md_file = options[5]
 		progress = options[6]
 		explicit = options[7]
-		vectors_prody = options[8]
+		if prody_true == 1 and options[8] != 0:
+			vectors_prody = options[8]
 
 ##Text for "Help"
 def help_option():
