@@ -23,8 +23,10 @@ from pymol import cmd, stored, cgo
 try:
 	import prody
 	prody_true = 1
+	print "ProDy imported"
 except:
 	prody_true = 0
+	print "ProDy not found"
 
 ##This class is responsible for interface to GROMACS. It will read all important data from GROMACS tools.
 class Gromacs_output:
@@ -2665,6 +2667,8 @@ def save_options():
 	if os.path.isdir(project_dir) == False:
 		os.makedirs(project_dir)
 	destination_option = file(project_dir + "options.pickle", "w")
+	if prody_true == 0:
+		vectors_prody = 0
 	pickle_list = [plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress, explicit, vectors_prody]
 	pickle.dump(pickle_list, destination_option)
 	del destination_option
@@ -2688,7 +2692,8 @@ def load_options():
 		md_file = options[5]
 		progress = options[6]
 		explicit = options[7]
-		vectors_prody = options[8]
+		if prody_true == 1 and options[8] != 0:
+			vectors_prody = options[8]
 
 ##Text for "Help"
 def help_option():
