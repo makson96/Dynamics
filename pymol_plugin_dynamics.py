@@ -1447,7 +1447,7 @@ class CalculationWindow:
 			start_button.configure(state=DISABLED)
 		self.start_button = start_button
 		
-		log_button = Button(frame2, text = "LOG", command=lambda: logWindow())
+		log_button = Button(frame2, text = "LOG", command=logWindow)
 		log_button.pack(side=LEFT)
 		log_button.configure(state=DISABLED)
 		self.log_button = log_button
@@ -1679,7 +1679,7 @@ class InterpretationWindow:
 		exit_button.pack(side=LEFT)
 		save_button = Button(frame1_8, text = "Save", command=lambda : select_file_save(1))
 		save_button.pack(side=LEFT)
-		log_button = Button(frame1_8, text = "Log", command=lambda: logWindow())
+		log_button = Button(frame1_8, text = "Log", command=logWindow)
 		log_button.pack(side=LEFT)
 		
 		if prody_true != 1:
