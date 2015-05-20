@@ -23,10 +23,8 @@ from pymol import cmd, stored, cgo
 try:
 	import prody
 	prody_true = 1
-	print "ProDy imported"
 except:
 	prody_true = 0
-	print "ProDy not found"
 
 ##This class is responsible for interface to GROMACS. It will read all important data from GROMACS tools.
 class Gromacs_output:
@@ -1119,6 +1117,7 @@ coulombtype = PME"""
 	if prody_true == 1:
 		global vectors_prody
 		vectors_prody = Vectors()
+		print "ProDy Imported"
 
 	##Creating objects - data from those windows will be used by rootWindow
 	global calculationW, waterW, restraintsW
@@ -2663,6 +2662,7 @@ def load_file(file_path):
 
 ##Save all settings to options.pickle file
 def save_options():
+	global vectors_prody
 	print "updating project files"
 	if os.path.isdir(project_dir) == False:
 		os.makedirs(project_dir)
