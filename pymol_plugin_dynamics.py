@@ -7,7 +7,7 @@
 ##- Tomasz Makarewicz (btchtm@ug.edu.pl)
 
 ##Plugin Version
-plugin_ver = " 2.0.1"
+plugin_ver = " 2.0.2"
 
 ##--Import libraries--
 ##Import nativ python libraries
@@ -1453,7 +1453,7 @@ class CalculationWindow:
 			start_button.configure(state=DISABLED)
 		self.start_button = start_button
 		
-		log_button = Button(frame2, text = "LOG", command=lambda: logWindow(root))
+		log_button = Button(frame2, text = "LOG", command=logWindow)
 		log_button.pack(side=LEFT)
 		log_button.configure(state=DISABLED)
 		self.log_button = log_button
@@ -1673,7 +1673,7 @@ class InterpretationWindow:
 		exit_button.pack(side=LEFT)
 		save_button = Button(frame1_8, text = "Save", command=lambda : select_file_save(1))
 		save_button.pack(side=LEFT)
-		log_button = Button(frame1_8, text = "Log", command=lambda: logWindow(root))
+		log_button = Button(frame1_8, text = "Log", command=logWindow)
 		log_button.pack(side=LEFT)
 		
 		if prody_true != 1:
@@ -2462,9 +2462,12 @@ def helpWindow(master):
 	ok_button.pack()
 
 ##Log window
-def logWindow(master):
-	if os.name == "posix":
+def logWindow():
+	import sys
+	if os.name == "linux2":
 		subprocess.call("xdg-open " + project_dir + "log.txt", executable="/bin/bash", shell=True)
+	elif sys.platform == "darwin":
+		subprocess.call("open " + project_dir + "log.txt", executable="/bin/bash", shell=True)
 	else:
 		root = Toplevel(master)
 		root.wm_title("Log Window")
