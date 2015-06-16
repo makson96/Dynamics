@@ -872,7 +872,7 @@ class Mdp_config:
 		#Clean options from artefacts
 		try:
 			self.options.remove([''])
-		else:
+		except:
 			pass
 	
 	def save_file(self):
