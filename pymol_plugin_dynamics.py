@@ -863,6 +863,11 @@ class Mdp_config:
 			self.options[option_nr][0] = ";"+self.options[option_nr][0]
 		elif check == 1 and self.options[option_nr][0][0] == ";":
 			self.options[option_nr][0] = self.options[option_nr][0][1:]
+		#Clean options from arthefacts
+		try:
+			self.options.remove([''])
+		else:
+			pass
 	
 	def save_file(self):
 		config = ""
@@ -2247,7 +2252,6 @@ def mdp_configure(config_name, master):
 		
 		#bind canvas with frame1 1/2
 		canvas.create_window((1,1), window=frame1, anchor="nw", tags="frame1")
-		
 		for option, value in options:
 			frame2 = Frame(frame1)
 			frame2.pack(side=TOP)
