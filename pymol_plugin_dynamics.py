@@ -863,11 +863,7 @@ class Mdp_config:
 			self.options[option_nr][0] = ";"+self.options[option_nr][0]
 		elif check == 1 and self.options[option_nr][0][0] == ";":
 			self.options[option_nr][0] = self.options[option_nr][0][1:]
-		#Clean options from artefacts
-		try:
-			self.options.remove([''])
-		except:
-			pass
+		self.clean()
 	
 	def save_file(self):
 		config = ""
@@ -880,6 +876,13 @@ class Mdp_config:
 		mdp = open(project_dir+self.file_name, "w")
 		mdp.write(config)
 		mdp.close() 
+	
+	#Clean options from artefacts
+	def clean(self):	
+		try:
+			self.options.remove([''])
+		except:
+			pass
 
 ##Status and to_do maintaining class
 class Progress_status:
@@ -2224,6 +2227,7 @@ def mdp_configure(config_name, master):
 		elif config_name == "md":
 			options = md_file.options
 			root2.wm_title("Molecular Dynamics Simulation Options")
+		options.clean()
 		
 		values_list = []
 		check_list = []
