@@ -863,7 +863,7 @@ class Mdp_config:
 			self.options[option_nr][0] = ";"+self.options[option_nr][0]
 		elif check == 1 and self.options[option_nr][0][0] == ";":
 			self.options[option_nr][0] = self.options[option_nr][0][1:]
-		#Clean options from arthefacts
+		#Clean options from artefacts
 		try:
 			self.options.remove([''])
 		else:
