@@ -863,7 +863,7 @@ class Mdp_config:
 			self.options[option_nr][0] = ";"+self.options[option_nr][0]
 		elif check == 1 and self.options[option_nr][0][0] == ";":
 			self.options[option_nr][0] = self.options[option_nr][0][1:]
-		self.clean()
+		self.clean_artefacts()
 	
 	def save_file(self):
 		config = ""
@@ -878,7 +878,7 @@ class Mdp_config:
 		mdp.close() 
 	
 	#Clean options from artefacts
-	def clean(self):	
+	def clean_artefacts(self):	
 		try:
 			self.options.remove([''])
 		except:
@@ -2219,15 +2219,17 @@ def mdp_configure(config_name, master):
 		root2 = Toplevel(master)
 		
 		if config_name == "em":
+			em_file.clean_artefacts()
 			options = em_file.options
 			root2.wm_title("Energy Minimization Options")
 		elif config_name == "pr":
+			pr_file.clean_artefacts()
 			options = pr_file.options
 			root2.wm_title("Position Restrained MD Options")
 		elif config_name == "md":
+			md_file.clean_artefacts()
 			options = md_file.options
 			root2.wm_title("Molecular Dynamics Simulation Options")
-		options.clean()
 		
 		values_list = []
 		check_list = []
