@@ -2473,7 +2473,7 @@ def helpWindow(master):
 def logWindow():
 	import sys
 	if sys.platform == "linux2":
-+		subprocess.call("xdg-open " + project_dir + "log.txt", executable="/bin/bash", shell=True)
+		subprocess.call("xdg-open " + project_dir + "log.txt", executable="/bin/bash", shell=True)
 	elif sys.platform == "darwin":
 		subprocess.call("open " + project_dir + "log.txt", executable="/bin/bash", shell=True)
 
