@@ -56,11 +56,12 @@ class Gromacs_output:
 			print "Found " + gromacs_version
 		else:
 			print "GROMACS not detected."
-			print "Please install and setup correctly GROMACS for your platform. Aborting."
-			status = ["fail", "Require GROMACS installation"]
+			status = ["fail", "GROMACS not detected. Please install and setup GROMACS correctly for your platform. Aborting."]
 		if status[0] == "ok":
 			self.version = gromacs_version
+			self.init2()
 
+	def init2(self):
 		subprocess.call("echo -e '1\n1' | pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
@@ -949,6 +950,11 @@ def init_function():
 	gromacs = Gromacs_output()
 	gromacs2 = Gromacs_input()
 	explicit = 1
+	
+	##Break now if status is not ok and print message
+	if status[0] == "fail":
+		#sys.exit(status[1])
+		raise ValueError(status[1])
 	
 	if gromacs.version[0:9] == "GROMACS 4":
 		em_init_config = """cpp = /usr/bin/cpp
