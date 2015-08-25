@@ -80,7 +80,7 @@ class Gromacs_output:
 			os.remove(dynamics_dir+"test_gromacs2.pdb")
 		except:
 			pass
-		if self.version[0:17] == "GROMACS VERSION 4": #pdb2gmx -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top
+		if self.version[0:17] == "GROMACS VERSION 4":
 			subprocess.call("echo -e '1\n1' | pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		else:
 			subprocess.call("echo -e '1\n1' | gmx pdb2gmx -f "+dynamics_dir+"test_gromacs.pdb -o "+dynamics_dir+"test_gromacs.gro -p "+dynamics_dir+"test_gromacs.top &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
@@ -118,7 +118,7 @@ class Gromacs_output:
 			number = number + 1
 
 		if self.version[0:17] == "GROMACS VERSION 4":
-			subprocess.call("echo 1 | trjconv -f "+dynamics_dir+"test_gromacs.pdb.pdb -s "+dynamics_dir+"test_gromacs.pdb -o "+dynamics_dir+"test_gromacs2.pdb &> "+dynamics_dir+"test_gromacs_group.txt",
+			subprocess.call("echo 1 | trjconv -f "+dynamics_dir+"test_gromacs.pdb -s "+dynamics_dir+"test_gromacs.pdb -o "+dynamics_dir+"test_gromacs2.pdb &> "+dynamics_dir+"test_gromacs_group.txt",
 		executable="/bin/bash", shell=True)
 		else:
 			subprocess.call("echo 1 | gmx trjconv -f "+dynamics_dir+"test_gromacs.pdb -s "+dynamics_dir+"test_gromacs.pdb -o "+dynamics_dir+"test_gromacs2.pdb &> "+dynamics_dir+"test_gromacs_group.txt",
@@ -298,7 +298,7 @@ class Gromacs_input:
 		if gromacs.version[0:17] == "GROMACS VERSION 4":
 			command = "g_x2top -f "+project_name+".pdb -o "+project_name+".top &> log.txt"
 		else:
-			command = "gmx g_x2top -f "+project_name+".pdb -o "+project_name+".top &> log.txt"
+			command = "gmx x2top -f "+project_name+".pdb -o "+project_name+".top &> log.txt"
 		logfile = open('log.txt', 'w')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
