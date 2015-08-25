@@ -1007,10 +1007,9 @@ def init_function():
 	
 	##Break now if status is not ok and print message
 	if status[0] == "fail":
-		#sys.exit(status[1])
 		raise ValueError(status[1])
 	
-	if gromacs.version[0:9] == "GROMACS 4":
+	if gromacs.version[0:17] == "GROMACS VERSION 4":
 		em_init_config = """cpp = /usr/bin/cpp
 define = -DFLEX_SPC
 constraints = none
