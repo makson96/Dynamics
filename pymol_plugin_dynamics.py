@@ -7,7 +7,7 @@
 ##- Tomasz Makarewicz (btchtm@ug.edu.pl)
 
 ##Plugin Version
-plugin_ver = " 2.0.4"
+plugin_ver = " 2.0.5pre"
 
 ##--Import libraries--
 ##Import nativ python libraries
