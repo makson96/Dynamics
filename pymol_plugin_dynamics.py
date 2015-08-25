@@ -40,11 +40,7 @@ class Gromacs_output:
 		status = ["ok", ""]
 		print "Testing GROMACS installation and version"
 		#GROMACS 4.x
-		try:
-			subprocess.call("echo -e '1\n1' | pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
-		#GROMACS 5.x
-		except:
-			subprocess.call("echo -e '1\n1' | gmx pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+		subprocess.call("echo -e '1\n1' | pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
 		#This will require correction in case GROMACS header will change
@@ -55,11 +51,19 @@ class Gromacs_output:
 			#Warn about issues with specyfic GROMACS versions
 			if gromacs_version == "GROMACS VERSION 4.6":
 				print "Warning. GROMACS 4.6.0 may fail. Please upgrade to newer version of GROMACS"
-		elif lista_gromacs[0][0:8] == "GROMACS:":
-			version = lista_gromacs[0].split("VERSION ")
-			gromacs_version = "GROMACS VERSION " + version[1]
-			print "Found " + gromacs_version
+		#GROMACS 5.x
 		else:
+			subprocess.call("gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+			del test_gromacs
+			test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
+			lista_gromacs = test_gromacs.readlines()
+			for line in lista_gromacs:
+				if line[0:8] == "GROMACS:":
+					version = line.split("VERSION ")
+					gromacs_version = "GROMACS VERSION " + version[1]
+					print "Found " + gromacs_version
+					break
+		if 'gromacs_version' not in locals():
 			print "GROMACS not detected."
 			status = ["fail", "GROMACS not detected. Please install and setup GROMACS correctly for your platform. Aborting."]
 		if status[0] == "ok":
@@ -67,10 +71,19 @@ class Gromacs_output:
 			self.init2()
 
 	def init2(self):
-		if self.version[0:17] == "GROMACS VERSION 4":
+		fo = open(dynamics_dir+"test_gromacs.pdb", "wb")
+		fo.write( "ATOM      1  N   LYS     1      24.966  -0.646  22.314  1.00 32.74      1SRN  99\n");
+		fo.close()
+		try:
+			os.remove(dynamics_dir+"test_gromacs.gro")
+			os.remove(dynamics_dir+"test_gromacs.top")
+			os.remove(dynamics_dir+"test_gromacs2.pdb")
+		except:
+			pass
+		if self.version[0:17] == "GROMACS VERSION 4": #pdb2gmx -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top
 			subprocess.call("echo -e '1\n1' | pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		else:
-			subprocess.call("echo -e '1\n1' | gmx pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+			subprocess.call("echo -e '1\n1' | gmx pdb2gmx -f "+dynamics_dir+"test_gromacs.pdb -o "+dynamics_dir+"test_gromacs.gro -p "+dynamics_dir+"test_gromacs.top &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
 		
@@ -103,19 +116,12 @@ class Gromacs_output:
 		for water in water_list:
 			water_list2.append([number, water[:-1]])
 			number = number + 1
-	
-		fo = open(dynamics_dir+"group_test.pdb", "wb")
-		fo.write( "ATOM      1  N   LYS     1      24.966  -0.646  22.314  1.00 32.74      1SRN  99\n");
-		fo.close()
-		try:
-			os.remove(dynamics_dir+"group_test2.pdb")
-		except:
-			pass
+
 		if self.version[0:17] == "GROMACS VERSION 4":
-			subprocess.call("echo 1 | trjconv -f "+dynamics_dir+"group_test.pdb -s "+dynamics_dir+"group_test.pdb -o "+dynamics_dir+"group_test2.pdb &> "+dynamics_dir+"test_gromacs_group.txt",
+			subprocess.call("echo 1 | trjconv -f "+dynamics_dir+"test_gromacs.pdb.pdb -s "+dynamics_dir+"test_gromacs.pdb -o "+dynamics_dir+"test_gromacs2.pdb &> "+dynamics_dir+"test_gromacs_group.txt",
 		executable="/bin/bash", shell=True)
 		else:
-			subprocess.call("echo 1 | gmx trjconv -f "+dynamics_dir+"group_test.pdb -s "+dynamics_dir+"group_test.pdb -o "+dynamics_dir+"group_test2.pdb &> "+dynamics_dir+"test_gromacs_group.txt",
+			subprocess.call("echo 1 | gmx trjconv -f "+dynamics_dir+"test_gromacs.pdb -s "+dynamics_dir+"test_gromacs.pdb -o "+dynamics_dir+"test_gromacs2.pdb &> "+dynamics_dir+"test_gromacs_group.txt",
 		executable="/bin/bash", shell=True)
 		group_test = open(dynamics_dir+"test_gromacs_group.txt","r")
 		group_test_list = group_test.readlines()
