@@ -153,7 +153,7 @@ class Gromacs_output:
 		if self.version[0:17] == "GROMACS VERSION 4":
 			subprocess.call("echo -e '"+str(force_number)+"\n1' | pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		else:
-			subprocess.call("echo -e '"+str(force_number)+"\n1' | gmx pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+			subprocess.call("echo -e '"+str(force_number)+"\n1' | gmx pdb2gmx -f "+dynamics_dir+"test_gromacs.pdb -o "+dynamics_dir+"test_gromacs.gro -p "+dynamics_dir+"test_gromacs.top &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
 
