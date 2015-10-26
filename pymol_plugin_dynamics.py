@@ -37,6 +37,11 @@ class Gromacs_output:
 	
 	def __init__(self):
 		global status
+		#Remove garbage
+		garbage_files = next(os.walk(dynamics_dir))[2]
+		for garbage in garbage_files:
+			if garbage[0] == "#":
+				os.remove(dynamics_dir+garbage)
 		status = ["ok", ""]
 		print "Testing GROMACS installation and version"
 		#GROMACS 4
