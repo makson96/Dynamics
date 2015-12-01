@@ -146,8 +146,9 @@ class Gromacs_output:
 		for group in group_list:
 			group1 = group.split(' has')
 			group2 = group1[0].split('Group     ')
-			group_list2.append([number, group2[1]])
-			number = number + 1
+			if len(group2) == 2:
+				group_list2.append([number, group2[1]])
+				number = number + 1
 		
 		self.force_list = force_list2
 		self.water_list = water_list2
