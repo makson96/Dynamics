@@ -1919,6 +1919,10 @@ class WaterWindows:
 						em_file.update(parameter_nr, "no", 0)
 					elif (parameter[0] == "rgbradii") or (parameter[0] == ";rgbradii"):
 						em_file.update(parameter_nr, "0", 0)
+					elif (parameter[0] == "cutoff-scheme") or (parameter[0] == ";cutoff-scheme"):
+						em_file.update(parameter_nr, "Verlet")
+					elif (parameter[0] == "coulombtype") or (parameter[0] == ";coulombtype"):
+						em_file.update(parameter_nr, "PME")
 					parameter_nr = parameter_nr + 1
 			#md update
 			if not os.path.isfile(dynamics_dir + "md.mdp"):
@@ -1948,6 +1952,10 @@ class WaterWindows:
 						md_file.update(parameter_nr, "0", 0)
 					elif (parameter[0] == "comm_mode") or (parameter[0] == ";comm_mode"):
 						md_file.update(parameter_nr, "ANGULAR", 0)
+					elif (parameter[0] == "cutoff-scheme") or (parameter[0] == ";cutoff-scheme"):
+						md_file.update(parameter_nr, "Verlet")
+					elif (parameter[0] == "coulombtype") or (parameter[0] == ";coulombtype"):
+						md_file.update(parameter_nr, "PME")
 					parameter_nr = parameter_nr + 1
 		elif explicit == 0:
 			for button in self.implicit_buttons:
@@ -1972,6 +1980,10 @@ class WaterWindows:
 						em_file.update(parameter_nr, "no")
 					elif (parameter[0] == "rgbradii") or (parameter[0] == ";rgbradii"):
 						em_file.update(parameter_nr, "0")
+					elif (parameter[0] == "cutoff-scheme") or (parameter[0] == ";cutoff-scheme"):
+						em_file.update(parameter_nr, "group")
+					elif (parameter[0] == "coulombtype") or (parameter[0] == ";coulombtype"):
+						em_file.update(parameter_nr, "Cut-off")
 					parameter_nr = parameter_nr + 1
 			#md update
 			if not os.path.isfile(dynamics_dir + "md.mdp"):
@@ -2001,6 +2013,10 @@ class WaterWindows:
 						md_file.update(parameter_nr, "0")
 					elif (parameter[0] == "comm_mode") or (parameter[0] == ";comm_mode"):
 						md_file.update(parameter_nr, "ANGULAR")
+					elif (parameter[0] == "cutoff-scheme") or (parameter[0] == ";cutoff-scheme"):
+						md_file.update(parameter_nr, "group")
+					elif (parameter[0] == "coulombtype") or (parameter[0] == ";coulombtype"):
+						md_file.update(parameter_nr, "Cut-off")
 					parameter_nr = parameter_nr + 1
 			self.change_i(v2)
 			#in implicit solvent watermodel must be set to "None"
