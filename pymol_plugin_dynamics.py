@@ -45,7 +45,6 @@ class Gromacs_output:
 		status = ["ok", ""]
 		print "Testing GROMACS installation and version"
 		subprocess.call("gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
-		del test_gromacs
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
 		for line in lista_gromacs:
@@ -54,6 +53,7 @@ class Gromacs_output:
 				gromacs_version = version[1]
 				print "Found GROMACS VERSION" + gromacs_version
 				break
+		del test_gromacs
 		if 'gromacs_version' not in locals():
 			print "GROMACS 5 or newer not detected."
 			status = ["fail", "GROMACS not detected. Please install and setup GROMACS 5 or newer correctly for your platform. Aborting."]
