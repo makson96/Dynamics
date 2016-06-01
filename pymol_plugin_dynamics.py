@@ -1525,7 +1525,7 @@ class CalculationWindow:
 			start_button.configure(state=DISABLED)
 		self.start_button = start_button
 		
-		log_button = Button(frame2, text = "LOG", command=logWindow)
+		log_button = Button(frame2, text = "LOG", command=lambda: logWindow(root))
 		log_button.pack(side=LEFT)
 		log_button.configure(state=DISABLED)
 		self.log_button = log_button
@@ -2534,9 +2534,9 @@ def helpWindow(master):
 	ok_button.pack()
 
 ##Log window
-def logWindow():
+def logWindow(master):
 	import sys
-	if os.name == "linux2":
+	if sys.platform == "linux2":
 		subprocess.call("xdg-open " + project_dir + "log.txt", executable="/bin/bash", shell=True)
 	elif sys.platform == "darwin":
 		subprocess.call("open " + project_dir + "log.txt", executable="/bin/bash", shell=True)
