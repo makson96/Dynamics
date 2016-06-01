@@ -11,7 +11,7 @@ plugin_ver = " 2.0.6pre"
 
 ##--Import libraries--
 ##Import nativ python libraries
-import subprocess, time, os, shutil, thread, pickle, Queue
+import subprocess, time, os, shutil, thread, pickle, Queue, glob
 ##Import libraries for tk graphic interface
 from Tkinter import *
 from ttk import Progressbar, Scrollbar
@@ -74,12 +74,8 @@ class Gromacs_output:
 		fo = open(dynamics_dir+"test_gromacs.pdb", "wb")
 		fo.write( "ATOM      1  N   LYS     1      24.966  -0.646  22.314  1.00 32.74      1SRN  99\n");
 		fo.close()
-		try:
-			os.remove(dynamics_dir+"test_gromacs.gro")
-			os.remove(dynamics_dir+"test_gromacs.top")
-			os.remove(dynamics_dir+"test_gromacs2.pdb")
-		except:
-			pass
+		for gromacs_test_files in glob.glob(dynamics_dir+"#*"):
+			os.remove(gromacs_test_files)
 		if self.version[0:17] == "GROMACS VERSION 4":
 			subprocess.call("echo -e '1\n1' | pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		else:
