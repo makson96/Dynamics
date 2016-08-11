@@ -35,6 +35,7 @@ class Gromacs_output:
 	water_list = []
 	group_list = []
 	restraints = []
+	plumed_true = 1
 	
 	def __init__(self):
 		global status
@@ -72,6 +73,7 @@ class Gromacs_output:
 		if status[0] == "ok":
 			self.version = gromacs_version
 			self.init2()
+			self.detect_plumed()
 
 	def init2(self):
 		fo = open(dynamics_dir+"test_gromacs.pdb", "wb")
@@ -163,6 +165,19 @@ class Gromacs_output:
 		self.water_list = water_list2
 		save_options()
 		return water_list2
+	
+	##This function will determine if PLUMED is compiled into GROMACS
+	def detect_plumed(self):
+		subprocess.call(self.command+" mdrun -plumed &> "+dynamics_dir+"test_plumed.txt", executable="/bin/bash", shell=True)
+		test_plumed = open(dynamics_dir+"test_plumed.txt","r")
+		plumed_list = test_plumed.readlines()
+		for line in plumed_list:
+			if line[0:7] == "-plumed":
+				self.plumed_true = 0
+		if self.plumed_true == 0:
+			print "GROMACS does not appear to have PLUMED (disabling)"
+		else:
+			print "GROMACS detected with PLUMED (enabling)"
 	
 	##This function will read atoms group for restraints for current molecule.	
 	def restraints_index(self):
