@@ -51,8 +51,8 @@ class Gromacs_output:
 		for line in lista_gromacs:
 			if line[0:8] == "GROMACS:":
 				version = line.split("VERSION ")
-				gromacs_version = version[1]
-				print "Found GROMACS VERSION" + gromacs_version
+				gromacs_version = version[1].rstrip()
+				print "Found GROMACS VERSION " + gromacs_version
 				break
 		del test_gromacs
 		if 'gromacs_version' not in locals():
@@ -63,8 +63,8 @@ class Gromacs_output:
 			for line in lista_gromacs:
 				if line[0:8] == "GROMACS:":
 					version = line.split("VERSION ")
-					gromacs_version = version[1]
-					print "Found GROMACS VERSION" + gromacs_version + "with MPI"
+					gromacs_version = version[1].rstrip()
+					print "Found GROMACS VERSION " + gromacs_version + " with MPI"
 					break
 		if 'gromacs_version' not in locals():
 			print "GROMACS 5 or newer not detected."
