@@ -1,0 +1,34 @@
+#!/usr/bin/make -f
+
+PACKAGEDIR = package_dir
+
+# secondly called by launchpad
+build:
+	python2.7 -m compileall .
+	mkdir $(PACKAGEDIR)
+	mkdir -p $(PACKAGEDIR)/pymol-plugin-dynamics/DEBIAN
+	mkdir -p $(PACKAGEDIR)/pymol-plugin-dynamics/usr/lib/python2.7/dist-packages/pmg_tk/startup
+	mkdir -p $(PACKAGEDIR)/pymol-plugin-dynamics/usr/share/doc/pymol-plugin-dynamics
+	cp pymol_plugin_dynamics.py $(PACKAGEDIR)/pymol-plugin-dynamics/usr/lib/python2.7/dist-packages/pmg_tk/startup
+	cp pymol_plugin_dynamics.pyc $(PACKAGEDIR)/pymol-plugin-dynamics/usr/lib/python2.7/dist-packages/pmg_tk/startup
+	cp manual.odt $(PACKAGEDIR)/pymol-plugin-dynamics/usr/share/doc/pymol-plugin-dynamics
+	cp README $(PACKAGEDIR)/pymol-plugin-dynamics/usr/share/doc/pymol-plugin-dynamics
+	cp LICENSE $(PACKAGEDIR)/pymol-plugin-dynamics/usr/share/doc/pymol-plugin-dynamics
+
+# thirdly called by launchpad
+binary: binary-indep binary-arch
+
+binary-indep:
+	# nothing to be done
+
+binary-arch:
+	mkdir -p debian/tmp/DEBIAN
+	dpkg-gencontrol -ppymol-plugin-dynamics
+	mv debian/tmp/DEBIAN/control $(PACKAGEDIR)/pymol-plugin-dynamics/DEBIAN
+	dpkg --build $(PACKAGEDIR)/pymol-plugin-dynamics/ ..
+
+# firstly called by launchpad
+clean:
+	rm -rf $(PACKAGEDIR)
+
+.PHONY: binary binary-arch binary-indep clean

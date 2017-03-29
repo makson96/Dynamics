@@ -1,0 +1,14 @@
+Source: pymol-plugin-dynamics
+Section: science
+Priority: extra
+Maintainer: Tomasz Makarewicz <btchtm@ug.edu.pl>
+Build-Depends: debhelper (>= 5), cdbs (>= 0.2), python2.7
+Standards-Version: 3.8.0
+
+Package: pymol-plugin-dynamics
+Architecture: any
+Depends: python, bash, python-pmw, python-tk, gromacs, pymol
+Suggests: python-prody
+Description: This is graphic plugin for PyMOL.
+ It uses GROMACS to count dynamics
+ and display it in PyMOL window.
