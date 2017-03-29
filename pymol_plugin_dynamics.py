@@ -684,6 +684,9 @@ class Vectors:
 	
 	##Change Multimodel PDB file into NMD vector file
 	def prody(self):
+		#Silence ProDy and create logs
+		prody.confProDy(verbosity='none')
+		prody.startLogfile("log_prody.log")
 		#Prepare ensemble
 		model = prody.parsePDB(project_name+"_multimodel.pdb", subset='calpha')
 		model
@@ -721,6 +724,7 @@ class Vectors:
 				#self.show_contact_map(gnm)
 		#Write NMD file
 		prody.writeNMD(project_name+'.nmd', write_nmd[:3], model)
+		prody.closeLogfile("log_prody.log")
 	
 	##Read NMD file	
 	def nmd_format(self):
