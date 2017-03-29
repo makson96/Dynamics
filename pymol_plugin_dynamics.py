@@ -554,7 +554,8 @@ class Gromacs_input:
 		
 		if os.path.isfile("posre_2.itp") == True and stop == 0:
 			status = ["ok", "Added Restraints"]
-			os.remove("posre.itp")
+			if os.path.isfile("posre.itp"):
+				os.remove("posre.itp")
 			shutil.copy("posre_2.itp", "posre.itp")
 		else:
 			status = ["fail", "Unable to create restraints file"]
