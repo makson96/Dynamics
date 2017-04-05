@@ -48,16 +48,15 @@ class Gromacs_output:
 		print "Testing GROMACS installation and version"
 		subprocess.call(self.command+" -version &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
-		if "GROMACS version:" not in test_gromacs.read():
+		if "gromacs version:" not in test_gromacs.read().lower():
 			self.command = "gmx"
 			subprocess.call(self.command+" -version &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		del test_gromacs
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
-		print lista_gromacs
 		for line in lista_gromacs:
-			if line[0:16] == "GROMACS version:":
-				if "VERSION" in line:
+			if line[0:16].lower() == "gromacs version:":
+				if "VERSION " in line:
 					version = line.split("VERSION ")
 					gromacs_version = version[1].rstrip()
 				else:
