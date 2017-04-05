@@ -30,7 +30,7 @@ except:
 class Gromacs_output:
 	
 	version = "GROMACS not found"
-	command = "gmx"
+	command = "gmx_mpi"
 	force_list = []
 	water_list = []
 	group_list = []
@@ -46,30 +46,28 @@ class Gromacs_output:
 				os.remove(dynamics_dir+garbage)
 		status = ["ok", ""]
 		print "Testing GROMACS installation and version"
-		subprocess.call(self.command+" &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+		subprocess.call(self.command+" -version &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
+		if "GROMACS version:" not in test_gromacs.read():
+			self.command = "gmx"
+			subprocess.call(self.command+" -version &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+		del test_gromacs
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
+		print lista_gromacs
 		for line in lista_gromacs:
-			if line[0:8] == "GROMACS:":
-				version = line.split("VERSION ")
-				gromacs_version = version[1].rstrip()
+			if line[0:16] == "GROMACS version:":
+				if "VERSION" in line:
+					version = line.split("VERSION ")
+					gromacs_version = version[1].rstrip()
+				else:
+					gromacs_version = line[16:-1].lstrip().rstrip()
 				print "Found GROMACS VERSION " + gromacs_version
 				break
 		del test_gromacs
 		if 'gromacs_version' not in locals():
-			self.command = "gmx_mpi"
-			subprocess.call(self.command+" &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
-			test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
-			lista_gromacs = test_gromacs.readlines()
-			for line in lista_gromacs:
-				if line[0:8] == "GROMACS:":
-					version = line.split("VERSION ")
-					gromacs_version = version[1].rstrip()
-					print "Found GROMACS VERSION " + gromacs_version + " with MPI"
-					break
-		if 'gromacs_version' not in locals():
 			print "GROMACS 5 or newer not detected."
-			status = ["fail", "GROMACS not detected. Please install and setup GROMACS 5 or newer correctly for your platform. Aborting."]
+			status = ["fail", "GROMACS not detected. Please install and setup GROMACS 5 or newer correctly for your platform. Check '~/.dynamics/test_gromacs.txt' for more details."]
 		if status[0] == "ok":
 			self.version = gromacs_version
 			self.init2()
