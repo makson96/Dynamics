@@ -1012,11 +1012,7 @@ def init_function():
 	gromacs = Gromacs_output()
 	gromacs2 = Gromacs_input()
 	explicit = 1
-	
-	##Break now if status is not ok and print message
-	if status[0] == "fail":
-		raise ValueError(status[1])
-	
+
 	if gromacs.version[0:17] == "GROMACS VERSION 4":
 		em_init_config = """cpp = /usr/bin/cpp
 define = -DFLEX_SPC
@@ -1190,14 +1186,18 @@ coulombtype = PME"""
 		global vectors_prody
 		vectors_prody = Vectors()
 		print "ProDy Imported"
-
+	
 	##Creating objects - data from those windows will be used by rootWindow
-	global calculationW, waterW, restraintsW
-	calculationW = CalculationWindow()
-	waterW = WaterWindows()
-	restraintsW = RestraintsWindow()
-	##Start graphic interface
-	rootWindow()
+	if status[0] == "ok":
+		global calculationW, waterW, restraintsW
+		calculationW = CalculationWindow()
+		waterW = WaterWindows()
+		restraintsW = RestraintsWindow()
+		##Start graphic interface
+		rootWindow()
+		##Break now if status is not ok and print message
+	elif status[0] == "fail":
+		tkMessageBox.showerror("Initialization error", status[1])
 
 ##--Graphic Interface--
 ##Root menu window
