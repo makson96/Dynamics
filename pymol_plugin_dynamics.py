@@ -1642,18 +1642,12 @@ class InterpretationWindow:
 			if splited_line[0] == "dt":
 				dt = float(splited_line[2])
 				self.dt = dt
-				print "dt"
-				print dt
 			elif splited_line[0] == "nsteps":
 				nsteps = float(splited_line[2])
 				self.nsteps = nsteps
-				print "nsteps"
-				print nsteps
 			elif splited_line[0] == "nstxout":
 				nstxout = float(splited_line[2])
 				self.nstxout = nstxout
-				print "nstxout"
-				print nstxout
 		max_time = dt * nsteps
 		self.max_time = max_time
 	
