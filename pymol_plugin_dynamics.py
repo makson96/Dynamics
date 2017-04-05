@@ -34,35 +34,45 @@ class Gromacs_output:
 	water_list = []
 	group_list = []
 	restraints = []
+	mpi = "_mpi"
 	
 	def __init__(self):
 		global status
 		status = ["ok", ""]
 		print "Testing GROMACS installation and version"
-		#GROMACS 4.x
-		subprocess.call("echo -e '1\n1' | pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+		#GROMACS 5.x and newer (MPI)
+		subprocess.call("gmx_mpi -version &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
-		lista_gromacs = test_gromacs.readlines()
-		#This will require correction in case GROMACS header will change
-		if lista_gromacs[0] == "                         :-)  G  R  O  M  A  C  S  (-:\n":
-			version = lista_gromacs[4].split("  ")
-			gromacs_version = "GROMACS " + version[15]
-			print "Found " + gromacs_version
-			#Warn about issues with specyfic GROMACS versions
-			if gromacs_version == "GROMACS VERSION 4.6":
-				print "Warning. GROMACS 4.6.0 may fail. Please upgrade to newer version of GROMACS"
-		#GROMACS 5.x
-		else:
-			subprocess.call("gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+		if "gromacs version:" not in test_gromacs.read().lower():
+			#GROMACS 5.x and newer
+			self.mpi = ""
+			subprocess.call("gmx -version &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 			del test_gromacs
 			test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
-			lista_gromacs = test_gromacs.readlines()
-			for line in lista_gromacs:
-				if line[0:8] == "GROMACS:":
+			if "gromacs version:" not in test_gromacs.read().lower():
+				#GROMACS 4.x (MPI)
+				self.mpi = "_mpi"
+				subprocess.call("pdb2gmx_mpi -version &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+				del test_gromacs
+				test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
+				if "gromacs version:" not in test_gromacs.read().lower():
+					#GROMACS 4.x
+					self.mpi = ""
+					subprocess.call("pdb2gmx -version &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+		del test_gromacs
+		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
+		lista_gromacs = test_gromacs.readlines()
+		for line in lista_gromacs:
+			if line[0:16].lower() == "gromacs version:":
+				if "VERSION " in line:
 					version = line.split("VERSION ")
-					gromacs_version = "GROMACS VERSION " + version[1]
-					print "Found " + gromacs_version
-					break
+					gromacs_version = version[1].rstrip()
+				else:
+					gromacs_version = line[16:-1].lstrip().rstrip()
+				gromacs_version = "GROMACS VERSION " + gromacs_version
+				print "Found " + gromacs_version
+				del test_gromacs
+				break
 		if 'gromacs_version' not in locals():
 			print "GROMACS not detected."
 			status = ["fail", "GROMACS not detected. Please install and setup GROMACS correctly for your platform. Aborting."]
@@ -77,9 +87,9 @@ class Gromacs_output:
 		for gromacs_test_files in glob.glob(dynamics_dir+"#*"):
 			os.remove(gromacs_test_files)
 		if self.version[0:17] == "GROMACS VERSION 4":
-			subprocess.call("echo -e '1\n1' | pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+			subprocess.call("echo -e '1\n1' | pdb2gmx"+self.mpi+" &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		else:
-			subprocess.call("echo -e '1\n1' | gmx pdb2gmx -f "+dynamics_dir+"test_gromacs.pdb -o "+dynamics_dir+"test_gromacs.gro -p "+dynamics_dir+"test_gromacs.top &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+			subprocess.call("echo -e '1\n1' | gmx"+self.mpi+" pdb2gmx -f "+dynamics_dir+"test_gromacs.pdb -o "+dynamics_dir+"test_gromacs.gro -p "+dynamics_dir+"test_gromacs.top &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
 		
@@ -114,10 +124,10 @@ class Gromacs_output:
 			number = number + 1
 
 		if self.version[0:17] == "GROMACS VERSION 4":
-			subprocess.call("echo 1 | trjconv -f "+dynamics_dir+"test_gromacs.pdb -s "+dynamics_dir+"test_gromacs.pdb -o "+dynamics_dir+"test_gromacs2.pdb &> "+dynamics_dir+"test_gromacs_group.txt",
+			subprocess.call("echo 1 | trjconv"+self.mpi+" -f "+dynamics_dir+"test_gromacs.pdb -s "+dynamics_dir+"test_gromacs.pdb -o "+dynamics_dir+"test_gromacs2.pdb &> "+dynamics_dir+"test_gromacs_group.txt",
 		executable="/bin/bash", shell=True)
 		else:
-			subprocess.call("echo 1 | gmx trjconv -f "+dynamics_dir+"test_gromacs.pdb -s "+dynamics_dir+"test_gromacs.pdb -o "+dynamics_dir+"test_gromacs2.pdb &> "+dynamics_dir+"test_gromacs_group.txt",
+			subprocess.call("echo 1 | gmx"+self.mpi+" trjconv -f "+dynamics_dir+"test_gromacs.pdb -s "+dynamics_dir+"test_gromacs.pdb -o "+dynamics_dir+"test_gromacs2.pdb &> "+dynamics_dir+"test_gromacs_group.txt",
 		executable="/bin/bash", shell=True)
 		group_test = open(dynamics_dir+"test_gromacs_group.txt","r")
 		group_test_list = group_test.readlines()
@@ -148,9 +158,9 @@ class Gromacs_output:
 	def water_update(self, force_number):
 		print "Updateing available water models"
 		if self.version[0:17] == "GROMACS VERSION 4":
-			subprocess.call("echo -e '"+str(force_number)+"\n1' | pdb2gmx &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+			subprocess.call("echo -e '"+str(force_number)+"\n1' | pdb2gmx"+self.mpi+" &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		else:
-			subprocess.call("echo -e '"+str(force_number)+"\n1' | gmx pdb2gmx -f "+dynamics_dir+"test_gromacs.pdb -o "+dynamics_dir+"test_gromacs.gro -p "+dynamics_dir+"test_gromacs.top &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+			subprocess.call("echo -e '"+str(force_number)+"\n1' | gmx"+self.mpi+" pdb2gmx -f "+dynamics_dir+"test_gromacs.pdb -o "+dynamics_dir+"test_gromacs.gro -p "+dynamics_dir+"test_gromacs.top &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
 
@@ -177,9 +187,9 @@ class Gromacs_output:
 		self.restraints = []
 		os.chdir(project_dir)
 		if self.version[0:17] == "GROMACS VERSION 4":
-			subprocess.call("echo q | make_ndx -f "+project_name+".pdb -o index.ndx &> restraints.log", executable="/bin/bash", shell=True)
+			subprocess.call("echo q | make_ndx"+self.mpi+" -f "+project_name+".pdb -o index.ndx &> restraints.log", executable="/bin/bash", shell=True)
 		else:
-			subprocess.call("echo q | gmx make_ndx -f "+project_name+".pdb -o index.ndx &> restraints.log", executable="/bin/bash", shell=True)
+			subprocess.call("echo q | gmx"+self.mpi+" make_ndx -f "+project_name+".pdb -o index.ndx &> restraints.log", executable="/bin/bash", shell=True)
 		index = open("index.ndx","r")
 		index_list = index.readlines()
 		index_position = 0
