@@ -246,9 +246,9 @@ class Gromacs_input:
 		force_water = str(self.force) + "\n" + str(self.water)
 		
 		if gromacs.version[0:17] == "GROMACS VERSION 4":
-			command = "echo -e '"+force_water+"' | pdb2gmx -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log.txt"
+			command = "echo -e '"+force_water+"' | pdb2gmx"+gromacs.mpi+" -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log.txt"
 		else:
-			command = "echo -e '"+force_water+"' | gmx pdb2gmx -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log.txt"
+			command = "echo -e '"+force_water+"' | gmx pdb2gmx"+gromacs.mpi+" -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log.txt"
 		logfile = open('log.txt', 'w')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -268,9 +268,9 @@ class Gromacs_input:
 			status_update(status)
 			
 			if gromacs.version[0:17] == "GROMACS VERSION 4":
-				command = "echo -e '"+force_water+"' | pdb2gmx -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log1.txt"
+				command = "echo -e '"+force_water+"' | pdb2gmx"+gromacs.mpi+" -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log1.txt"
 			else:
-				command = "echo -e '"+force_water+"' | gmx pdb2gmx -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log1.txt"
+				command = "echo -e '"+force_water+"' | gmx"+gromacs.mpi+" pdb2gmx -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log1.txt"
 			logfile = open('log.txt', 'a')
 			logfile.write(self.command_distinction+command+self.command_distinction)
 			
@@ -303,9 +303,9 @@ class Gromacs_input:
 			pass
 		
 		if gromacs.version[0:17] == "GROMACS VERSION 4":
-			command = "g_x2top -f "+project_name+".pdb -o "+project_name+".top &> log.txt"
+			command = "g_x2top"+gromacs.mpi+" -f "+project_name+".pdb -o "+project_name+".top &> log.txt"
 		else:
-			command = "gmx x2top -f "+project_name+".pdb -o "+project_name+".top &> log.txt"
+			command = "gmx"+gromacs.mpi+" x2top -f "+project_name+".pdb -o "+project_name+".top &> log.txt"
 		logfile = open('log.txt', 'w')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -326,9 +326,9 @@ class Gromacs_input:
 		if 	 status[0] == "ok":
 			
 			if gromacs.version[0:17] == "GROMACS VERSION 4":
-				command = "echo -e 0 | trjconv -f "+project_name+".pdb -s "+project_name+".pdb -o "+project_name+".gro &> log1.txt"
+				command = "echo -e 0 | trjconv"+gromacs.mpi+" -f "+project_name+".pdb -s "+project_name+".pdb -o "+project_name+".gro &> log1.txt"
 			else:
-				command = "echo -e 0 | gmx trjconv -f "+project_name+".pdb -s "+project_name+".pdb -o "+project_name+".gro &> log1.txt"
+				command = "echo -e 0 | gmx"+gromacs.mpi+" trjconv -f "+project_name+".pdb -s "+project_name+".pdb -o "+project_name+".gro &> log1.txt"
 			logfile = open('log.txt', 'a')
 			logfile.write(self.command_distinction+command+self.command_distinction)
 			
@@ -363,9 +363,9 @@ class Gromacs_input:
 			pass
 		
 		if gromacs.version[0:17] == "GROMACS VERSION 4":
-			command = "editconf -f "+project_name+".gro -o "+project_name+"1.gro "+box_type+distance+density+" &> log1.txt"
+			command = "editconf"+gromacs.mpi+" -f "+project_name+".gro -o "+project_name+"1.gro "+box_type+distance+density+" &> log1.txt"
 		else:
-			command = "gmx editconf -f "+project_name+".gro -o "+project_name+"1.gro "+box_type+distance+density+" &> log1.txt"
+			command = "gmx"+gromacs.mpi+" editconf -f "+project_name+".gro -o "+project_name+"1.gro "+box_type+distance+density+" &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -383,7 +383,7 @@ class Gromacs_input:
 		logfile1.close()
 		
 		if gromacs.version[0:17] == "GROMACS VERSION 4":
-			command = "genbox -cp "+project_name+"1.gro -cs -o "+project_name+"_b4em.gro -p "+project_name+".top &> log1.txt"
+			command = "genbox"+gromacs.mpi+" -cp "+project_name+"1.gro -cs -o "+project_name+"_b4em.gro -p "+project_name+".top &> log1.txt"
 		else:
 			water_name = gromacs.water_list[self.water-1][1][4:8].lower()
 			print water_name
@@ -393,7 +393,7 @@ class Gromacs_input:
 				water_gro = "tip5p.gro"
 			else:
 				water_gro = "spc216.gro"
-			command = "gmx solvate -cp "+project_name+"1.gro -cs "+water_gro+" -o "+project_name+"_b4em.gro -p "+project_name+".top &> log1.txt"
+			command = "gmx"+gromacs.mpi+" solvate -cp "+project_name+"1.gro -cs "+water_gro+" -o "+project_name+"_b4em.gro -p "+project_name+".top &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -433,9 +433,9 @@ class Gromacs_input:
 			shutil.copy(project_name+".gro", project_name+"_b4em.gro")
 		
 		if gromacs.version[0:17] == "GROMACS VERSION 4":
-			command = "grompp -f em -c "+project_name+"_b4em -p "+project_name+" -o "+project_name+"_em &> log1.txt"
+			command = "grompp"+gromacs.mpi+" -f em -c "+project_name+"_b4em -p "+project_name+" -o "+project_name+"_em &> log1.txt"
 		else:
-			command = "gmx grompp -f em -c "+project_name+"_b4em -p "+project_name+" -o "+project_name+"_em &> log1.txt"
+			command = "gmx"+gromacs.mpi+" grompp -f em -c "+project_name+"_b4em -p "+project_name+" -o "+project_name+"_em &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 
@@ -453,9 +453,9 @@ class Gromacs_input:
 		logfile1.close()
 		
 		if gromacs.version[0:17] == "GROMACS VERSION 4":
-			command = "mdrun -nice 4 -s "+project_name+"_em -o "+project_name+"_em -c "+project_name+"_b4pr -v &> log1.txt"
+			command = "mdrun"+gromacs.mpi+" -nice 4 -s "+project_name+"_em -o "+project_name+"_em -c "+project_name+"_b4pr -v &> log1.txt"
 		else:
-			command = "gmx mdrun -nice 4 -s "+project_name+"_em -o "+project_name+"_em -c "+project_name+"_b4pr -v &> log1.txt"
+			command = "gmx"+gromacs.mpi+" mdrun -nice 4 -s "+project_name+"_em -o "+project_name+"_em -c "+project_name+"_b4pr -v &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -489,9 +489,9 @@ class Gromacs_input:
 			pass
 		
 		if gromacs.version[0:17] == "GROMACS VERSION 4":
-			command = "grompp -f pr -c "+project_name+"_b4pr -r "+project_name+"_b4pr -p "+project_name+" -o "+project_name+"_pr &> log1.txt"
+			command = "grompp"+gromacs.mpi+" -f pr -c "+project_name+"_b4pr -r "+project_name+"_b4pr -p "+project_name+" -o "+project_name+"_pr &> log1.txt"
 		else:
-			command = "gmx grompp -f pr -c "+project_name+"_b4pr -r "+project_name+"_b4pr -p "+project_name+" -o "+project_name+"_pr &> log1.txt"
+			command = "gmx"+gromacs.mpi+" grompp -f pr -c "+project_name+"_b4pr -r "+project_name+"_b4pr -p "+project_name+" -o "+project_name+"_pr &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -509,9 +509,9 @@ class Gromacs_input:
 		logfile1.close()
 		
 		if gromacs.version[0:17] == "GROMACS VERSION 4":
-			command = "mdrun -nice 4 -s "+project_name+"_pr -o "+project_name+"_pr -c "+project_name+"_b4md -v &> log1.txt"
+			command = "mdrun"+gromacs.mpi+" -nice 4 -s "+project_name+"_pr -o "+project_name+"_pr -c "+project_name+"_b4md -v &> log1.txt"
 		else:
-			command = "gmx mdrun -nice 4 -s "+project_name+"_pr -o "+project_name+"_pr -c "+project_name+"_b4md -v &> log1.txt"
+			command = "gmx"+gromacs.mpi+" mdrun -nice 4 -s "+project_name+"_pr -o "+project_name+"_pr -c "+project_name+"_b4md -v &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -543,9 +543,9 @@ class Gromacs_input:
 			pass
 		
 		if gromacs.version[0:17] == "GROMACS VERSION 4":
-			command = "echo 0 | genrestr -f "+project_name+".pdb -o posre_2.itp -n index_dynamics.ndx &> log1.txt"
+			command = "echo 0 | genrestr"+gromacs.mpi+" -f "+project_name+".pdb -o posre_2.itp -n index_dynamics.ndx &> log1.txt"
 		else:
-			command = "echo 0 | gmx genrestr -f "+project_name+".pdb -o posre_2.itp -n index_dynamics.ndx &> log1.txt"
+			command = "echo 0 | gmx"+gromacs.mpi+" genrestr -f "+project_name+".pdb -o posre_2.itp -n index_dynamics.ndx &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 			
@@ -591,9 +591,9 @@ class Gromacs_input:
 				shutil.copy(project_name+"_b4pr.gro", project_name+"_b4md.gro")
 		
 		if gromacs.version[0:17] == "GROMACS VERSION 4":
-			command = "grompp -f md -c "+project_name+"_b4md  -p "+project_name+" -o "+project_name+"_md &> log1.txt"
+			command = "grompp"+gromacs.mpi+" -f md -c "+project_name+"_b4md  -p "+project_name+" -o "+project_name+"_md &> log1.txt"
 		else:
-			command = "gmx grompp -f md -c "+project_name+"_b4md  -p "+project_name+" -o "+project_name+"_md &> log1.txt"
+			command = "gmx"+gromacs.mpi+" grompp -f md -c "+project_name+"_b4md  -p "+project_name+" -o "+project_name+"_md &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -611,9 +611,9 @@ class Gromacs_input:
 		logfile1.close()
 		
 		if gromacs.version[0:17] == "GROMACS VERSION 4":
-			command = "mdrun -nice 4 -s "+project_name+"_md -o "+project_name+"_md -c "+project_name+"_after_md -v &> log1.txt"
+			command = "mdrun"+gromacs.mpi+" -nice 4 -s "+project_name+"_md -o "+project_name+"_md -c "+project_name+"_after_md -v &> log1.txt"
 		else:
-			command = "gmx mdrun -nice 4 -s "+project_name+"_md -o "+project_name+"_md -c "+project_name+"_after_md -v &> log1.txt"
+			command = "gmx"+gromacs.mpi+" mdrun -nice 4 -s "+project_name+"_md -o "+project_name+"_md -c "+project_name+"_after_md -v &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -647,9 +647,9 @@ class Gromacs_input:
 			os.remove(project_name+"_multimodel.pdb")
 		
 		if gromacs.version[0:17] == "GROMACS VERSION 4":
-			command = "echo "+str(self.group)+" | trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -app -o "+project_name+"_multimodel.pdb &> log1.txt"
+			command = "echo "+str(self.group)+" | trjconv"+gromacs.mpi+" -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -app -o "+project_name+"_multimodel.pdb &> log1.txt"
 		else:
-			command = "echo "+str(self.group)+" | gmx trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -o "+project_name+"_multimodel.pdb &> log1.txt"
+			command = "echo "+str(self.group)+" | gmx"+gromacs.mpi+" trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -o "+project_name+"_multimodel.pdb &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
