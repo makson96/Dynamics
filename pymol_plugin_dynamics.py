@@ -1285,7 +1285,7 @@ def rootWindow():
 	time_entry.pack(side=LEFT)
 	time_label2 = Label(frame1_3_1_1, text="[ps]")
 	time_label2.pack(side=LEFT)
-	time_button = Button(frame1_3_1_1, text = "OK", command=lambda: md_file.update(5, str(float(time_entry_value.get())/float(md_file.options[4][1]))))
+	time_button = Button(frame1_3_1_1, text = "OK", command=lambda: md_file.update(2, str(float(time_entry_value.get())/float(md_file.options[3][1]))))
 	time_button.pack(side=LEFT)
 	
 	##Disable configuration of ProDy (Vectors) if ProDy is not installed
