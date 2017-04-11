@@ -210,12 +210,12 @@ class Gromacs_input:
 	water = 1
 	group = 1
 	box_type = "triclinic"	
-	#adding variable to choose heavy hydrogen*****
+	#variable to choose heavy hydrogen
 	hydro = "noheavyh"
 	box_distance = "0.8"
 	box_density = "1000"
 	restraints_nr = 1
-			#******* Added four variables salt, positive, negative and neutral*****
+	#four variables salt, positive, negative and neutral
 	neutrality = "neutral"		
 	salt_conc = "0.15"
 	positive_ion = "NA"
@@ -372,7 +372,6 @@ class Gromacs_input:
 			pass
 		
 		command = gromacs.command+" editconf -f "+project_name+".gro -o "+project_name+"1.gro -c "+box_type+distance+density+" &> log1.txt"
-		#added -c option to center the protein which was missing in the original (Ajit)
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -421,7 +420,6 @@ class Gromacs_input:
 			status = ["fail", "Unable to add water box"]
 		return status
 
-	#*****************************************************For Genion additon**********************section begins here****
 	##This function will add ions/salts to the protein in waterbox
 	def saltadd(self, file_path, project_name):
 		status = ["ok", "Preparing to add ions or salt"]
@@ -478,9 +476,6 @@ class Gromacs_input:
 		else:
 			status = ["failed", "Unable to add ions"]
 		return status
-
-	#********************************************Genion additon section ends here**********************************************************
-
 	
 	##This function will perform energy minimization	
 	def em(self, file_path, project_name):
@@ -1006,7 +1001,7 @@ class Progress_status:
 	
 	resume = 0
 	x2top = 0
-	steps = 8 #increased to 8 from 7
+	steps = 8
 	
 	def to_do_update(self, position, value):
 		if type(position) == type(1):
@@ -2550,7 +2545,7 @@ def steps_status_bar(var, variable_list=[]):
 				progress.to_do[to_do_nr] = 0
 				progress.to_do = progress.to_do
 				variable_list[to_do_nr].set(0)
-			elif step == 0 and to_do_nr != 6: #Exclud optional steps (5 = restraints) (@ajit 6=restraints after addition of genion step)
+			elif step == 0 and to_do_nr != 6:
 				progress.to_do[to_do_nr] = 1
 				progress.to_do = progress.to_do
 				variable_list[to_do_nr].set(1)
