@@ -5,12 +5,10 @@
 ##Software is created and maintained by Laboratory of Biomolecular Systems Simulation at University of Gdansk.
 ##Contributors:
 ##- Tomasz Makarewicz (btchtm@ug.edu.pl)
-## edited for genion addition by Ajit B. Datta (ajit@jcbose.ac.in)
-# Editing to make conjugate gradient the default energy minimizing method
-#Changed version number to 2.1.1pre
+##- Ajit B. Datta (ajit@jcbose.ac.in)
 
 ##Plugin Version
-plugin_ver = " 2.1.3pre"
+plugin_ver = " 2.1.0pre"
 
 ##--Import libraries--
 ##Import nativ python libraries
