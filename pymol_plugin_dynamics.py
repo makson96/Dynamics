@@ -31,7 +31,7 @@ except:
 class Gromacs_output:
 	
 	version = "GROMACS not found"
-	command = "gmx_mpi" #changed to utilize the double precision version
+	command = "gmx_mpi_d"
 	force_list = []
 	water_list = []
 	group_list = []
@@ -50,8 +50,13 @@ class Gromacs_output:
 		subprocess.call(self.command+" -version &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
 		if "gromacs version:" not in test_gromacs.read().lower():
-			self.command = "gmx"
+			self.command = "gmx_mpi"
 			subprocess.call(self.command+" -version &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
+			del test_gromacs
+			test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
+			if "gromacs version:" not in test_gromacs.read().lower():
+				self.command = "gmx"
+				subprocess.call(self.command+" -version &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		del test_gromacs
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
