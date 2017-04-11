@@ -5,9 +5,12 @@
 ##Software is created and maintained by Laboratory of Biomolecular Systems Simulation at University of Gdansk.
 ##Contributors:
 ##- Tomasz Makarewicz (btchtm@ug.edu.pl)
+## edited for genion addition by Ajit B. Datta (ajit@jcbose.ac.in)
+# Editing to make conjugate gradient the default energy minimizing method
+#Changed version number to 2.1.1pre
 
 ##Plugin Version
-plugin_ver = " 2.1.0pre"
+plugin_ver = " 2.1.3pre"
 
 ##--Import libraries--
 ##Import nativ python libraries
@@ -30,7 +33,7 @@ except:
 class Gromacs_output:
 	
 	version = "GROMACS not found"
-	command = "gmx_mpi"
+	command = "gmx_mpi" #changed to utilize the double precision version
 	force_list = []
 	water_list = []
 	group_list = []
@@ -140,7 +143,7 @@ class Gromacs_output:
 	
 	##This function will update water list if force field is changed.
 	def water_update(self, force_number):
-		print "Updateing available water models"
+		print "Updating available water models"
 		subprocess.call("echo -e '"+str(force_number)+"\n1' | "+self.command+" pdb2gmx -f "+dynamics_dir+"test_gromacs.pdb -o "+dynamics_dir+"test_gromacs.gro -p "+dynamics_dir+"test_gromacs.top &> "+dynamics_dir+"test_gromacs.txt", executable="/bin/bash", shell=True)
 		test_gromacs = open(dynamics_dir+"test_gromacs.txt","r")
 		lista_gromacs = test_gromacs.readlines()
@@ -203,14 +206,21 @@ class Gromacs_input:
 	force = 1
 	water = 1
 	group = 1
-	box_type = "dodecahedron"
-	box_distance = "0.6"
+	box_type = "triclinic"	
+	#adding variable to choose heavy hydrogen*****
+	hydro = "noheavyh"
+	box_distance = "0.8"
 	box_density = "1000"
 	restraints_nr = 1
+			#******* Added four variables salt, positive, negative and neutral*****
+	neutrality = "neutral"		
+	salt_conc = "0.15"
+	positive_ion = "NA"
+	negative_ion = "CL"
 	command_distinction = "\n!************************!\n"
 
 	##This function will change given variabless stored by the class (needed for lambda statements)
-	def update(self, group, box_type, box_distance, box_density, root=""):
+	def update(self, group, box_type, hydro, box_distance, box_density, root=""):
 		#Close mother window if present
 		try:
 			root.destroy()
@@ -219,15 +229,31 @@ class Gromacs_input:
 		
 		self.group = group
 		self.box_type = box_type
+		self.hydro = hydro		
 		self.box_distance = box_distance
 		self.box_density = box_density
 		save_options()
 		print "gromacs update"
 
-	##This function will create initial topology and triectory using pdb file and choosen force field
+	def update2(self, group, neutrality, salt_conc, positive_ion, negative_ion, root=""):
+		#Close mother window if present
+		try:
+			root.destroy()
+		except:
+			pass
+			
+ 		self.group = group
+ 		self.neutrality = neutrality		
+		self.salt_conc = salt_conc
+		self.positive_ion = positive_ion
+		self.negative_ion = negative_ion
+		save_options()
+		print "genion parameters update"
+	##This function will create initial topology and trajectory using pdb file and choosen force field
 	def pdb2top(self, file_path, project_name):
 		status = ["ok", "Calculating topology using Force fields"]
 		status_update(status)
+		hh = "-"+self.hydro
 		try:
 			os.remove(project_name+".gro")
 			os.remove(project_name+".top")
@@ -236,7 +262,7 @@ class Gromacs_input:
 		
 		force_water = str(self.force) + "\n" + str(self.water)
 		
-		command = "echo -e '"+force_water+"' | "+gromacs.command+" pdb2gmx -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log.txt"
+		command = "echo -e '"+force_water+"' | "+gromacs.command+" pdb2gmx -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top "+hh+" &> log.txt"
 		logfile = open('log.txt', 'w')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -255,7 +281,7 @@ class Gromacs_input:
 			status = ["fail", "Warning. Trying to ignore unnecessary hydrogen atoms."]
 			status_update(status)
 			
-			command = "echo -e '"+force_water+"' | "+gromacs.command+" pdb2gmx -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top &> log1.txt"
+			command = "echo -e '"+force_water+"' | "+gromacs.command+" pdb2gmx -ignh -f "+project_name+".pdb -o "+project_name+".gro -p "+project_name+".top "+hh+"  &> log1.txt"
 			logfile = open('log.txt', 'a')
 			logfile.write(self.command_distinction+command+self.command_distinction)
 			
@@ -338,10 +364,12 @@ class Gromacs_input:
 		
 		try:
 			os.remove(project_name+"1.gro")
+			os.remove(project_name+"_solv.gro")
 		except:
 			pass
 		
-		command = gromacs.command+" editconf -f "+project_name+".gro -o "+project_name+"1.gro "+box_type+distance+density+" &> log1.txt"
+		command = gromacs.command+" editconf -f "+project_name+".gro -o "+project_name+"1.gro -c "+box_type+distance+density+" &> log1.txt"
+		#added -c option to center the protein which was missing in the original (Ajit)
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -366,7 +394,7 @@ class Gromacs_input:
 			water_gro = "tip5p.gro"
 		else:
 			water_gro = "spc216.gro"
-		command = gromacs.command+" solvate -cp "+project_name+"1.gro -cs "+water_gro+" -o "+project_name+"_b4em.gro -p "+project_name+".top &> log1.txt"
+		command = gromacs.command+" solvate -cp "+project_name+"1.gro -cs "+water_gro+" -o "+project_name+"_solv.gro -p "+project_name+".top &> log1.txt"
 		logfile = open('log.txt', 'a')
 		logfile.write(self.command_distinction+command+self.command_distinction)
 		
@@ -389,6 +417,67 @@ class Gromacs_input:
 		else:
 			status = ["fail", "Unable to add water box"]
 		return status
+
+	#*****************************************************For Genion additon**********************section begins here****
+	##This function will add ions/salts to the protein in waterbox
+	def saltadd(self, file_path, project_name):
+		status = ["ok", "Preparing to add ions or salt"]
+		salt = "-conc "+self.salt_conc+" "
+		positive = "-pname "+self.positive_ion+" "
+		negative = "-nname "+self.negative_ion+" "
+		neu ="-"+self.neutrality
+		try:
+			os.remove(project_name+"_b4em.gro")
+			os.remove(project_name+"_ions.tpr")
+		except:
+			pass
+		
+		command = gromacs.command+" grompp -f em -c "+project_name+"_solv.gro -o "+project_name+"_ions.tpr -p "+project_name+".top &> log1.txt"
+		logfile = open('log.txt', 'a')
+		logfile.write(self.command_distinction+command+self.command_distinction)
+		
+		status_update(status)
+		Grompp = subprocess.Popen(command, executable="/bin/bash", shell=True)
+		while Grompp.poll() is None:
+			if stop == 1:
+				Grompp.kill()
+				break
+			time.sleep(1.0)
+		
+		logfile1 = open('log1.txt', 'r')
+		logfile.write(logfile1.read())
+		logfile.close()
+		logfile1.close()
+		
+		command = "echo -e '13' | "+gromacs.command+" genion -s "+project_name+"_ions.tpr -o "+project_name+"_b4em.gro "+positive+negative+salt+neu+" -p "+project_name+".top &> log1.txt"
+				
+		logfile = open('log.txt', 'a')
+		logfile.write(self.command_distinction+command+self.command_distinction)
+		
+		status = ["ok", "Adding salts and ions"]
+		status_update(status)
+		Ionadd = subprocess.Popen(command, executable="/bin/bash", shell=True)
+		while Ionadd.poll() is None:
+			if stop == 1:
+				Ionadd.kill()
+				break
+			time.sleep(1.0)
+		
+		logfile1 = open('log1.txt', 'r')
+		logfile.write(logfile1.read())
+		logfile.close()
+		logfile1.close()
+		
+		if os.path.isfile(file_path+"_be4em.gro") == True and stop == 0:
+			status = ["ok", "Ions added successfully"]
+		elif stop == 0:
+			status = ["ok", "Find out what's wrong!"]
+		else:
+			status = ["failed", "Unable to add ions"]
+		return status
+
+	#********************************************Genion additon section ends here**********************************************************
+
 	
 	##This function will perform energy minimization	
 	def em(self, file_path, project_name):
@@ -621,6 +710,7 @@ class Gromacs_input:
 			status = ["fail", "Unable to generate multimodel PDB file"]
 		return status
 
+	
 ##This class will handle PCA by ProDy python library and show vectors from NMD file.
 class Vectors:
 	
@@ -907,13 +997,13 @@ class Mdp_config:
 ##Status and to_do maintaining class
 class Progress_status:
 	
-	#0:Save configuration files; 1:Generate topology file from pdb; 2:Adding Water Box; 3:Energy Minimization; 4:Position Restrained MD; 5:Restraints; 6:Molecular Dynamics Simulation; 7:Generate multimodel PDB; 8:Calculate vectors using ProDy
-	status= [0,0,0,0,0,0,0,0,0]
-	to_do = [1,1,1,1,1,0,1,1,1]
+	#0:Save configuration files; 1:Generate topology file from pdb; 2:Adding Water Box; 3: Adding ions and neutralization 4:Energy Minimization; 5:Position Restrained MD; 6:Restraints; 7:Molecular Dynamics Simulation; 8:Generate multimodel PDB; 9:Calculate vectors using ProDy
+	status= [0,0,0,0,0,0,0,0,0,0]
+	to_do = [1,1,1,1,1,1,0,1,1,1]
 	
 	resume = 0
 	x2top = 0
-	steps = 7
+	steps = 8 #increased to 8 from 7
 	
 	def to_do_update(self, position, value):
 		if type(position) == type(1):
@@ -936,7 +1026,7 @@ class Progress_status:
 
 ##init function - puts plugin into menu and starts 'init_function' after clicking.
 def __init__(self):
-	self.menuBar.addmenuitem("Plugin", "command", "dynamics"+plugin_ver, label = "dynamics"+plugin_ver,
+	self.menuBar.addmenuitem("Plugin", "command", "Dynamics_Gromacs"+plugin_ver, label = "Dynamics_Gromacs"+plugin_ver,
 	command = init_function)
 
 ##This function will initialize all plugin stufs
@@ -970,12 +1060,12 @@ def init_function():
 	em_init_config = """define = -DFLEX_SPC
 constraints = none
 integrator = steep
-nsteps = 100
+nsteps = 10000
 nstlist = 10
-ns_type = grid
-rlist = 1.0
-rcoulomb = 1.0
-rvdw = 1.0
+ns_type = simple
+rlist = 1.5
+rcoulomb = 1.5
+rvdw = 1.5
 emtol = 1000.0
 emstep = 0.01
 implicit-solvent = no
@@ -986,56 +1076,56 @@ cutoff-scheme = Verlet
 coulombtype = PME"""
 	pr_init_config = """define = -DPOSRES
 constraints = all-bonds
-integrator = md
+integrator = md-vv
 dt = 0.002
-nsteps = 500
+nsteps = 5000
 nstcomm = 1
-nstxout = 10
-nstvout = 1000
+nstxout = 100
+nstvout = 100
 nstfout = 0
 nstlog = 10
 nstenergy = 10
 nstlist = 10
-ns_type = grid
-rlist = 1.0
-rcoulomb = 1.0
-rvdw = 1.0
+ns_type = simple
+rlist = 1.5
+rcoulomb = 1.5
+rvdw = 1.5
 Tcoupl = v-rescale
 tau_t = 0.1 0.1
 tc-grps = protein Non-Protein
-ref_t = 300 300
+ref_t = 298 298
 Pcoupl = no
 tau_p = 0.5
 compressibility = 4.5e-5
 ref_p = 1.0
 gen_vel = yes
-gen_temp = 300.0
+gen_temp = 298.0
 gen_seed = 173529
 cutoff-scheme = Verlet
 coulombtype = PME"""
 	md_init_config = """;define = -DPOSRES
-integrator = md
+integrator = md-vv
 dt = 0.002
 nsteps = 5000
 nstcomm = 1
 nstxout = 50
-nstvout = 0
+nstvout = 50
 nstfout = 0
 nstlist = 10
-ns_type = grid
-rlist = 1.0
-rcoulomb = 1.0
-rvdw = 1.0
+ns_type = simple
+rlist = 1.5
+rcoulomb = 1.5
+rvdw = 1.5
 Tcoupl = v-rescale
 tau_t = 0.1 0.1
 tc-grps = protein Non-Protein
-ref_t = 300 300
+ref_t = 298 298
 Pcoupl = no
 tau_p = 0.5
 compressibility = 4.5e-5
 ref_p = 1.0
 gen_vel = yes
-gen_temp = 300.0
+gen_temp = 298.0
 gen_seed = 173529
 constraints = all-bonds
 constraint-algorithm = Lincs
@@ -1060,10 +1150,11 @@ coulombtype = PME"""
 
 	##Creating objects - data from those windows will be used by rootWindow
 	if status[0] == "ok":
-		global calculationW, waterW, restraintsW
+		global calculationW, waterW, restraintsW, genionW
 		calculationW = CalculationWindow()
 		waterW = WaterWindows()
 		restraintsW = RestraintsWindow()
+		genionW = GenionWindow()
 		##Start graphic interface
 		rootWindow()
 	##Break now if status is not ok and print message
@@ -1076,7 +1167,7 @@ def rootWindow():
 
 	root = Tk()
 	balloon = Pmw.Balloon(root)
-	root.wm_title("Dynamics"+plugin_ver)
+	root.wm_title("Dynamics with Gromacs"+plugin_ver)
 	
 	##Detect list of PyMOL loaded PDB files if no files than list "nothing"
 	allNames = cmd.get_names("objects") #PyMOL API
@@ -1190,7 +1281,7 @@ def rootWindow():
 	w2 = Label(frame1_1, text="Group", font = "bold")
 	w2.pack(side=TOP)
 	for group in gromacs.group_list:
-		radio_button2 = Radiobutton(frame1_1, text=group[1], value=group[0], variable=v2_group, command=lambda: gromacs2.update(v2_group.get(), gromacs2.box_type, gromacs2.box_distance, gromacs2.box_density))
+		radio_button2 = Radiobutton(frame1_1, text=group[1], value=group[0], variable=v2_group, command=lambda: gromacs2.update(v2_group.get(), gromacs2.box_type, gromacs2.box_distance, gromacs2.box_density, gromacs2.salt_conc, gromacs2.positive_ion, gromacs2.negative_ion, gromacs2.neutrality))
 		radio_button2.pack(side=TOP, anchor=W)
 		#Tooltip
 		balloon.bind(radio_button2, "Select group of atoms for final display")
@@ -1222,7 +1313,9 @@ def rootWindow():
 	water_button.pack(side=LEFT)
 	waterbox_button = Button(frame1_2_1, text = "Configure", command=lambda: waterW.box(root))
 	waterbox_button.pack(side=LEFT)
-	
+	waterbox_button2 = Button(frame1_2_1, text = "Hydrogen Mass", command=lambda: waterW.box2(root))
+	waterbox_button2.pack(side=LEFT)
+		
 	frame1_3 = Frame(frame1)
 	frame1_3.pack(side=LEFT)
 	
@@ -1237,6 +1330,12 @@ def rootWindow():
 	steps_label.pack(side=TOP)
 	steps_button = Button(frame1_3_1, text = "Configure", command=lambda: steps_configure(root, check1_button))
 	steps_button.pack(side=TOP)
+	
+	#Button for Genion configuration
+	ion_label = Label(frame1_3_1, text="Adding ions & Neutralize")
+	ion_label.pack(side=TOP)
+	ion_button2 = Button(frame1_3_1, text = "Configure", command=lambda: genionW.window(root))
+	ion_button2.pack(side=TOP)
 	
 	#Button for configuration of MDP files
 	em_label = Label(frame1_3_1, text="Energy Minimization")
@@ -1284,7 +1383,7 @@ def rootWindow():
 	time_entry.pack(side=LEFT)
 	time_label2 = Label(frame1_3_1_1, text="[ps]")
 	time_label2.pack(side=LEFT)
-	time_button = Button(frame1_3_1_1, text = "OK", command=lambda: md_file.update(3, str(float(time_entry_value.get())/float(md_file.options[2][1]))))
+	time_button = Button(frame1_3_1_1, text = "OK", command=lambda: md_file.update(3, int(float(time_entry_value.get())/float(md_file.options[2][1]))))
 	time_button.pack(side=LEFT)
 	
 	##Disable configuration of ProDy (Vectors) if ProDy is not installed
@@ -1319,7 +1418,9 @@ def rootWindow():
 	#Tooltips
 	balloon.bind(water_button, "Choose one of the Water Models for dynamics simulation")
 	balloon.bind(waterbox_button, "Configure Water Model parameters")
+	balloon.bind(waterbox_button2, "Use Deuterium or Heavier hydrogens (to allow bigger time steps in MD)")
 	balloon.bind(steps_button, "Select calculations which needs to be performed for dynamics simulation")
+	balloon.bind(ion_button2, "Select salt concentration and neutralization status")
 	balloon.bind(em_button2, "Configure Energy Minimization parameters")
 	balloon.bind(pr_button2, "Configure Position Restrained MD parameters")
 	balloon.bind(md_button2, "Configure Molecular Dynamics Simulation parameters")
@@ -1765,7 +1866,8 @@ class WaterWindows:
 			for button in self.explicit_buttons:
 				button.configure(state=ACTIVE)
 			progress.to_do[2] = 1
-			progress.to_do[4] = 1
+			progress.to_do[3] = 1
+			progress.to_do[5] = 1
 			#em update
 			if not os.path.isfile(dynamics_dir + "em.mdp"):
 				parameter_nr = 0
@@ -1800,13 +1902,13 @@ class WaterWindows:
 					elif (parameter[0] == "rvdw") or (parameter[0] == ";rvdw"):
 						md_file.update(parameter_nr, "1.0")
 					elif (parameter[0] == "Tcoupl") or (parameter[0] == ";Tcoupl"):
-						md_file.update(parameter_nr, "berendsen")
+						md_file.update(parameter_nr, "v-rescale")
 					elif (parameter[0] == "tau_t") or (parameter[0] == ";tau_t"):
 						md_file.update(parameter_nr, "0.1 0.1")
 					elif (parameter[0] == "tc-grps") or (parameter[0] == ";tc-grps"):
 						md_file.update(parameter_nr, "protein Non-Protein")
 					elif (parameter[0] == "ref_t") or (parameter[0] == ";ref_t"):
-						md_file.update(parameter_nr, "300 300")
+						md_file.update(parameter_nr, "298 298")
 					elif (parameter[0] == "implicit-solvent") or (parameter[0] == ";implicit-solvent"):
 						md_file.update(parameter_nr, "no")
 					elif (parameter[0] == "pbc") or (parameter[0] == ";pbc"):
@@ -1826,7 +1928,8 @@ class WaterWindows:
 			for button in self.explicit_buttons:
 				button.configure(state=DISABLED)
 			progress.to_do[2] = 0
-			progress.to_do[4] = 0
+			progress.to_do[3] = 0
+			progress.to_do[5] = 0
 			#em update
 			if not os.path.isfile(dynamics_dir + "em.mdp"):
 				parameter_nr = 0
@@ -1867,7 +1970,7 @@ class WaterWindows:
 					elif (parameter[0] == "tc-grps") or (parameter[0] == ";tc-grps"):
 						md_file.update(parameter_nr, "protein Non-Protein", 0)
 					elif (parameter[0] == "ref_t") or (parameter[0] == ";ref_t"):
-						md_file.update(parameter_nr, "300 300", 0)
+						md_file.update(parameter_nr, "298 298", 0)
 					elif (parameter[0] == "implicit-solvent") or (parameter[0] == ";implicit-solvent"):
 						md_file.update(parameter_nr, "GBSA")
 					elif (parameter[0] == "pbc") or (parameter[0] == ";pbc"):
@@ -1934,18 +2037,18 @@ class WaterWindows:
 	def box(self, master):
 		root = Toplevel(master)
 		root.wm_title("Water Box Options")
-		root.wm_geometry("300x250")
+		root.wm_geometry("300x200")
 		v = StringVar(root)
 		v.set(gromacs2.box_type)
 		w = Label(root, text="Box type")
 		w.pack()
-		radio_button = Radiobutton(root, text="triclinic", value="triclinic", variable=v, command = lambda : gromacs2.update(gromacs2.group, v.get(), gromacs2.box_distance, gromacs2.box_density))
+		radio_button = Radiobutton(root, text="triclinic", value="triclinic", variable=v, command = lambda : gromacs2.update(gromacs2.group, v.get(), gromacs2.hydro, gromacs2.box_distance, gromacs2.box_density))
 		radio_button.pack(side=TOP, anchor=W)
-		radio_button = Radiobutton(root, text="cubic", value="cubic", variable=v, command = lambda : gromacs2.update(gromacs2.group, v.get(), gromacs2.box_distance, gromacs2.box_density))
+		radio_button = Radiobutton(root, text="cubic", value="cubic", variable=v, command = lambda : gromacs2.update(gromacs2.group, v.get(), gromacs2.hydro, gromacs2.box_distance, gromacs2.box_density))
 		radio_button.pack(side=TOP, anchor=W)
-		radio_button = Radiobutton(root, text="dodecahedron", value="dodecahedron", variable=v, command = lambda : gromacs2.update(gromacs2.group, v.get(), gromacs2.box_distance, gromacs2.box_density))
+		radio_button = Radiobutton(root, text="dodecahedron", value="dodecahedron", variable=v, command = lambda : gromacs2.update(gromacs2.group, v.get(), gromacs2.hydro, gromacs2.box_distance, gromacs2.box_density))
 		radio_button.pack(side=TOP, anchor=W)
-		radio_button = Radiobutton(root, text="octahedron", value="octahedron", variable=v, command = lambda : gromacs2.update(gromacs2.group, v.get(), gromacs2.box_distance, gromacs2.box_density))
+		radio_button = Radiobutton(root, text="octahedron", value="octahedron", variable=v, command = lambda : gromacs2.update(gromacs2.group, v.get(), gromacs2.hydro, gromacs2.box_distance, gromacs2.box_density))
 		radio_button.pack(side=TOP, anchor=W)
 		w1 = Label(root, text="Distance")
 		w1.pack()
@@ -1957,7 +2060,62 @@ class WaterWindows:
 		density = Entry(root)
 		density.pack(side=TOP)
 		density.insert(0, gromacs2.box_density)
-		ok_button = Button(root, text = "OK", command=lambda : gromacs2.update(gromacs2.group, gromacs2.box_type, distance.get(), density.get(), root))
+		ok_button = Button(root, text = "OK", command=lambda : gromacs2.update(gromacs2.group, gromacs2.box_type, gromacs2.hydro, distance.get(), density.get(), root))
+		ok_button.pack(side=TOP)
+		
+	##Hydrogen configuration (for bigger time steps)
+	def box2(self, master):
+		root = Toplevel(master)
+		root.wm_title("Hydrogen options (for Pdb2gmx)")
+		root.wm_geometry("300x200")	
+		v1 = StringVar (root)
+		v1.set(gromacs2.hydro)
+		w = Label(root, text="Hydrogen type (for pdb2gmx only)")
+		w.pack()
+		radio_button = Radiobutton(root, text="Normal Hydrogen", value="noheavyh", variable=v1, command = lambda : gromacs2.update(gromacs2.group, gromacs2.box_type, v1.get(), gromacs2.box_distance, gromacs2.box_density))
+		radio_button.pack(side=TOP, anchor=W)
+		radio_button = Radiobutton(root, text="Deuterium", value="deuterate", variable=v1, command = lambda : gromacs2.update(gromacs2.group, gromacs2.box_type, v1.get(), gromacs2.box_distance, gromacs2.box_density))
+		radio_button.pack(side=TOP, anchor=W)
+		radio_button = Radiobutton(root, text="Heavy Hydrogen (4amu) ", value="heavyh", variable=v1, command = lambda : gromacs2.update(gromacs2.group, gromacs2.box_type, v1.get(), gromacs2.box_distance, gromacs2.box_density))
+		radio_button.pack(side=TOP, anchor=W)
+		ok_button = Button(root, text = "OK", command=lambda : gromacs2.update(gromacs2.group, gromacs2.box_type, gromacs2.hydro, gromacs2.box_distance, gromacs2.box_density, root))
+		ok_button.pack(side=TOP)
+
+# Options for the genion class all the options
+class GenionWindow:
+	
+#	implicit_buttons = []
+#	explicit_buttons = []
+	
+	##Genion box configuration window
+	def window(self, master):
+		root = Toplevel(master)
+		root.wm_title("GENION options")
+		root.wm_geometry("300x350")
+		v = StringVar(root)
+		v.set(gromacs2.neutrality)
+		w = Label(root, text="Parameters for genion")
+		w.pack()
+		radio_button = Radiobutton(root, text="Neutralize System", value="neutral", variable=v, command = lambda : gromacs2.update2(gromacs2.group, v.get(), gromacs2.salt_conc, gromacs2.positive_ion, gromacs2.negative_ion))
+		radio_button.pack(side=TOP, anchor=W)
+		radio_button = Radiobutton(root, text="Do not Neutralize", value="noneutral", variable=v, command = lambda : gromacs2.update2(gromacs2.group, v.get(), gromacs2.salt_conc, gromacs2.positive_ion, gromacs2.negative_ion))
+		radio_button.pack(side=TOP, anchor=W)
+		w1 = Label(root, text="Salt Concentration")
+		w1.pack()
+		salt = Entry(root)
+		salt.pack(side=TOP)
+		salt.insert(0, gromacs2.salt_conc)
+		w2 = Label(root, text="Positive Ion")
+		w2.pack()
+		posit = Entry(root)
+		posit.pack(side=TOP)
+		posit.insert(0, gromacs2.positive_ion)
+		w3 = Label(root, text="Negative Ion")
+		w3.pack()
+		negat = Entry(root)
+		negat.pack(side=TOP)
+		negat.insert(0, gromacs2.negative_ion)
+		ok_button = Button(root, text = "OK", command=lambda : gromacs2.update2(gromacs2.group, gromacs2.neutrality, salt.get(), posit.get(), negat.get(), root))
 		ok_button.pack(side=TOP)
 
 ##This class is resposible for graphic edition of restraints
@@ -2045,12 +2203,12 @@ class RestraintsWindow:
 			config_button.configure(state=ACTIVE)
 			md_file.update(2, md_file.options[2][1], 1)
 			gromacs.restraints_index()
-			progress.to_do[5] = 1
+			progress.to_do[6] = 1
 			progress.to_do = progress.to_do
 		elif check == 0:
 			config_button.configure(state=DISABLED)
 			md_file.update(2, md_file.options[2][1], 0)
-			progress.to_do[5] = 0
+			progress.to_do[6] = 0
 			progress.to_do = progress.to_do
 
 ##This function will create window, which allow you to choose PDB file if no file is loaded to PyMOL
@@ -2119,13 +2277,13 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
 	else:
 		create_config_files()
 	##Correct set of restraints button
-	if progress.to_do[5] == 0:
+	if progress.to_do[6] == 0:
 		config_button_restraints.configure(state=DISABLED)
-	elif progress.to_do[5] == 1:
+	elif progress.to_do[6] == 1:
 		config_button_restraints.configure(state=ACTIVE)
 	##If Resume is zero than initial Steps are all ON
 	if progress.resume == 0:
-		progress.to_do = [1,1,1,1,1,0,1,1,1]
+		progress.to_do = [1,1,1,1,1,1,0,1,1,1]
 
 ##This function creates files needed by the project
 def create_config_files():
@@ -2277,6 +2435,7 @@ def steps_configure(master, restraints_button):
 		v1.set(progress.x2top)
 		check_var3 = IntVar(root)
 		check_var3.set(progress.to_do[2])
+		#Created empty variable check_var4 for genion
 		check_var4 = IntVar(root)
 		check_var4.set(progress.to_do[3])
 		check_var5 = IntVar(root)
@@ -2289,9 +2448,11 @@ def steps_configure(master, restraints_button):
 		check_var8.set(progress.to_do[7])
 		check_var9 = IntVar(root)
 		check_var9.set(progress.to_do[8])
-		#Variable for Resume Simulation
 		check_var10 = IntVar(root)
-		check_var10.set(progress.resume)
+		check_var10.set(progress.to_do[9])
+		#Variable for Resume Simulation
+		check_var11 = IntVar(root)
+		check_var11.set(progress.resume)
 	
 		frame1 = Frame(root)
 		frame1.pack(side=TOP)
@@ -2310,50 +2471,56 @@ def steps_configure(master, restraints_button):
 		
 		c3 = Checkbutton(frame1, text="Adding Water Box (only for explicit solvent)"+steps_status_done(2), variable=check_var3, command=lambda: progress.to_do_update(2, check_var3.get()))
 		c3.pack(side=TOP, anchor=W)
-		
-		c4 = Checkbutton(frame1, text="Energy Minimization (optional)"+steps_status_done(3), variable=check_var4, command=lambda: progress.to_do_update(3, check_var4.get()))
+
+		c4 = Checkbutton(frame1, text="Adding ions and neutralize (only for explicit solvent; Optional)"+steps_status_done(3), variable=check_var4, command=lambda: progress.to_do_update(3, check_var4.get()))
 		c4.pack(side=TOP, anchor=W)
 		
-		c5 = Checkbutton(frame1, text="Position Restrained MD (optional, only for explicit solvent)"+steps_status_done(4), variable=check_var5, command=lambda: progress.to_do_update(4, check_var5.get()))
+		c5 = Checkbutton(frame1, text="Energy Minimization (optional)"+steps_status_done(4), variable=check_var5, command=lambda: progress.to_do_update(4, check_var5.get()))
 		c5.pack(side=TOP, anchor=W)
 		
-		c6 = Checkbutton(frame1, text="Restraints (optional)"+steps_status_done(5), variable=check_var6, command=lambda: restraintsW.check(check_var6.get(), restraints_button))
+		c6 = Checkbutton(frame1, text="Position Restrained MD (optional, only for explicit solvent)"+steps_status_done(5), variable=check_var6, command=lambda: progress.to_do_update(5, check_var6.get()))
 		c6.pack(side=TOP, anchor=W)
 		
-		c7 = Checkbutton(frame1, text="Molecular Dynamics Simulation"+steps_status_done(6), variable=check_var7, command=lambda: progress.to_do_update(6, check_var7.get()))
+		c7 = Checkbutton(frame1, text="Restraints (optional)"+steps_status_done(6), variable=check_var7, command=lambda: restraintsW.check(check_var7.get(), restraints_button))
 		c7.pack(side=TOP, anchor=W)
 		
-		c8 = Checkbutton(frame1, text="Generate multimodel PDB"+steps_status_done(7), variable=check_var8, command=lambda: progress.to_do_update(7, check_var8.get()))
+		c8 = Checkbutton(frame1, text="Molecular Dynamics Simulation"+steps_status_done(7), variable=check_var8, command=lambda: progress.to_do_update(7, check_var8.get()))
 		c8.pack(side=TOP, anchor=W)
 		
-		c9 = Checkbutton(frame1, text="Calculate vectors using ProDy (optional)"+steps_status_done(8), variable=check_var9, command=lambda: progress.to_do_update(8, check_var9.get()))
+		c9 = Checkbutton(frame1, text="Generate multimodel PDB"+steps_status_done(8), variable=check_var9, command=lambda: progress.to_do_update(8, check_var9.get()))
 		c9.pack(side=TOP, anchor=W)
 		
+		c10 = Checkbutton(frame1, text="Calculate vectors using ProDy (optional)"+steps_status_done(9), variable=check_var10, command=lambda: progress.to_do_update(9, check_var10.get()))
+		c10.pack(side=TOP, anchor=W)
+		
 		if prody_true != 1:
-			check_var9.set(0)
-			c9.configure(state=DISABLED)
-			progress.to_do_update(8, 0)
+			check_var11.set(0)
+			c10.configure(state=DISABLED)
+			progress.to_do_update(9, 0)
 		
 		if explicit !=1:
 			check_var3.set(0)
 			c3.configure(state=DISABLED)
 			progress.to_do_update(2, 0)
-			check_var5.set(0)
-			c5.configure(state=DISABLED)
-			progress.to_do_update(4, 0)
+			check_var4.set(0)
+			c4.configure(state=DISABLED)
+			progress.to_do_update(3, 0)
+			check_var6.set(0)
+			c6.configure(state=DISABLED)
+			progress.to_do_update(5, 0)
 		
 		l1 = Label(frame1, text="Simulation Progress:")
 		l1.pack(side=TOP)
 		
-		variable_list = [check_var1, check_var2, check_var3, check_var4, check_var5, check_var6, check_var7, check_var8, check_var9]
+		variable_list = [check_var1, check_var2, check_var3, check_var4, check_var5, check_var6, check_var7, check_var8, check_var9, check_var10, check_var11]
 		progress_bar = Progressbar(frame1)
 		progress_bar.pack(side=TOP)
-		if check_var10.get() == 1:
-			percent = steps_status_bar(check_var10.get(), variable_list)
+		if check_var11.get() == 1:
+			percent = steps_status_bar(check_var11.get(), variable_list)
 			progress_bar.configure(value=percent)
 		
-		c10 = Checkbutton(frame1, text="Resume Simulation", variable=check_var10, command=lambda: steps_click_resume(check_var10.get(), progress_bar, variable_list))
-		c10.pack(side=TOP, anchor=W)
+		c11 = Checkbutton(frame1, text="Resume Simulation", variable=check_var11, command=lambda: steps_click_resume(check_var11.get(), progress_bar, variable_list))
+		c11.pack(side=TOP, anchor=W)
 		
 		b1 = Button(root, text="OK", command=lambda: steps_click_ok (root))
 		b1.pack(side=TOP)
@@ -2380,7 +2547,7 @@ def steps_status_bar(var, variable_list=[]):
 				progress.to_do[to_do_nr] = 0
 				progress.to_do = progress.to_do
 				variable_list[to_do_nr].set(0)
-			elif step == 0 and to_do_nr != 5: #Exclud optional steps (5 = restraints)
+			elif step == 0 and to_do_nr != 6: #Exclud optional steps (5 = restraints) (@ajit 6=restraints after addition of genion step)
 				progress.to_do[to_do_nr] = 1
 				progress.to_do = progress.to_do
 				variable_list[to_do_nr].set(1)
@@ -2388,7 +2555,7 @@ def steps_status_bar(var, variable_list=[]):
 		progress.resume = 1
 	elif var == 0:
 		percent = 0.0
-		progress.to_do = [1,1,1,1,1,0,1,1,1]
+		progress.to_do = [1,1,1,1,1,1,0,1,1,1]
 		to_do_nr = 0
 		for variable in variable_list:
 			if to_do_nr != 5:
@@ -2489,58 +2656,72 @@ def dynamics():
 			progress.status[2] = 1
 			progress.to_do[2] = 0
 			save_options()
-	
-	##EM	
+
+	##Adding ions
 	if status[0] == "ok" and stop == 0 and progress.to_do[3] == 1:
-		status = gromacs2.em(file_path, project_name)
+		status = gromacs2.saltadd(file_path, project_name)
 		if status[0] == "ok":
 			progress.status[3] = 1
 			progress.to_do[3] = 0
 			save_options()
 	elif status[0] == "ok" and stop == 0 and progress.to_do[3] == 0 and progress.status[3] == 0:
-		shutil.copy(project_name+"_b4em.gro",project_name+"_b4pr.gro")	
+		shutil.copy(project_name+"_solv.gro",project_name+"_b4em.gro")		
+
 	
-	##PR
+	##EM	
 	if status[0] == "ok" and stop == 0 and progress.to_do[4] == 1:
-		status = gromacs2.pr(file_path, project_name)
+		status = gromacs2.em(file_path, project_name)
 		if status[0] == "ok":
 			progress.status[4] = 1
 			progress.to_do[4] = 0
 			save_options()
 	elif status[0] == "ok" and stop == 0 and progress.to_do[4] == 0 and progress.status[4] == 0:
-		shutil.copy(project_name+"_b4pr.gro",project_name+"_b4md.gro")
+		shutil.copy(project_name+"_b4em.gro",project_name+"_b4pr.gro")	
 	
-	##Restraints
+
+	##PR
 	if status[0] == "ok" and stop == 0 and progress.to_do[5] == 1:
-		status = gromacs2.restraints(project_name)
+		status = gromacs2.pr(file_path, project_name)
 		if status[0] == "ok":
 			progress.status[5] = 1
 			progress.to_do[5] = 0
 			save_options()
+	elif status[0] == "ok" and stop == 0 and progress.to_do[5] == 0 and progress.status[5] == 0:
+		shutil.copy(project_name+"_b4pr.gro",project_name+"_b4md.gro")
 	
-	##MD
+	##Restraints
 	if status[0] == "ok" and stop == 0 and progress.to_do[6] == 1:
-		status = gromacs2.md(file_path, project_name)
+		status = gromacs2.restraints(project_name)
 		if status[0] == "ok":
 			progress.status[6] = 1
 			progress.to_do[6] = 0
 			save_options()
 	
-	##Trjconv
+	##MD
 	if status[0] == "ok" and stop == 0 and progress.to_do[7] == 1:
+		status = gromacs2.md(file_path, project_name)
+		if status[0] == "ok":
+			progress.status[7] = 1
+			progress.to_do[7] = 0
+			save_options()
+	
+	##Trjconv
+	if status[0] == "ok" and stop == 0 and progress.to_do[8] == 1:
 		status = gromacs2.trjconv(file_path, project_name)
 		show_multipdb()
-		progress.status[7] = 1
-		progress.to_do[7] = 0
+		progress.status[8] = 1
+		progress.to_do[8] = 0
 		save_options()
 	
+
+
 	##Calculating vectors
-	if status[0] == "ok" and stop == 0 and progress.to_do[8] == 1 and prody_true == 1:
+	if status[0] == "ok" and stop == 0 and progress.to_do[9] == 1 and prody_true == 1:
 		vectors_prody.prody()
 		vectors_prody.nmd_format()
 		vectors_prody.show_vectors()
-		progress.status[8] = 1
-		progress.to_do[8] = 0
+		progress.status[9] = 1
+		progress.to_do[9] = 0
 		save_options()
 	elif status[0] == "fail":
 		print status[1]
@@ -2548,7 +2729,7 @@ def dynamics():
 			error_message()
 	
 	##Showing interpretation window
-	if status[0] == "ok" and stop == 0 and progress.status[7] == 1:
+	if status[0] == "ok" and stop == 0 and progress.status[8] == 1:
 		interpretation = InterpretationWindow()
 		try:
 			interpretation()
