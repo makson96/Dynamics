@@ -58,6 +58,8 @@ class Gromacs_output:
 		self.detect_plumed()
 				
 	def init2(self):
+		print "Reading available force fields and water models"
+		
 		fo = open(dynamics_dir +"test_gromacs.pdb", "wb")
 		fo.write("ATOM      1  N   LYS     1      24.966  -0.646  22.314  1.00 32.74      1SRN  99\n");
 		fo.close()
@@ -74,7 +76,7 @@ class Gromacs_output:
 		executeSubprocess(cmd,  gmxStdinFilePath, gmxStdoutFilePath)
 		lista_gromacs = readTextLines(gmxStdoutFilePath)
 		
-		print "Reading available force fields"	
+		#Reading available force fields
 		force_start_line = 0
 		while lista_gromacs[force_start_line] != "Select the Force Field:\n":
 			force_start_line = force_start_line + 1
@@ -91,7 +93,7 @@ class Gromacs_output:
 
 		self.force_list = force_list2
 				
-		print "Reading available water models"
+		#Reading available water models
 		water_start_line = 0
 		while lista_gromacs[water_start_line][0:7] != "Opening":
 			water_start_line = water_start_line + 1
@@ -110,6 +112,8 @@ class Gromacs_output:
 
 		self.water_list = water_list2
 		
+		print "Reading available groups"
+		
 		gmxStdinFilePath = dynamics_dir + "gromacs_stdin.txt"
 		fo = open(gmxStdinFilePath, "w")
 		fo.write( "1");
@@ -122,7 +126,7 @@ class Gromacs_output:
 		
 		group_test_list = readTextLines(gmxStdoutFilePath)
 		
-		print "Reading available groups"
+		#Reading available groups
 		group_start_line = 0
 		while group_test_list[group_start_line] != "Will write pdb: Protein data bank file\n":
 			group_start_line = group_start_line + 1
@@ -182,6 +186,7 @@ class Gromacs_output:
 	
 	##This function will determine if PLUMED is compiled into GROMACS
 	def detect_plumed(self):
+		print "Searching for PLUMED integrated with GROMACS"
 		gmxStdoutFilePath = dynamics_dir + "test_plumed.txt"
 		cmd = self.command + ' mdrun -plumed'
 		executeSubprocess(cmd,  None, gmxStdoutFilePath)
@@ -881,7 +886,7 @@ def getGromacsExeInfo():
 	stdoutFile = "test_gromacs.txt"
 	if os.path.isfile(stdoutFile):
 		os.remove(stdoutFile)
-
+	
 	for gmx in gmxExes:
 		cmd = gmx + " -version"
 		executeSubprocess(cmd,  None, stdoutFile)
@@ -899,6 +904,8 @@ def getGromacsExeInfo():
 			if re.search("^[ ]*GROMACS version:", line, re.I):
 				gmxExe = gmx
 				version = re.sub("^[ ]*GROMACS version:[ ]*", "", line, flags = re.I)
+				if "VERSION " in version:
+					version = version.split("VERSION ")[1].rstrip()
 			elif re.search(r"^[ ]*Build OS/arch:", line, re.I):
 				buildArch = re.sub("^[ ]*Build OS/arch:[ ]*", "", line, flags = re.I)
 				
@@ -1054,6 +1061,7 @@ def init_function():
 	if not os.path.isdir(project_dir):
 		os.makedirs(project_dir)
 	
+	print "Searching for GROMACS installation"
 	os.chdir(dynamics_dir)
 	gmxExe, gmxVersion, gmxBuildArch, gmxOnCygwin = getGromacsExeInfo()
 	os.chdir(homeDir)
@@ -1063,6 +1071,8 @@ def init_function():
 		status = ["fail", "GROMACS not detected. Please install and setup GROMACS 5 or newer correctly for your platform. Check '~/.dynamics/test_gromacs.txt' for more details. Don't forget to add GROMACS bin directory to your PATH"]
 		tkMessageBox.showerror("Initialization error", status[1])
 		return
+	else:
+		print "Found GROMACS VERSION " + gmxVersion
 
 	updateGromacsDynamicsAndProjectDirs()
 
