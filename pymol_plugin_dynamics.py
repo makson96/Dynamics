@@ -40,7 +40,7 @@ class Gromacs_output:
 	group_list = []
 	restraints = []
 	plumed_true = 1
-        
+		
 	def __init__(self):
 		global status
 		#Remove garbage
@@ -57,7 +57,7 @@ class Gromacs_output:
 
 		self.init2()
 		self.detect_plumed()
-                
+				
 	def init2(self):
 		fo = open(dynamics_dir +"test_gromacs.pdb", "wb")
 		fo.write( "ATOM      1  N   LYS     1      24.966  -0.646  22.314  1.00 32.74      1SRN  99\n");
@@ -71,7 +71,7 @@ class Gromacs_output:
 		fo.close()
 		
 		gmxStdoutFilePath = dynamics_dir + "test_gromacs.txt"
-                
+				
 		# msud@san.rr.com
 		cmd = self.command + ' pdb2gmx -f \'' + dynamics_dir_exe + 'test_gromacs.pdb\' -o \'' + dynamics_dir_exe + 'test_gromacs.gro\' -p \'' + dynamics_dir_exe + 'test_gromacs.top\''
 		executeSubprocess(cmd,  gmxStdinFilePath, gmxStdoutFilePath)
@@ -93,7 +93,7 @@ class Gromacs_output:
 			number = number + 1
 
 		self.force_list = force_list2
-                
+				
 		print "Reading available water models"
 		water_start_line = 0
 		while lista_gromacs[water_start_line][0:7] != "Opening":
@@ -112,7 +112,7 @@ class Gromacs_output:
 			number = number + 1
 
 		self.water_list = water_list2
-                
+				
 		# msud@san.rr.com
 		gmxStdinFilePath = dynamics_dir + "gromacs_stdin.txt"
 		fo = open(gmxStdinFilePath, "w")
@@ -120,10 +120,10 @@ class Gromacs_output:
 		fo.close()
 		
 		gmxStdoutFilePath = dynamics_dir + "test_gromacs.txt"
-                
+				
 		cmd = self.command + ' trjconv -f \'' + dynamics_dir_exe + 'test_gromacs.pdb\' -s \'' + dynamics_dir_exe + 'test_gromacs.pdb\' -o \'' + dynamics_dir_exe + 'test_gromacs2.pdb\''
 		executeSubprocess(cmd,  gmxStdinFilePath, gmxStdoutFilePath)
-                
+				
 		# msud@san.rr.com: group_test = open(dynamics_dir+"test_gromacs_group.txt","r")
 		group_test_list = readTextLines(gmxStdoutFilePath)
 		
@@ -160,10 +160,10 @@ class Gromacs_output:
 		fo.close()
 		
 		gmxStdoutFilePath = dynamics_dir + "test_gromacs.txt"
-                
+				
 		cmd = self.command + ' pdb2gmx -f \'' + dynamics_dir_exe + 'test_gromacs.pdb\' -o \'' + dynamics_dir_exe + 'test_gromacs.gro\' -p \'' + dynamics_dir_exe + 'test_gromacs.top\''
 		executeSubprocess(cmd,  gmxStdinFilePath, gmxStdoutFilePath)
-                
+				
 		# msud@san.rr.com
 		lista_gromacs = readTextLines(gmxStdoutFilePath)
 
@@ -175,7 +175,7 @@ class Gromacs_output:
 		while (lista_gromacs[water_end_line][0:7] != "Opening") and (lista_gromacs[water_end_line][0] != "\n"):
 			water_end_line = water_end_line + 1
 			if re.search("None", lista_gromacs[water_end_line], re.I): break
-                        
+						
 		water_list = lista_gromacs[water_start_line:water_end_line]
 		water_list2 = []
 		number = 1
@@ -193,7 +193,7 @@ class Gromacs_output:
 		gmxStdoutFilePath = dynamics_dir + "test_plumed.txt"
 		cmd = self.command + ' mdrun -plumed'
 		executeSubprocess(cmd,  None, gmxStdoutFilePath)
-                
+				
 		# msud@san.rr.com
 		plumed_list = readTextLines(gmxStdoutFilePath)
 		for line in plumed_list:
@@ -217,7 +217,7 @@ class Gromacs_output:
 
 		cmd = self.command+" make_ndx -f "+project_name+".pdb -o index.ndx"	
 		executeSubprocess(cmd,  "gromacs_stdin.txt", "restraints.log")
-                
+				
 		index_list = readTextLines("restraints.log")
 
 		index_position = 0
@@ -347,7 +347,7 @@ class Gromacs_input:
 
 			command = gromacs.command+" trjconv -f "+project_name+".pdb -s "+project_name+".pdb -o "+project_name+".gro"
 			executeAndMonitorSubprocess(command,  'gromacs_stdin.txt', 'log1.txt', 'log.txt')
-                        
+						
 			if os.path.isfile(file_path+".gro") == True and stop == 0:
 				status = ["ok", "Calculated structure using trjconv."]
 			else:
@@ -383,7 +383,7 @@ class Gromacs_input:
 
 		# msud@san.rr.com
 		command = gromacs.command+" solvate -cp "+project_name+"1.gro -cs "+water_gro+" -o "+project_name+"_solv.gro -p "+project_name+".top"
-                
+				
 		status = ["ok", "Adding Water Box"]
 		status_update(status)
 
@@ -420,7 +420,7 @@ class Gromacs_input:
 
 		status = ["ok", "Adding salts and ions"]
 		status_update(status)
-                
+				
 		command = gromacs.command+" genion -s "+project_name+"_ions.tpr -o "+project_name+"_b4em.gro "+positive+negative+salt+neu+" -p "+project_name+".top"
 		executeAndMonitorSubprocess(command,  'gromacs_stdin.txt', 'log1.txt', 'log.txt')
 		
@@ -450,7 +450,7 @@ class Gromacs_input:
 		status_update(status)		
 		command = gromacs.command+" grompp -f em -c "+project_name+"_b4em -p "+project_name+" -o "+project_name+"_em"
 		executeAndMonitorSubprocess(command,  None, 'log1.txt', 'log.txt')
-                
+				
 		command = gromacs.command+" mdrun -nice 4 -s "+project_name+"_em -o "+project_name+"_em -c "+project_name+"_b4pr -v"
 		executeAndMonitorSubprocess(command,  None, 'log1.txt', 'log.txt')
 		
@@ -558,7 +558,7 @@ class Gromacs_input:
 		fo = open("gromacs_stdin.txt", "w")
 		fo.write( "%s" % str(self.group))
 		fo.close()
-                
+				
 		status_update(status)
 		command = gromacs.command+" trjconv -f "+project_name+"_md.trr -s "+project_name+"_md.tpr -o "+project_name+"_multimodel.pdb"
 		executeAndMonitorSubprocess(command,  'gromacs_stdin.txt', 'log1.txt', 'log.txt')
@@ -893,175 +893,175 @@ def __init__(self):
 # Detect gmx executable along with other associated information...
 #
 def getGromacsExeInfo():
-    gmxExes = ['gmx_mpi_d', 'gmx_mpi', 'gmx']
-    
-    gmxExe = ""
-    version = ""
-    buildArch = ""
-    buildOnCygwin = 0
+	gmxExes = ['gmx_mpi_d', 'gmx_mpi', 'gmx']
+	
+	gmxExe = ""
+	version = ""
+	buildArch = ""
+	buildOnCygwin = 0
 
-    stdoutFile = "test_gromacs.txt"
-    if os.path.isfile(stdoutFile):
-        os.remove(stdoutFile)
+	stdoutFile = "test_gromacs.txt"
+	if os.path.isfile(stdoutFile):
+		os.remove(stdoutFile)
 
-    for gmx in gmxExes:
-        cmd = gmx + " -version"
-        executeSubprocess(cmd,  None, stdoutFile)
-        
-        ofs = open(stdoutFile, "r")
-        output = ofs.read()
-        ofs.close()
-        
-        output = standardizeNewLineChar(output)
-        if not re.search("GROMACS version:", output, re.I):
-            continue
-        
-        gmxExe = gmx
-        for line in output.split("\n"):
-            if re.search("^[ ]*GROMACS version:", line, re.I):
-                gmxExe = gmx
-                version = re.sub("^[ ]*GROMACS version:[ ]*", "", line, flags = re.I)
-            elif re.search(r"^[ ]*Build OS/arch:", line, re.I):
-                buildArch = re.sub("^[ ]*Build OS/arch:[ ]*", "", line, flags = re.I)
-                
-                if re.search(r"CYGWIN", buildArch, re.I):
-                    buildOnCygwin = 1
-        break
+	for gmx in gmxExes:
+		cmd = gmx + " -version"
+		executeSubprocess(cmd,  None, stdoutFile)
+		
+		ofs = open(stdoutFile, "r")
+		output = ofs.read()
+		ofs.close()
+		
+		output = standardizeNewLineChar(output)
+		if not re.search("GROMACS version:", output, re.I):
+			continue
+		
+		gmxExe = gmx
+		for line in output.split("\n"):
+			if re.search("^[ ]*GROMACS version:", line, re.I):
+				gmxExe = gmx
+				version = re.sub("^[ ]*GROMACS version:[ ]*", "", line, flags = re.I)
+			elif re.search(r"^[ ]*Build OS/arch:", line, re.I):
+				buildArch = re.sub("^[ ]*Build OS/arch:[ ]*", "", line, flags = re.I)
+				
+				if re.search(r"CYGWIN", buildArch, re.I):
+					buildOnCygwin = 1
+		break
 
-    return (gmxExe, version, buildArch, buildOnCygwin)
+	return (gmxExe, version, buildArch, buildOnCygwin)
 
 
 # msud@san.rr.com
 # Setup directories for running gmx...
 #
 def setGromacsDynamicsAndProjectDirs():
-    global project_name, dynamics_dir, project_dir, dynamics_dir_exe, project_dir_exe
-    
-    project_name = "nothing"
-    
-    homeDir = os.getenv("HOME")
-    
-    gmxCurDirPath = os.path.abspath(homeDir)
-    dynamics_dir = os.path.join(gmxCurDirPath, '.dynamics', '')
-    project_dir = os.path.join(dynamics_dir, project_name, '')
+	global project_name, dynamics_dir, project_dir, dynamics_dir_exe, project_dir_exe
+	
+	project_name = "nothing"
+	
+	homeDir = os.getenv("HOME")
+	
+	gmxCurDirPath = os.path.abspath(homeDir)
+	dynamics_dir = os.path.join(gmxCurDirPath, '.dynamics', '')
+	project_dir = os.path.join(dynamics_dir, project_name, '')
 
-    dynamics_dir_exe = dynamics_dir
-    project_dir_exe = project_dir
-     
+	dynamics_dir_exe = dynamics_dir
+	project_dir_exe = project_dir
+	 
 # msud@san.rr.com
 # Update directories for running gmx on cygwin...
 #
 def updateGromacsDynamicsAndProjectDirs():
-    global gmxExe, gmxVersion, gmxBuildArch, gmxOnCygwin
-    global project_name, dynamics_dir, project_dir, dynamics_dir_exe, project_dir_exe
-    
-    dynamics_dir_exe = dynamics_dir
-    project_dir_exe = project_dir
-    
-    if  gmxOnCygwin and re.search(r"\\", dynamics_dir):
-        dynamics_dir_exe = dynamics_dir.replace("\\", '/')
-        project_dir_exe = project_dir.replace("\\", '/')
+	global gmxExe, gmxVersion, gmxBuildArch, gmxOnCygwin
+	global project_name, dynamics_dir, project_dir, dynamics_dir_exe, project_dir_exe
+	
+	dynamics_dir_exe = dynamics_dir
+	project_dir_exe = project_dir
+	
+	if  gmxOnCygwin and re.search(r"\\", dynamics_dir):
+		dynamics_dir_exe = dynamics_dir.replace("\\", '/')
+		project_dir_exe = project_dir.replace("\\", '/')
 
 # msud@san.rr.com
 # Setup project directory for running gmx...
 #
 def setGromacsProjectDir():
-    global gmxExe, gmxVersion, gmxBuildArch, gmxOnCygwin
-    global project_name, project_dir, project_dir_exe
+	global gmxExe, gmxVersion, gmxBuildArch, gmxOnCygwin
+	global project_name, project_dir, project_dir_exe
 
-    project_dir = os.path.join(dynamics_dir, project_name, '')
-    
-    if  gmxOnCygwin and re.search(r"\\", dynamics_dir):
-        project_dir_exe = project_dir.replace("\\", '/')
+	project_dir = os.path.join(dynamics_dir, project_name, '')
+	
+	if  gmxOnCygwin and re.search(r"\\", dynamics_dir):
+		project_dir_exe = project_dir.replace("\\", '/')
 
 # msud@san.rr.com
 # Execute command using stdin/stdout as needed...
 #
 def executeSubprocess(cmd, stdinFilePath = None, stdoutFilePath = None):
-    print "Runnind cmd: %s" % cmd
-    
-    stdinFile = None
-    if stdinFilePath:
-        stdinFile = open(stdinFilePath, "r")
-        
-    stdoutFile = None
-    if stdoutFilePath:
-        stdoutFile = open(stdoutFilePath, "w")
-        
-    returnCode = subprocess.call(cmd, stdin=stdinFile, stdout=stdoutFile, stderr=subprocess.STDOUT, shell=True)
-    
-    if stdinFilePath:
-        stdinFile.close()
-    if stdoutFilePath:
-        stdoutFile.close()
-    
-    return returnCode
+	print "Runnind cmd: %s" % cmd
+	
+	stdinFile = None
+	if stdinFilePath:
+		stdinFile = open(stdinFilePath, "r")
+		
+	stdoutFile = None
+	if stdoutFilePath:
+		stdoutFile = open(stdoutFilePath, "w")
+		
+	returnCode = subprocess.call(cmd, stdin=stdinFile, stdout=stdoutFile, stderr=subprocess.STDOUT, shell=True)
+	
+	if stdinFilePath:
+		stdinFile.close()
+	if stdoutFilePath:
+		stdoutFile.close()
+	
+	return returnCode
    
 # msud@san.rr.com
 # Strat a subprocess and wait for it to complete along with an option to kill it...
 #
 def executeAndMonitorSubprocess(command, stdinFilePath = None, stdoutFilePath = None, logFilePath = None):
-    global stop
-    
-    print "Runnind cmd: %s" % command
-     
-    if logFilePath:
-        if os.path.isfile(logFilePath):
-            logFile = open('log.txt', 'a')
-        else:
-            logFile = open('log.txt', 'w')
-        logFile.write("\n!************************!\n" + command + "\n!************************!\n")
-        logFile.close()
-        
-    stdinFile = None
-    if stdinFilePath:
-        stdinFile = open(stdinFilePath, "r")
-    
-    stdoutFile = None
-    if stdoutFilePath:
-        stdoutFile = open(stdoutFilePath, "w")
-                
-    gmx = subprocess.Popen(command,  stdin=stdinFile, stdout=stdoutFile, stderr=subprocess.STDOUT, shell=True)
-    while gmx.poll() is None:
-        if stop == 1:
-            gmx.kill()
-            break
-        time.sleep(1.0)
-    
-    if stdinFilePath:
-        stdinFile.close()
-    
-    if stdoutFilePath:
-        stdoutFile.close()
-    
-    # Append any stdout to log file...
-    if logFilePath and stdoutFilePath:
-        logFile = open(logFilePath, "a")
-        stdoutFile = open(stdoutFilePath, "r")
-        logFile.write(stdoutFile.read())
-        logFile.close()
-        stdoutFile.close()
+	global stop
+	
+	print "Runnind cmd: %s" % command
+	 
+	if logFilePath:
+		if os.path.isfile(logFilePath):
+			logFile = open('log.txt', 'a')
+		else:
+			logFile = open('log.txt', 'w')
+		logFile.write("\n!************************!\n" + command + "\n!************************!\n")
+		logFile.close()
+		
+	stdinFile = None
+	if stdinFilePath:
+		stdinFile = open(stdinFilePath, "r")
+	
+	stdoutFile = None
+	if stdoutFilePath:
+		stdoutFile = open(stdoutFilePath, "w")
+				
+	gmx = subprocess.Popen(command,  stdin=stdinFile, stdout=stdoutFile, stderr=subprocess.STDOUT, shell=True)
+	while gmx.poll() is None:
+		if stop == 1:
+			gmx.kill()
+			break
+		time.sleep(1.0)
+	
+	if stdinFilePath:
+		stdinFile.close()
+	
+	if stdoutFilePath:
+		stdoutFile.close()
+	
+	# Append any stdout to log file...
+	if logFilePath and stdoutFilePath:
+		logFile = open(logFilePath, "a")
+		stdoutFile = open(stdoutFilePath, "r")
+		logFile.write(stdoutFile.read())
+		logFile.close()
+		stdoutFile.close()
 
 # msud@san.rr.com
 # Change Windows and Mac new line char to UNIX...
 #
 def standardizeNewLineChar(inText):
-    outText = re.sub("(\r\n)|(\r)", "\n", inText)
-    return outText
+	outText = re.sub("(\r\n)|(\r)", "\n", inText)
+	return outText
 
 # msud@san.rr.com
 # Read text lines and standardize new line char...
 #
 def readTextLines(textFilePath):
-    textLines = []
-    
-    ifs = open(textFilePath, "r")
-    for line in iter(ifs.readline, ''):
-        newLine = standardizeNewLineChar(line)
-        textLines.append(newLine)
-    ifs.close()
-    
-    return textLines
+	textLines = []
+	
+	ifs = open(textFilePath, "r")
+	for line in iter(ifs.readline, ''):
+		newLine = standardizeNewLineChar(line)
+		textLines.append(newLine)
+	ifs.close()
+	
+	return textLines
 
 ##This function will initialize all plugin stufs
 def init_function():
@@ -1107,10 +1107,10 @@ def init_function():
 
 	##Gromacs variables
 	global gromacs, gromacs2, explicit
-        
+		
 	gromacs = Gromacs_output()
 	gromacs2 = Gromacs_input()
-        
+		
 	explicit = 1
 
 	em_init_config = """define = -DFLEX_SPC
