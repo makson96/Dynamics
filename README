@@ -1,62 +1,131 @@
-﻿Dynamics PyMOL Plugin Manual
+﻿
+
+
+
+
+
+
+Dynamics PyMOL Plugin Manual
 v. 2.1.0pre
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 University of Gdansk
 Laboratory of Biomolecular Systems Simulation
 Table of Content:
 
+1. Introduction	3
+2. Requirements and Installation	4
+2.1. Requirements	4
+2.2. Installation	4
+2.2.1. Ubuntu	4
+2.2.2. Gentoo	4
+2.2.3. Other Linux distributions and MacOS X	4
+2.2.4. Windows/Cygwin	5
+3. Instruction	6
+3.1. Molecule	6
+3.2. Force Field and Water Model	9
+3.3. Simulation Steps	12
+3.4. Restraints	13
+3.5. Configuration	14
+3.6. Additional Options	15
+3.7. Vectors Options	15
+3.8. Additional Buttons	16
+4. Interpretation Window	18
+4.1. Contact Map	18
+5. Changelog	20
+6. Copyright	21
 1. Introduction
-2. Requirements and Installation
-2.1. Requirements
-2.2. Installation
-3. Instruction
-3.1. Molecule
-3.2. Force Field and Water Model
-3.3. Simulation Steps
-3.4. Restraints
-3.5. Configuration
-3.6. Vectors Options
-3.7. Additional Buttons
-4. Interpretation Window
-4.1. Contact Map
-5. Changelog
-6. Copyright
 
-1. Introduction
-
-PyMOL is powerful and easy to use open source tool for viewing and manipulating molecules. Thanks to its API capabilities it can be extended by developing third party plugins in high level programming language Python. This project is focused on developing plugin for PyMOL, which add molecular dynamics simulation feature. It is meant to be easy to use. The plugin uses GROMACS tools as a back-end. Project is developed as an open source and as such create full open source stack together with PyMOL and GROMACS. Because GROMACS can compile easily only on Unix like systems, the plugin also keep compatibility only with those. No Windows port is expected. Plugin is developed and maintained by Laboratory of Biomolecular Systems Simulation at University of Gdansk.
-
+PyMOL is powerful and easy to use open source tool for viewing and manipulating molecules. Thanks to its API capabilities it can be extended by developing third party plugins in high level programming language Python. This project is focused on developing plugin for PyMOL, which add molecular dynamics simulation feature. It is meant to be easy to use. The plugin uses GROMACS tools as a back-end. Project is developed as an open source and as such create full open source stack together with PyMOL and GROMACS.
+Plugin is developed and maintained by Laboratory of Biomolecular Systems Simulation at University of Gdansk.
 2. Requirements and Installation
 
 2.1. Requirements
 
-The plugin should work on all variety of Unix like systems. Most of the tests are performed on Ubuntu Linux, which is treated as a reference platform. To work properly plugin require Bash, Python with TkInter, PyMOL and GROMACS. Prody is recommended for advanced featurs.
-	The plugin is mostly tested on Ubuntu 14.04 with PyMOL 1.7 and GROMACS 4.6 and 5.0.
+The plugin should work on Linux, Windows/Cygwin and MacOS X.
+Linux and MacOS X dependencies:
+Bash
+Python2 with TkInter
+PyMOL
+GROMACS 5.x or newer
+Windows/Cygwin dependencies:
+Cygwin
+PyMOL
+GROMACS 5.x or newer
+
+Prody is recommended for advanced features. Plugin can take use of PLUMED compiled into GROMACS.
 
 2.2. Installation
 
-	There are two ways to install the plugin. If you are Ubuntu user, then you can just add repository and install package:
+	The plugin can be installed in the standard PyMOL way, but optimal method depends on the platform.
+
+2.2.1. Ubuntu
+
+If you are Ubuntu user, then you can just add repository and install package:
 	sudo add-apt-repository ppa:tomaszm/dynamics
 	sudo apt-get update
 	sudo apt-get install pymol-plugin-dynamics
-All required libraries will be downloaded as dependencies. Supported versions of Ubuntu are the latest stable and the latest LTS.
-	The second way for all other platforms or Ubuntu as well is to install the plugin directly from its GitHub repository:
+All required libraries will be downloaded as dependencies. Supported versions of Ubuntu are 14.04 and 16.04.
+
+2.2.2. Gentoo
+
+If you are Gentoo user, then you can use ebuild system. To make the installation use (as root):
+	emerge --ask sci-chemistry/pymol-plugins-dynamics
+
+2.2.3. Other Linux distributions and MacOS X
+
+	All other Linux distributions as well as MacOS X are supported by standard PyMOL plugin install interface. Download plugin directly from its GitHub repository:
 https://github.com/tomaszmakarewicz/Dynamics
 You can download the latest master snapshot by command:
 	git clone git://github.com/tomaszmakarewicz/Dynamics.git
 Then run PyMOL as a root. On the top Menu choose Plugin->Manage Plugins->Install... Then choose pymol_plugin_dynamics.py file. After installation restart PyMOL with normal user privilege.
 
+2.2.4. Windows/Cygwin
+
+Download and install the latest version of Cygwin including appropriate code development packages.
+Download, compile, and install the latest version of GROMACS 2016.3 under Cygwin. Follow the standard compilation, installation and testing instructions to build, compile and install GROMACS 2016.3 under Cygwin. For example:
+% cd gromacs-2016.3
+% mkdir build
+% cmake .. -DBUILD_SHARED_LIBS=off -DGMX_BUILD_OWN_FFTW=ON -DCMAKE_INSTALL_PREFIX=/cygdrive/c/<YOUR_GROMACS_ROOT>
+% make >& make.log
+% make install >& make.install.log
+Test GROMACS from Cywin command line.
+Download and install 64 bit PyMOL 1.8.2.0, which comes with Python 2.7.9.
+Test PyMOL.
+Update PATH environment variable on Windows to include the following bin directories corresponding to GROMACS and Cygwin:
+C:\<YOUR_GROMACS_ROOT>\bin
+C:\<YOUR_CYGWIN_PATH>\bin
+Install the GROMACS plugin following standard PyMOL instructions. Download latest plugin version from link: https://github.com/tomaszmakarewicz/Dynamics/archive/master.zip and unpack it. Run PyMOL. On the top Menu choose Plugin->Manage Plugins->Install... Then choose pymol_plugin_dynamics.py file. After installation restart PyMOL.
 3. Instruction
 
 	Dynamics PyMOL plugin is meant to be as easy to use as it is possible. As an input it takes PDB molecule model. As an output it creates PDB multimodel molecule, which could be easily stored and viewed. After starting PyMOL load PDB file for which molecular dynamics simulation needs to be performed. If you want some specific atoms to restraints just select them on displayed molecule model. Now all you need to do is to click on top Menu->Plugin->dynamics and plugin menu should open. All available options are described in this chapter.
+
+
 
 3.1. Molecule
 
 	There are three columns in the plugin menu. The left one is used to choose a molecule for dynamics simulation. If you have loaded any molecule in PyMOL the list of those should appear. Chose one, for which you want perform simulation.
 
+
+
 	If you haven't loaded any molecule in PyMOL. The Browse button should appear. You can use it to select PDB file for molecular dynamics simulation.
 
+
 	If you have earlier performed any simulations using this plugin, the additional list should appear. It will allow you to select any molecules from previous projects.
+
 
 The last list in this column determine which part of molecule should be displayed as a final result. It does not affect any calculations. The default selection is whole Protein, as it is suggested by GROMACS.
 
@@ -64,37 +133,60 @@ The last list in this column determine which part of molecule should be displaye
 
 	The middle column is focused on force fields and water models for molecular dynamics simulation. The first radio buttons list allows you to choose force field provided by GROMACS tool. Note that not all force fields can perform full molecular dynamics simulation for given molecule.
 
+
+
 	Below force fields there is a label with default water model for chosen force field. You can change it by clicking Choose... button. Note that every force field may have different available list of water models. What is more, you can choose her to use implicit solvent instead of explicit. In this case, choosing water model, configuring water box and few steps in Simulation Steps will be blocked, as they have no use for implicit solvent.
 
+
+
 	Next to the Choose... button there is a Configure button, which allows you to customize water box details. Here you can change shape of the box, water density which is given in g/L unit. You can also determine here the size of the water box, which is given in multiple of molecule size.
+
+
+	The third button Hydrogen Mass allows configuring hydrogen atoms used in the simulation.
+
+
 
 3.3. Simulation Steps
 
 	The right column of plugin menu is devoted for advanced configuration. The first configuration option is Simulation Steps. Not all molecular dynamics calculations need to be done at once. To configure this aspect you can click Configure button below the label Simulation Steps. You will then get the list of available steps. Select those, which you want to do. After calculation you can save results and finish work on other machine or resume work on the same computer later. To resume work in the main menu select molecule in left column from list Previous Projects and check box Resume in the Simulation Steps. You can also select here if you want to do restraints or not and chose if you want to use x2top instead of pdb2gmx for creating topology file.
 
+
 3.4. Restraints
 
 	If the checkbox for Restraints (optional) in Simulation Steps is checked, the Configure button below Restraints (Select Atoms) will become active. After clicking button you will get the list of proposed parts of molecules to be restraints. Every list of the atoms contain atoms IDs, which are assigned to them in PDB file. The last options show atoms selected in PyMOL. You can choose one of the available list and modify which atoms should be restrained. Those atoms will get big energy penalty for every move while performing molecular dynamics simulation, so they will stay fixed and only not selected atoms will get proper molecular dynamics simulation.
+
+
+
 
 3.5. Configuration
 
 	There are three more configuration options in the right column. The first configuration option is for Energy Minimization. This step is performed after adding molecule to water box. Some atoms in that system may collide. The purpose is to move water atoms a bit, so dynamics simulation will not start in a very inconvenient energy state.
 	The second option is for Progression Restrained MD. This step keep molecule fix, while allow water molecules to moves. It will make water to fill any holes created by Energy Minimization.
 	The third option is for final Molecular Dynamics Simulation. You can also configure here constraints (Options for bonds).
-	On the bottom of the column there is Dynamics Simulation Time entry. Changing it will alter Molecular Dynamics Simulation options, to adjust it to given time.
+
+
 	To get exact info about available options look at GROMACS configuration MDP files options:
 http://manual.gromacs.org/current/online/mdp_opt.html
 	If you want to use your own MDP files instead of available configuration options just paste your files to ~/.dynamics/ directory. File names are respectively em.mdp, pr.mdp, md.mdp.
 
-3.6. Vectors Options
+3.6. Additional Options
+
+	The Adding ions & Neutralize button will provide options for ions handling in the project.
+	On the bottom of the column there is Dynamics Simulation Time entry. Changing it will alter Molecular Dynamics Simulation options, to adjust it to given time.
+
+3.7. Vectors Options
 
 	Under the Vectors Options label, there is Configure button, which can be pressed if Prody is installed. Here you can choose what type of vector model do you want and if you what Contact Map (and Cross-correlation) to be calculated.
 
-3.7. Additional buttons
+
+
+3.8. Additional buttons
 
 	In the main menu on the bottom there are six buttons. From the left. Quit button will exit the plugin. Clean button will remove all temporary plugin files including previous project files. Help button will display brief help information. Save button will allow you to save your molecule with all settings and any previous work as at tar.bz2 archive. Load button will allow you to load previously saved tar.bz2 archive. OK button will take you to next window, in which you will perform molecular dynamics simulation.
 
+
 In the next menu there are 5 buttons. From the left. EXIT button will quit plugin. SAVE button will allow you to save current project with its progress and settings as a tar.bz2 archive. STOP button will suspend calculations, while START button will resume or start counting. LOG button will display GROMACS output, which may be very useful if the calculation fails. Note that after starting calculations the GROMACS installation will perform the simulation. Status bar will show you the progress. If GROMACS will fail, the additional windows will pop up and show GROMACS error status. Full log of GROMACS work can be found in ~/.dynamics/molecule_name/log.txt .
+
 
 4. Interpretation Window
 
@@ -107,13 +199,17 @@ In the next menu there are 5 buttons. From the left. EXIT button will quit plugi
 5. Changelog
 
 What's new in 2.1:
-
+Support for Microsoft Windows
+Genion support
+Hydrogen options
+Support for GROMACS 2016.x
+Remove support for GROMACS 4.x
+Support for GROMACS compiled with mpi and double precision
 
 Known issues:
 Gausian network model will most certainly fail because of wrong nmd files generetad by ProDy.
 There are some differences between nmd files displayed by this plugin and Normal Mode Wizard.
-ProDy can sometimes make this plugin (and PyMOL) to crush.
-
+ProDy can sometimes make this plugin (and PyMOL) to crash.
 6. Copyright
 
 	This software (including its Debian packaging) is available to you under the terms of the GPL-3, see "/usr/share/common-licenses/GPL-3".
@@ -122,3 +218,4 @@ Contributors:
 - Tomasz Makarewicz (btchtm@ug.edu.pl)
 - Ajit B. Datta (ajit@jcbose.ac.in)
 - Sara Boch Kminikowska
+- Manish Sud (msud@san.rr.com; URL: www.MayaChemTools.org)
