@@ -54,25 +54,32 @@ class Gromacs_output:
 		self.version =  gmxVersion
 		self.command =  gmxExe
 
+		# Track current directiry and switch to dynamics_dir before invoking gmx...
+		current_dir = os.getcwd()
+		os.chdir(dynamics_dir)
+		
 		self.init2()
 		self.detect_plumed()
+		
+		# Switch back to current directory...
+		os.chdir(current_dir)
 				
 	def init2(self):
 		print "Reading available force fields and water models"
 		
-		fo = open(dynamics_dir +"test_gromacs.pdb", "wb")
+		fo = open("test_gromacs.pdb", "wb")
 		fo.write("ATOM      1  N   LYS     1      24.966  -0.646  22.314  1.00 32.74      1SRN  99\n");
 		fo.close()
 		
-		gmxStdinFilePath = dynamics_dir + "gromacs_stdin.txt"
+		gmxStdinFilePath = "gromacs_stdin.txt"
 		fo = open(gmxStdinFilePath, "w")
 		fo.write( "1\n");
 		fo.write( "1");
 		fo.close()
 		
-		gmxStdoutFilePath = dynamics_dir + "test_gromacs.txt"
+		gmxStdoutFilePath = "test_gromacs.txt"
 				
-		cmd = self.command + ' pdb2gmx -f \'' + dynamics_dir_exe + 'test_gromacs.pdb\' -o \'' + dynamics_dir_exe + 'test_gromacs.gro\' -p \'' + dynamics_dir_exe + 'test_gromacs.top\''
+		cmd = self.command + " pdb2gmx -f test_gromacs.pdb -o test_gromacs.gro -p test_gromacs.top"
 		executeSubprocess(cmd,  gmxStdinFilePath, gmxStdoutFilePath)
 		lista_gromacs = readTextLines(gmxStdoutFilePath)
 		
@@ -94,34 +101,18 @@ class Gromacs_output:
 		self.force_list = force_list2
 				
 		#Reading available water models
-		water_start_line = 0
-		while lista_gromacs[water_start_line][0:7] != "Opening":
-			water_start_line = water_start_line + 1
-		water_start_line = water_start_line + 1
-		water_end_line = water_start_line + 1
-		while (lista_gromacs[water_end_line][0:7] != "Opening") and (lista_gromacs[water_end_line][0] != "\n"):
-			water_end_line = water_end_line + 1
-			if re.search("None", lista_gromacs[water_end_line], re.I): break
-
-		water_list = lista_gromacs[water_start_line:water_end_line]
-		water_list2 = []
-		number = 1
-		for water in water_list:
-			water_list2.append([number, water[:-1]])
-			number = number + 1
-
-		self.water_list = water_list2
+		self.water_list = getWaterModelsInfo(lista_gromacs)
 		
 		print "Reading available groups"
 		
-		gmxStdinFilePath = dynamics_dir + "gromacs_stdin.txt"
+		gmxStdinFilePath = "gromacs_stdin.txt"
 		fo = open(gmxStdinFilePath, "w")
 		fo.write( "1");
 		fo.close()
 		
-		gmxStdoutFilePath = dynamics_dir + "test_gromacs.txt"
+		gmxStdoutFilePath = "test_gromacs.txt"
 				
-		cmd = self.command + ' trjconv -f \'' + dynamics_dir_exe + 'test_gromacs.pdb\' -s \'' + dynamics_dir_exe + 'test_gromacs.pdb\' -o \'' + dynamics_dir_exe + 'test_gromacs2.pdb\''
+		cmd = self.command + " trjconv -f  test_gromacs.pdb -s test_gromacs.pdb -o test_gromacs2.pdb"
 		executeSubprocess(cmd,  gmxStdinFilePath, gmxStdoutFilePath)
 		
 		group_test_list = readTextLines(gmxStdoutFilePath)
@@ -144,51 +135,40 @@ class Gromacs_output:
 				group_list2.append([number, group2[1]])
 				number = number + 1
 		
-		self.force_list = force_list2
-		self.water_list = water_list2
 		self.group_list = group_list2
 	
 	##This function will update water list if force field is changed.
 	def water_update(self, force_number):
+		# Track current directiry and switch to dynamics_dir before invoking gmx...
+		current_dir = os.getcwd()
+		os.chdir(dynamics_dir)
+		
 		print "Updating available water models"
-		gmxStdinFilePath = dynamics_dir + "gromacs_stdin.txt"
+		gmxStdinFilePath = "gromacs_stdin.txt"
 		fo = open(gmxStdinFilePath, "w")
 		fo.write( "%d\n" % force_number);
 		fo.write( "1");
 		fo.close()
 		
-		gmxStdoutFilePath = dynamics_dir + "test_gromacs.txt"
+		gmxStdoutFilePath = "test_gromacs.txt"
 				
-		cmd = self.command + ' pdb2gmx -f \'' + dynamics_dir_exe + 'test_gromacs.pdb\' -o \'' + dynamics_dir_exe + 'test_gromacs.gro\' -p \'' + dynamics_dir_exe + 'test_gromacs.top\''
+		cmd = self.command + " pdb2gmx -f  test_gromacs.pdb -o test_gromacs.gro -p test_gromacs.top"
 		executeSubprocess(cmd,  gmxStdinFilePath, gmxStdoutFilePath)
 		
 		lista_gromacs = readTextLines(gmxStdoutFilePath)
-
-		water_start_line = 0
-		while lista_gromacs[water_start_line][0:7] != "Opening":
-			water_start_line = water_start_line + 1
-		water_start_line = water_start_line + 1
-		water_end_line = water_start_line + 1
-		while (lista_gromacs[water_end_line][0:7] != "Opening") and (lista_gromacs[water_end_line][0] != "\n"):
-			water_end_line = water_end_line + 1
-			if re.search("None", lista_gromacs[water_end_line], re.I): break
-						
-		water_list = lista_gromacs[water_start_line:water_end_line]
-		water_list2 = []
-		number = 1
-		for water in water_list:
-			water_list2.append([number, water[:-1]])
-			number = number + 1
-			
-		self.water_list = water_list2
+		self.water_list = getWaterModelsInfo(lista_gromacs)
+		
+		# Switch back to current directory...
+		os.chdir(current_dir)
+		
 		save_options()
-		return water_list2
+		return self.water_list
 	
 	##This function will determine if PLUMED is compiled into GROMACS
 	def detect_plumed(self):
 		print "Searching for PLUMED integrated with GROMACS"
-		gmxStdoutFilePath = dynamics_dir + "test_plumed.txt"
-		cmd = self.command + ' mdrun -plumed'
+		gmxStdoutFilePath = "test_plumed.txt"
+		cmd = self.command + " mdrun -plumed"
 		executeSubprocess(cmd,  None, gmxStdoutFilePath)
 		
 		plumed_list = readTextLines(gmxStdoutFilePath)
@@ -917,54 +897,38 @@ def getGromacsExeInfo():
 
 # Setup directories for running gmx...
 def setGromacsDynamicsAndProjectDirs():
-	global project_name, dynamics_dir, project_dir, dynamics_dir_exe, project_dir_exe
+	global project_name, dynamics_dir, project_dir
 	
 	project_name = "nothing"
 	
 	homeDir = os.getenv("HOME")
 	
-	gmxCurDirPath = os.path.abspath(homeDir)
-	dynamics_dir = os.path.join(gmxCurDirPath, '.dynamics', '')
+	gmxHomeDirPath = os.path.abspath(homeDir)
+	dynamics_dir = os.path.join(gmxHomeDirPath, '.dynamics', '')
 	project_dir = os.path.join(dynamics_dir, project_name, '')
-
-	dynamics_dir_exe = dynamics_dir
-	project_dir_exe = project_dir
-
-# Update directories for running gmx on cygwin...
-def updateGromacsDynamicsAndProjectDirs():
-	global gmxExe, gmxVersion, gmxBuildArch, gmxOnCygwin
-	global project_name, dynamics_dir, project_dir, dynamics_dir_exe, project_dir_exe
-	
-	dynamics_dir_exe = dynamics_dir
-	project_dir_exe = project_dir
-	
-	if  gmxOnCygwin and re.search(r"\\", dynamics_dir):
-		dynamics_dir_exe = dynamics_dir.replace("\\", '/')
-		project_dir_exe = project_dir.replace("\\", '/')
 
 # Setup project directory for running gmx...
 def setGromacsProjectDir():
-	global gmxExe, gmxVersion, gmxBuildArch, gmxOnCygwin
-	global project_name, project_dir, project_dir_exe
-
+	global project_name, project_dir
 	project_dir = os.path.join(dynamics_dir, project_name, '')
-	
-	if  gmxOnCygwin and re.search(r"\\", dynamics_dir):
-		project_dir_exe = project_dir.replace("\\", '/')
 
 # Execute command using stdin/stdout as needed...
-def executeSubprocess(cmd, stdinFilePath = None, stdoutFilePath = None):
-	print "Runnind cmd: %s" % cmd
-	
+def executeSubprocess(command, stdinFilePath = None, stdoutFilePath = None):
 	stdinFile = None
+	stdinMsg = "None"
 	if stdinFilePath:
 		stdinFile = open(stdinFilePath, "r")
+		stdinMsg = stdinFilePath
 		
 	stdoutFile = None
+	stdoutMsg = "None"
 	if stdoutFilePath:
 		stdoutFile = open(stdoutFilePath, "w")
+		stdoutMsg = stdoutFilePath
 		
-	returnCode = subprocess.call(cmd, stdin=stdinFile, stdout=stdoutFile, stderr=subprocess.STDOUT, shell=True)
+	print "Running command: " + command + "; STDIN: " + stdinMsg + "; STDOUT: " + stdoutMsg
+        
+	returnCode = subprocess.call(command, stdin=stdinFile, stdout=stdoutFile, stderr=subprocess.STDOUT, shell=True)
 	
 	if stdinFilePath:
 		stdinFile.close()
@@ -977,24 +941,28 @@ def executeSubprocess(cmd, stdinFilePath = None, stdoutFilePath = None):
 def executeAndMonitorSubprocess(command, stdinFilePath = None, stdoutFilePath = None, logFilePath = None):
 	global stop
 	
-	print "Runnind cmd: %s" % command
-	 
 	if logFilePath:
 		if os.path.isfile(logFilePath):
-			logFile = open('log.txt', 'a')
+			logFile = open(logFilePath, 'a')
 		else:
-			logFile = open('log.txt', 'w')
+			logFile = open(logFilePath, 'w')
 		logFile.write("\n!************************!\n" + command + "\n!************************!\n")
 		logFile.close()
 		
 	stdinFile = None
+	stdinMsg = "None"
 	if stdinFilePath:
 		stdinFile = open(stdinFilePath, "r")
+		stdinMsg = stdinFilePath
 	
 	stdoutFile = None
+	stdoutMsg = "None"
 	if stdoutFilePath:
 		stdoutFile = open(stdoutFilePath, "w")
+		stdoutMsg = stdoutFilePath
 				
+	print "Running command: " + command + "; STDIN: " + stdinMsg + "; STDOUT: " + stdoutMsg
+        
 	gmx = subprocess.Popen(command,  stdin=stdinFile, stdout=stdoutFile, stderr=subprocess.STDOUT, shell=True)
 	while gmx.poll() is None:
 		if stop == 1:
@@ -1033,11 +1001,32 @@ def readTextLines(textFilePath):
 	
 	return textLines
 
+# Collect water modes information...
+def getWaterModelsInfo(gmxOutputLines):
+	startLine = 0
+	while gmxOutputLines[startLine][0:7] != "Opening":
+		startLine = startLine + 1
+	
+	startLine = startLine + 1
+	endLine = startLine
+	
+	while (gmxOutputLines[endLine][0:7] != "Opening") and (gmxOutputLines[endLine][0] != "\n"):
+		endLine = endLine + 1
+	
+	watersInfo = gmxOutputLines[startLine:endLine]
+	watersInfo2 = []
+	number = 1
+	for water in watersInfo:
+		watersInfo2.append([number, water[:-1]])
+		number = number + 1
+	
+	return watersInfo2
+
 ##This function will initialize all plugin stufs
 def init_function():
 	##Global variables
 	global stop, status, error, em_init_config, pr_init_config, md_init_config, project_name, dynamics_dir, project_dir
-	global gmxExe, gmxVersion, gmxBuildArch, gmxOnCygwin, dynamics_dir_exe, project_dir_exe
+	global gmxExe, gmxVersion, gmxBuildArch, gmxOnCygwin
 
 	stop = 1
 	status = ["ok", ""]
@@ -1073,8 +1062,6 @@ def init_function():
 		return
 	else:
 		print "Found GROMACS VERSION " + gmxVersion
-
-	updateGromacsDynamicsAndProjectDirs()
 
 	##Gromacs variables
 	global gromacs, gromacs2, explicit
@@ -1586,6 +1573,8 @@ class CalculationWindow:
 			root1.mainloop()
 		if status == "Finished!":
 			root.destroy()
+			#Show interpretation window after successful completion of the calculations...
+			showInterpretationWindow()
 		else:
 			root.after(100, self.bar_display, root)
 	
@@ -1819,6 +1808,14 @@ class InterpretationWindow:
 		if self.pause != 1:
 			self.tentry_value.set(time)
 		root.after(100, self.display_time, root)
+
+## Show interpretation window...
+def showInterpretationWindow():
+	interpretation = InterpretationWindow()
+	try:
+		interpretation()
+	except AttributeError:
+		pass
 
 ##Gather all water options windows in one class
 class WaterWindows:
@@ -2745,9 +2742,6 @@ def dynamics():
 		progress.to_do[8] = 0
 		save_options()
 	
-	return
-
-
 	##Calculating vectors
 	if status[0] == "ok" and stop == 0 and progress.to_do[9] == 1 and prody_true == 1:
 		vectors_prody.prody()
@@ -2761,13 +2755,6 @@ def dynamics():
 		if stop == 0:
 			error_message()
 	
-	##Showing interpretation window
-	if status[0] == "ok" and stop == 0 and progress.status[8] == 1:
-		interpretation = InterpretationWindow()
-		try:
-			interpretation()
-		except AttributeError:
-			pass
 
 ##Saving configuration files
 def mdp_files():
