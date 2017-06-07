@@ -2785,7 +2785,7 @@ def save_file(destination_path):
 
 ##Load tar.bz file
 def load_file(file_path):
-	print "Loading"
+	print "Loading file: " + file_path
 	import tarfile
 	tar = tarfile.open(file_path, "r:bz2")
 	names = tar.getnames()
@@ -2821,12 +2821,12 @@ def load_options():
 	pickle_file = file(project_dir +"options.pickle")
 	options = pickle.load(pickle_file)
 	
+	print "Loading project " + project_name
 	print "Project was created for Dynamics PyMOL Plugin"+options[0]+" and GROMACS "+options[1]
 	if gromacs.version != options[1]:
 		print "GROMACS versions is different for loaded file."
 	
-	if options[0][1:4] == "2.1":
-		print "2.1 compatibility layer"
+	if options[0][1:4] == "2.2":
 		gromacs2 = options[2]
 		em_file = options[3]
 		pr_file = options[4]
@@ -2835,8 +2835,8 @@ def load_options():
 		explicit = options[7]
 		if prody_true == 1 and options[8] != 0:
 			vectors_prody = options[8]
-	elif options[0][1:4] == "2.0":
-		print "2.0 compatibility layer"
+	elif options[0][1:4] == "2.1":
+		print "plugin 2.1 compatibility layer"
 		gromacs2 = options[2]
 		em_file = options[3]
 		pr_file = options[4]
@@ -2845,6 +2845,8 @@ def load_options():
 		explicit = options[7]
 		if prody_true == 1 and options[8] != 0:
 			vectors_prody = options[8]
+	else:
+		print "Warning. Importing projects from plugin version " + options[0] " is not supported. Aboring import."
 
 ##Text for "Help"
 def help_option():
