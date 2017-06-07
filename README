@@ -198,13 +198,8 @@ In the next menu there are 5 buttons. From the left. EXIT button will quit plugi
 
 5. Changelog
 
-What's new in 2.1:
-Support for Microsoft Windows
-Genion support
-Hydrogen options
-Support for GROMACS 2016.x
-Remove support for GROMACS 4.x
-Support for GROMACS compiled with mpi and double precision
+What's new in 2.2:
+Remove support for GROMACS 5.0
 
 Known issues:
 Gausian network model will most certainly fail because of wrong nmd files generetad by ProDy.
