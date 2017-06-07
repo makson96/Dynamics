@@ -776,7 +776,6 @@ class Mdp_config:
 			for option in list2:
 				if option == ["ns_type", "simple"]:
 					list2[index] = ["ns_type", "grid"]
-					print 'aaa'
 				index = index + 1				
 		self.options = list2			
 	
