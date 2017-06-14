@@ -1414,8 +1414,8 @@ def rootWindow():
 	frame2.pack(side=TOP)
 	
 	#Additional Buttons
-	quit_button = Button(frame2, text = "Quit", command=root.destroy)
-	quit_button.pack(side=LEFT)
+	exit_button = Button(frame2, text = "Exit", command=root.destroy)
+	exit_button.pack(side=LEFT)
 	
 	clean_button = Button(frame2, text = "Clean", command=cleanMessage)
 	clean_button.pack(side=LEFT)
@@ -1445,7 +1445,7 @@ def rootWindow():
 	balloon.bind(pr_button2, "Configure Position Restrained MD parameters")
 	balloon.bind(md_button2, "Configure Molecular Dynamics Simulation parameters")
 	balloon.bind(check1_button, "Selecet which atoms should be restrainted (unlock in Simulation Steps)")
-	balloon.bind(quit_button, "Exit the Plugin")
+	balloon.bind(exit_button, "Exit the Plugin")
 	balloon.bind(clean_button, "Remove all temporary files (including previous projects)")
 	balloon.bind(help_button, "Display short help")
 	balloon.bind(save_button, "Save current project to tar.bz2 archive")
