@@ -215,7 +215,8 @@ class Gromacs_input:
 	force = 1
 	water = 1
 	group = 1
-	box_type = "triclinic"	
+	box_type = "triclinic"
+	explicit = 1
 	#variable to choose heavy hydrogen
 	hydro = "noheavyh"
 	box_distance = "0.8"
@@ -261,6 +262,8 @@ class Gromacs_input:
 				self.positive_ion = value
 			elif key == "negative_ion":
 				self.negative_ion = value
+			elif key == "explicit":
+				self.explicit = value
 		save_options()
 		print "gromacs updated"
 
@@ -1070,13 +1073,11 @@ def init_function():
 		print "Found GROMACS VERSION " + gmxVersion
 
 	##Gromacs variables
-	global gromacs, gromacs2, explicit
+	global gromacs, gromacs2
 		
 	gromacs = Gromacs_output()
 	gromacs2 = Gromacs_input()
-		
-	explicit = 1
-
+	
 	em_init_config = """define = -DFLEX_SPC
 constraints = none
 integrator = steep
@@ -1835,7 +1836,7 @@ class WaterWindows:
 		root.wm_title("Water Model")
 		
 		v1 = IntVar(root)
-		v1.set(explicit)
+		v1.set(gromacs2.explicit)
 		
 		v2 = IntVar(root)
 		v2.set(0)
@@ -1868,7 +1869,7 @@ class WaterWindows:
 		radio_button3_3.pack(side=TOP, anchor=W)
 		
 		self.implicit_buttons = [radio_button3_1, radio_button3_2, radio_button3_3]
-		self.change_e(explicit, v4_water, water_v, v2)
+		self.change_e(gromacs2.explicit, v4_water, water_v, v2)
 
 		ok_button = Button(root, text = "OK", command=root.destroy)
 		ok_button.pack(side=TOP)
@@ -1880,17 +1881,16 @@ class WaterWindows:
 		else:
 			gromacs2.force = force
 		gromacs.water_update(force)
-		if explicit == 1:
+		if gromacs2.explicit == 1:
 			water_v.set(gromacs.water_list[v4_water.get()-1][1])
-		elif explicit == 0:
+		elif gromacs2.explicit == 0:
 			water_v.set("Implicit Solvent")
 		gromacs2.water = v4_water.get()
 	
 	##This function changes explicit to implicit and vice versa water model
 	def change_e(self, value, v4_water, water_v, v2):
-		global explicit
-		explicit = value
-		if explicit == 1:
+		gromacs2.update({"explicit" : value})
+		if gromacs2.explicit == 1:
 			for button in self.implicit_buttons:
 				button.configure(state=DISABLED)
 			for button in self.explicit_buttons:
@@ -1952,7 +1952,7 @@ class WaterWindows:
 					elif (parameter[0] == "coulombtype") or (parameter[0] == ";coulombtype"):
 						md_file.update(parameter_nr, "PME")
 					parameter_nr = parameter_nr + 1
-		elif explicit == 0:
+		elif gromacs2.explicit == 0:
 			for button in self.implicit_buttons:
 				button.configure(state=ACTIVE)
 			for button in self.explicit_buttons:
@@ -2108,14 +2108,11 @@ class WaterWindows:
 		radio_button.pack(side=TOP, anchor=W)
 		radio_button = Radiobutton(root, text="Heavy Hydrogen (4amu) ", value="heavyh", variable=v1, command = lambda : gromacs2.update({"hydro" : v1.get()}))
 		radio_button.pack(side=TOP, anchor=W)
-		ok_button = Button(root, text = "OK", command=lambda : gromacs2.update({"":""}, root))
+		ok_button = Button(root, text = "OK", command=root.destroy)
 		ok_button.pack(side=TOP)
 
 # Options for the genion class all the options
 class GenionWindow:
-	
-#	implicit_buttons = []
-#	explicit_buttons = []
 	
 	##Genion box configuration window
 	def window(self, master):
@@ -2528,7 +2525,7 @@ def steps_configure(master, restraints_button):
 			c10.configure(state=DISABLED)
 			progress.to_do_update(9, 0)
 		
-		if explicit !=1:
+		if gromacs2.explicit !=1:
 			check_var3.set(0)
 			c3.configure(state=DISABLED)
 			progress.to_do_update(2, 0)
@@ -2816,13 +2813,13 @@ def save_options():
 	if os.path.isdir(project_dir) == False:
 		os.makedirs(project_dir)
 	destination_option = file(project_dir + "options.pickle", "w")
-	pickle_list = [plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress, explicit, vectors_prody]
+	pickle_list = [plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress, vectors_prody]
 	pickle.dump(pickle_list, destination_option)
 	del destination_option
 
 ##Load all settings from options.pickle file	
 def load_options():
-	global gromacs2, em_file, pr_file, md_file, progress, explicit, vectors_prody
+	global gromacs2, em_file, pr_file, md_file, progress, vectors_prody
 	
 	pickle_file = file(project_dir +"options.pickle")
 	options = pickle.load(pickle_file)
@@ -2835,14 +2832,13 @@ def load_options():
 	if options[0][1:4] == "2.2":
 		gromacs2.update({"force" : options[2].force, "water" : options[2].water, "group" : options[2].group, "box_type"  : options[2].box_type, "hydro" : options[2].hydro,
 		"box_distance"  : options[2].box_distance, "box_density" : options[2].box_density, "restraints_nr" : options[2].restraints_nr, "neutrality" : options[2].neutrality,
-		"salt_conc" : options[2].salt_conc, "positive_ion" : options[2].positive_ion, "negative_ion" : options[2].negative_ion})
+		"salt_conc" : options[2].salt_conc, "positive_ion" : options[2].positive_ion, "negative_ion" : options[2].negative_ion, "explicit" : options[2].explicit})
 		em_file = options[3]
 		pr_file = options[4]
 		md_file = options[5]
 		progress = options[6]
-		explicit = options[7]
-		if prody_true == 1 and options[8] != 0:
-			vectors_prody = options[8]
+		if prody_true == 1 and options[7] != 0:
+			vectors_prody = options[7]
 	elif options[0][1:4] == "2.1":
 		print "plugin 2.1 compatibility layer"
 		gromacs2.update({"force" : options[2].force, "water" : options[2].water, "group" : options[2].group, "box_type"  : options[2].box_type, "hydro" : options[2].hydro,
@@ -2852,7 +2848,7 @@ def load_options():
 		pr_file = options[4]
 		md_file = options[5]
 		progress = options[6]
-		explicit = options[7]
+		gromacs2.update({"explicit" : options[7]})
 		if prody_true == 1 and options[8] != 0:
 			vectors_prody = options[8]
 	else:
