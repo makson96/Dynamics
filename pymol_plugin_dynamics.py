@@ -11,7 +11,7 @@
 ##
 
 ##Plugin Version
-plugin_ver = " 2.1.0pre"
+plugin_ver = " 2.1.0"
 
 ##--Import libraries--
 ##Import nativ python libraries

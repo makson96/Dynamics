@@ -1,5 +1,10 @@
-pymol-plugin-dynamics (2.1.0~pre-xenial1) xenial; urgency=low
+pymol-plugin-dynamics (2.1.0-xenial1) xenial; urgency=low
 
-  * New upstream release
+  * Support for Microsoft Windows
+  * Genion support
+  * Hydrogen options
+  * Support for GROMACS 2016.x
+  * Remove support for GROMACS 4.x
+  * Support for GROMACS compiled with mpi and double precision
 
- -- Tomasz Makarewicz <btchtm@ug.edu.pl>  Wed, 29 Mar 2017 12:17:51 +0200
+ -- Tomasz Makarewicz <btchtm@ug.edu.pl>  Wed, 14 Jun 2017 11:45:14 +0200
