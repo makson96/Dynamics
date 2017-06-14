@@ -2833,7 +2833,9 @@ def load_options():
 		print "GROMACS versions is different for loaded file."
 	
 	if options[0][1:4] == "2.2":
-		gromacs2 = options[2]
+		gromacs2.update({"force" : options[2].force, "water" : options[2].water, "group" : options[2].group, "box_type"  : options[2].box_type, "hydro" : options[2].hydro,
+		"box_distance"  : options[2].box_distance, "box_density" : options[2].box_density, "restraints_nr" : options[2].restraints_nr, "neutrality" : options[2].neutrality,
+		"salt_conc" : options[2].salt_conc, "positive_ion" : options[2].positive_ion, "negative_ion" : options[2].negative_ion})
 		em_file = options[3]
 		pr_file = options[4]
 		md_file = options[5]
@@ -2843,7 +2845,9 @@ def load_options():
 			vectors_prody = options[8]
 	elif options[0][1:4] == "2.1":
 		print "plugin 2.1 compatibility layer"
-		gromacs2 = options[2]
+		gromacs2.update({"force" : options[2].force, "water" : options[2].water, "group" : options[2].group, "box_type"  : options[2].box_type, "hydro" : options[2].hydro,
+		"box_distance"  : options[2].box_distance, "box_density" : options[2].box_density, "restraints_nr" : options[2].restraints_nr, "neutrality" : options[2].neutrality,
+		"salt_conc" : options[2].salt_conc, "positive_ion" : options[2].positive_ion, "negative_ion" : options[2].negative_ion})
 		em_file = options[3]
 		pr_file = options[4]
 		md_file = options[5]
