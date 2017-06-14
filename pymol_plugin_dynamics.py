@@ -229,35 +229,41 @@ class Gromacs_input:
 	command_distinction = "\n!************************!\n"
 
 	##This function will change given variabless stored by the class (needed for lambda statements)
-	def update(self, group, box_type, hydro, box_distance, box_density, root=""):
+	def update(self, gmx_options, root=""):
 		#Close mother window if present
 		try:
 			root.destroy()
 		except:
 			pass
 		
-		self.group = group
-		self.box_type = box_type
-		self.hydro = hydro		
-		self.box_distance = box_distance
-		self.box_density = box_density
+		for key, value in gmx_options.items():
+			if key == "force":
+				self.force = value
+			elif key == "water":
+				self.water = value
+			elif key == "group":
+				self.group = value
+			elif key == "box_type":
+				self.box_type = value
+			elif key == "hydro":
+				self.hydro = value	
+			elif key == "box_distance":
+				self.box_distance = value
+			elif key == "box_density":
+				self.box_density = value
+			elif key == "restraints_nr":
+				self.restraints_nr = value
+			elif key == "neutrality":
+				self.neutrality = value
+			elif key == "salt_conc":
+				self.salt_conc = value
+			elif key == "positive_ion":
+				self.positive_ion = value
+			elif key == "negative_ion":
+				self.negative_ion = value
 		save_options()
-		print "gromacs update"
+		print "gromacs updated"
 
-	def update2(self, group, neutrality, salt_conc, positive_ion, negative_ion, root=""):
-		#Close mother window if present
-		try:
-			root.destroy()
-		except:
-			pass
-			
- 		self.group = group
- 		self.neutrality = neutrality		
-		self.salt_conc = salt_conc
-		self.positive_ion = positive_ion
-		self.negative_ion = negative_ion
-		save_options()
-		print "genion parameters update"
 	##This function will create initial topology and trajectory using pdb file and choosen force field
 	def pdb2top(self, file_path, project_name):
 		status = ["ok", "Calculating topology using Force fields"]
@@ -1295,7 +1301,7 @@ def rootWindow():
 	w2 = Label(frame1_1, text="Group", font = "bold")
 	w2.pack(side=TOP)
 	for group in gromacs.group_list:
-		radio_button2 = Radiobutton(frame1_1, text=group[1], value=group[0], variable=v2_group, command=lambda: gromacs2.update(v2_group.get(), gromacs2.box_type, gromacs2.box_distance, gromacs2.box_density, gromacs2.salt_conc, gromacs2.positive_ion, gromacs2.negative_ion, gromacs2.neutrality))
+		radio_button2 = Radiobutton(frame1_1, text=group[1], value=group[0], variable=v2_group, command=lambda: gromacs2.update({"group" : v2_group.get()}))
 		radio_button2.pack(side=TOP, anchor=W)
 		#Tooltip
 		balloon.bind(radio_button2, "Select group of atoms for final display")
@@ -2066,13 +2072,13 @@ class WaterWindows:
 		v.set(gromacs2.box_type)
 		w = Label(root, text="Box type")
 		w.pack()
-		radio_button = Radiobutton(root, text="triclinic", value="triclinic", variable=v, command = lambda : gromacs2.update(gromacs2.group, v.get(), gromacs2.hydro, gromacs2.box_distance, gromacs2.box_density))
+		radio_button = Radiobutton(root, text="triclinic", value="triclinic", variable=v, command = lambda : gromacs2.update({"box_type" : v.get()}))
 		radio_button.pack(side=TOP, anchor=W)
-		radio_button = Radiobutton(root, text="cubic", value="cubic", variable=v, command = lambda : gromacs2.update(gromacs2.group, v.get(), gromacs2.hydro, gromacs2.box_distance, gromacs2.box_density))
+		radio_button = Radiobutton(root, text="cubic", value="cubic", variable=v, command = lambda : gromacs2.update({"box_type" : v.get()}))
 		radio_button.pack(side=TOP, anchor=W)
-		radio_button = Radiobutton(root, text="dodecahedron", value="dodecahedron", variable=v, command = lambda : gromacs2.update(gromacs2.group, v.get(), gromacs2.hydro, gromacs2.box_distance, gromacs2.box_density))
+		radio_button = Radiobutton(root, text="dodecahedron", value="dodecahedron", variable=v, command = lambda : gromacs2.update({"box_type" : v.get()}))
 		radio_button.pack(side=TOP, anchor=W)
-		radio_button = Radiobutton(root, text="octahedron", value="octahedron", variable=v, command = lambda : gromacs2.update(gromacs2.group, v.get(), gromacs2.hydro, gromacs2.box_distance, gromacs2.box_density))
+		radio_button = Radiobutton(root, text="octahedron", value="octahedron", variable=v, command = lambda : gromacs2.update({"box_type" : v.get()}))
 		radio_button.pack(side=TOP, anchor=W)
 		w1 = Label(root, text="Distance")
 		w1.pack()
@@ -2084,7 +2090,7 @@ class WaterWindows:
 		density = Entry(root)
 		density.pack(side=TOP)
 		density.insert(0, gromacs2.box_density)
-		ok_button = Button(root, text = "OK", command=lambda : gromacs2.update(gromacs2.group, gromacs2.box_type, gromacs2.hydro, distance.get(), density.get(), root))
+		ok_button = Button(root, text = "OK", command=lambda : gromacs2.update({"box_distance" : distance.get(), "box_density" : density.get()}, root))
 		ok_button.pack(side=TOP)
 		
 	##Hydrogen configuration (for bigger time steps)
@@ -2096,13 +2102,13 @@ class WaterWindows:
 		v1.set(gromacs2.hydro)
 		w = Label(root, text="Hydrogen type (for pdb2gmx only)")
 		w.pack()
-		radio_button = Radiobutton(root, text="Normal Hydrogen", value="noheavyh", variable=v1, command = lambda : gromacs2.update(gromacs2.group, gromacs2.box_type, v1.get(), gromacs2.box_distance, gromacs2.box_density))
+		radio_button = Radiobutton(root, text="Normal Hydrogen", value="noheavyh", variable=v1, command = lambda : gromacs2.update({"hydro" : v1.get()}))
 		radio_button.pack(side=TOP, anchor=W)
-		radio_button = Radiobutton(root, text="Deuterium", value="deuterate", variable=v1, command = lambda : gromacs2.update(gromacs2.group, gromacs2.box_type, v1.get(), gromacs2.box_distance, gromacs2.box_density))
+		radio_button = Radiobutton(root, text="Deuterium", value="deuterate", variable=v1, command = lambda : gromacs2.update({"hydro" : v1.get()}))
 		radio_button.pack(side=TOP, anchor=W)
-		radio_button = Radiobutton(root, text="Heavy Hydrogen (4amu) ", value="heavyh", variable=v1, command = lambda : gromacs2.update(gromacs2.group, gromacs2.box_type, v1.get(), gromacs2.box_distance, gromacs2.box_density))
+		radio_button = Radiobutton(root, text="Heavy Hydrogen (4amu) ", value="heavyh", variable=v1, command = lambda : gromacs2.update({"hydro" : v1.get()}))
 		radio_button.pack(side=TOP, anchor=W)
-		ok_button = Button(root, text = "OK", command=lambda : gromacs2.update(gromacs2.group, gromacs2.box_type, gromacs2.hydro, gromacs2.box_distance, gromacs2.box_density, root))
+		ok_button = Button(root, text = "OK", command=lambda : gromacs2.update({"":""}, root))
 		ok_button.pack(side=TOP)
 
 # Options for the genion class all the options
@@ -2120,9 +2126,9 @@ class GenionWindow:
 		v.set(gromacs2.neutrality)
 		w = Label(root, text="Parameters for genion")
 		w.pack()
-		radio_button = Radiobutton(root, text="Neutralize System", value="neutral", variable=v, command = lambda : gromacs2.update2(gromacs2.group, v.get(), gromacs2.salt_conc, gromacs2.positive_ion, gromacs2.negative_ion))
+		radio_button = Radiobutton(root, text="Neutralize System", value="neutral", variable=v, command = lambda : gromacs2.update({"neutrality" : v.get()}))
 		radio_button.pack(side=TOP, anchor=W)
-		radio_button = Radiobutton(root, text="Do not Neutralize", value="noneutral", variable=v, command = lambda : gromacs2.update2(gromacs2.group, v.get(), gromacs2.salt_conc, gromacs2.positive_ion, gromacs2.negative_ion))
+		radio_button = Radiobutton(root, text="Do not Neutralize", value="noneutral", variable=v, command = lambda : gromacs2.update({"neutrality" : v.get()}))
 		radio_button.pack(side=TOP, anchor=W)
 		w1 = Label(root, text="Salt Concentration")
 		w1.pack()
@@ -2139,7 +2145,7 @@ class GenionWindow:
 		negat = Entry(root)
 		negat.pack(side=TOP)
 		negat.insert(0, gromacs2.negative_ion)
-		ok_button = Button(root, text = "OK", command=lambda : gromacs2.update2(gromacs2.group, gromacs2.neutrality, salt.get(), posit.get(), negat.get(), root))
+		ok_button = Button(root, text = "OK", command=lambda : gromacs2.update({"salt_conc" : salt.get(), "positive_ion" : posit.get(), "negative_ion" : negat.get()}, root))
 		ok_button.pack(side=TOP)
 
 ##This class is resposible for graphic edition of restraints
@@ -2846,7 +2852,7 @@ def load_options():
 		if prody_true == 1 and options[8] != 0:
 			vectors_prody = options[8]
 	else:
-		print "Warning. Importing projects from plugin version " + options[0] " is not supported. Aboring import."
+		print "Warning. Importing projects from plugin version " + options[0] + " is not supported. Aboring import."
 
 ##Text for "Help"
 def help_option():
