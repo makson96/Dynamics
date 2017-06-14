@@ -1283,7 +1283,7 @@ def rootWindow():
 	w2 = Label(frame1_1, text="Group", font = "bold")
 	w2.pack(side=TOP)
 	for group in gromacs.group_list:
-		radio_button2 = Radiobutton(frame1_1, text=group[1], value=group[0], variable=v2_group, command=lambda: gromacs2.update(v2_group.get(), gromacs2.box_type, gromacs2.box_distance, gromacs2.box_density, gromacs2.salt_conc, gromacs2.positive_ion, gromacs2.negative_ion, gromacs2.neutrality))
+		radio_button2 = Radiobutton(frame1_1, text=group[1], value=group[0], variable=v2_group, command=lambda: gromacs2.update(v2_group.get(), gromacs2.box_type, gromacs2.hydro, gromacs2.box_distance, gromacs2.box_density))
 		radio_button2.pack(side=TOP, anchor=W)
 		#Tooltip
 		balloon.bind(radio_button2, "Select group of atoms for final display")
@@ -2825,11 +2825,13 @@ def load_options():
 			vectors_prody = options[8]
 	elif options[0][1:4] == "2.0":
 		print "plugin 2.0 compatibility layer"
-		gromacs2 = options[2]
+		gromacs2.update(options[2].group, options[2].box_type, "noheavyh", options[2].box_distance, options[2].box_density)
 		em_file = options[3]
 		pr_file = options[4]
 		md_file = options[5]
 		progress = options[6]
+		progress.to_do.insert(3,0)
+		progress.status.insert(3,0)
 		explicit = options[7]
 		if prody_true == 1 and options[8] != 0:
 			vectors_prody = options[8]
