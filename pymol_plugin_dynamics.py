@@ -2834,7 +2834,7 @@ def load_options():
 		if prody_true == 1 and options[8] != 0:
 			vectors_prody = options[8]
 	else:
-		print "Warning. Importing projects from plugin version " + options[0] " is not supported. Aboring import."
+		print "Warning. Importing projects from plugin version " + options[0] + " is not supported. Aboring import."
 
 ##Text for "Help"
 def help_option():
