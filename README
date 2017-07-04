@@ -32,7 +32,7 @@ Table of Content:
 2.2. Installation	4
 2.2.1. Ubuntu	4
 2.2.2. Gentoo	4
-2.2.3. Other Linux distributions and MacOS X	4
+2.2.3. Other Linux distributions and macOS	4
 2.2.4. Windows/Cygwin	5
 3. Instruction	6
 3.1. Molecule	6
@@ -85,9 +85,11 @@ All required libraries will be downloaded as dependencies. Supported versions of
 If you are Gentoo user, then you can use ebuild system. To make the installation use (as root):
 	emerge --ask sci-chemistry/pymol-plugins-dynamics
 
-2.2.3. Other Linux distributions and MacOS X
+2.2.3. Other Linux distributions and macOS
 
-	All other Linux distributions as well as MacOS X are supported by standard PyMOL plugin install interface. Download plugin directly from its GitHub repository:
+	All other Linux distributions as well as macOS are supported by standard PyMOL plugin install interface. On macOS you will need to use X11 Hybrid version of PyMOL, as described here:
+	https://pymolwiki.org/index.php/MAC_Install#X11_Hybrid
+Download plugin directly from its GitHub repository:
 https://github.com/tomaszmakarewicz/Dynamics
 You can download the latest master snapshot by command:
 	git clone git://github.com/tomaszmakarewicz/Dynamics.git
