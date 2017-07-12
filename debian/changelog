@@ -1,3 +1,9 @@
+pymol-plugin-dynamics (2.1.2-xenial1) xenial; urgency=low
+
+  * ----
+
+ -- Tomasz Makarewicz <btchtm@ug.edu.pl>  Wed, 12 Jul 2017 08:16:32 +0200
+
 pymol-plugin-dynamics (2.1.1-xenial1) xenial; urgency=low
 
   * Support for Microsoft Windows
