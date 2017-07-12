@@ -794,7 +794,7 @@ class Mdp_config:
 			if option == ['']:
 				pass
 			else:
-				config = config + option[0]+" = "+option[1]+"\n"
+				config = config + str(option[0]) + " = " + str(option[1]) + "\n"
 		mdp = open(project_dir+self.file_name, "w")
 		mdp.write(config)
 		mdp.close() 
@@ -1385,7 +1385,7 @@ def rootWindow():
 	time_entry.pack(side=LEFT)
 	time_label2 = Label(frame1_3_1_1, text="[ps]")
 	time_label2.pack(side=LEFT)
-	time_button = Button(frame1_3_1_1, text = "OK", command=lambda: md_file.update(3, int(float(time_entry_value.get())/float(md_file.options[2][1]))))
+	time_button = Button(frame1_3_1_1, text = "OK", command=lambda: md_file.update(3, str(int(float(time_entry_value.get())/float(md_file.options[2][1])))))
 	time_button.pack(side=LEFT)
 	
 	##Disable configuration of ProDy (Vectors) if ProDy is not installed
