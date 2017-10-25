@@ -4,7 +4,7 @@
 ##This software (including its Debian packaging) is available to you under the terms of the GPL-3, see "/usr/share/common-licenses/GPL-3".
 ##Software is created and maintained by Laboratory of Biomolecular Systems Simulation at University of Gdansk.
 ##Contributors:
-##- Tomasz Makarewicz (btchtm@ug.edu.pl)
+##- Tomasz Makarewicz (makson96@gmail.com)
 ##- Ajit B. Datta (ajit@jcbose.ac.in)
 ##- Sara Boch Kminikowska
 ##- Manish Sud (msud@san.rr.com; URL: www.MayaChemTools.org)
@@ -2860,12 +2860,12 @@ def help_option():
 This software (including its Debian packaging) is available to you under the terms of the GPL-3, see "/usr/share/common-licenses/GPL-3".
 Software is created and maintained by Laboratory of Biomolecular Systems Simulation at University of Gdansk.
 Contributors:
-- Tomasz Makarewicz (btchtm@ug.edu.pl)
+- Tomasz Makarewicz (makson96@gmail.com)
 - Ajit B. Datta (ajit@jcbose.ac.in)
 - Sara Boch Kminikowska
 - Manish Sud (msud@san.rr.com; URL: www.MayaChemTools.org)
 
-Full manual is available to you on project website: https://github.com/tomaszmakarewicz/Dynamics/raw/master/manual.odt
+Full manual is available to you on project website: https://github.com/makson96/Dynamics/raw/master/manual.odt
 or as a file: /usr/share/doc/dynamics-pymol-plugin/manual.odt
 
 The purpose of this plugin is to perform molecular dynamics simulation by GROMACS using easy graphical tool and powerful molecular viewer.

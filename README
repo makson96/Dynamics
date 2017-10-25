@@ -90,9 +90,9 @@ If you are Gentoo user, then you can use ebuild system. To make the installation
 	All other Linux distributions as well as macOS are supported by standard PyMOL plugin install interface. On macOS you will need to use X11 Hybrid version of PyMOL, as described here:
 	https://pymolwiki.org/index.php/MAC_Install#X11_Hybrid
 Download plugin directly from its GitHub repository:
-https://github.com/tomaszmakarewicz/Dynamics
+https://github.com/makson96/Dynamics
 You can download the latest master snapshot by command:
-	git clone git://github.com/tomaszmakarewicz/Dynamics.git
+	git clone git://github.com/makson96/Dynamics.git
 Then run PyMOL as a root. On the top Menu choose Plugin->Manage Plugins->Install... Then choose pymol_plugin_dynamics.py file. After installation restart PyMOL with normal user privilege.
 
 2.2.4. Windows/Cygwin
@@ -110,7 +110,7 @@ Test PyMOL.
 Update PATH environment variable on Windows to include the following bin directories corresponding to GROMACS and Cygwin:
 C:\<YOUR_GROMACS_ROOT>\bin
 C:\<YOUR_CYGWIN_PATH>\bin
-Install the GROMACS plugin following standard PyMOL instructions. Download latest plugin version from link: https://github.com/tomaszmakarewicz/Dynamics/archive/master.zip and unpack it. Run PyMOL. On the top Menu choose Plugin->Manage Plugins->Install... Then choose pymol_plugin_dynamics.py file. After installation restart PyMOL.
+Install the GROMACS plugin following standard PyMOL instructions. Download latest plugin version from link: https://github.com/makson96/Dynamics/archive/master.zip and unpack it. Run PyMOL. On the top Menu choose Plugin->Manage Plugins->Install... Then choose pymol_plugin_dynamics.py file. After installation restart PyMOL.
 3. Instruction
 
 	Dynamics PyMOL plugin is meant to be as easy to use as it is possible. As an input it takes PDB molecule model. As an output it creates PDB multimodel molecule, which could be easily stored and viewed. After starting PyMOL load PDB file for which molecular dynamics simulation needs to be performed. If you want some specific atoms to restraints just select them on displayed molecule model. Now all you need to do is to click on top Menu->Plugin->dynamics and plugin menu should open. All available options are described in this chapter.
@@ -212,7 +212,7 @@ ProDy can sometimes make this plugin (and PyMOL) to crash.
 	This software (including its Debian packaging) is available to you under the terms of the GPL-3, see "/usr/share/common-licenses/GPL-3".
 	Software is created and maintained by Laboratory of Biomolecular Systems Simulation at University of Gdansk.
 Contributors:
-- Tomasz Makarewicz (btchtm@ug.edu.pl)
+- Tomasz Makarewicz (makson96@gmail.com)
 - Ajit B. Datta (ajit@jcbose.ac.in)
 - Sara Boch Kminikowska
 - Manish Sud (msud@san.rr.com; URL: www.MayaChemTools.org)

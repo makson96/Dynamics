@@ -1,7 +1,7 @@
 Source: pymol-plugin-dynamics
 Section: science
 Priority: extra
-Maintainer: Tomasz Makarewicz <btchtm@ug.edu.pl>
+Maintainer: Tomasz Makarewicz <makson96@gmail.com>
 Build-Depends: debhelper (>= 5), cdbs (>= 0.2), python2.7
 Standards-Version: 3.8.0
 
