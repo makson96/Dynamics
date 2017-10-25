@@ -75,7 +75,7 @@ Prody is recommended for advanced features. Plugin can take use of PLUMED compil
 2.2.1. Ubuntu
 
 If you are Ubuntu user, then you can just add repository and install package:
-	sudo add-apt-repository ppa:tomaszm/dynamics
+	sudo add-apt-repository ppa:makson96/dynamics
 	sudo apt-get update
 	sudo apt-get install pymol-plugin-dynamics
 All required libraries will be downloaded as dependencies. Supported versions of Ubuntu are 14.04 and 16.04.
