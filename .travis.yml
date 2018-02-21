@@ -4,9 +4,10 @@ python:
 # command to install dependencies
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y libfreetype6-dev libpng12-dev
+  - sudo apt-get install -y libfreetype6-dev libpng12-dev pymol
 install:
   - pip install -r requirements.txt
+# TODO: prepare proper PyMOL and GROMACS for tests
 # command to run tests
 script:
   - sh tests/run.sh
