@@ -15,8 +15,8 @@ before_install:
   - sudo apt-get install build-essential libglew-dev freeglut3-dev libxml2-dev libmsgpack-dev
   - wget $PYMOL_LINK -P tests
   - tar -xvf tests/pymol*.tar.bz2 -C tests
-  - if [[ PYMOL_VER == '1.8' ]]; then wget https://github.com/msgpack/msgpack-c/releases/download/cpp-1.0.1/msgpack-1.0.1.tar.gz -P tests/pymol
-  - if [[ PYMOL_VER == '1.8' ]]; then tar -xvf tests/pymol/msgpack-1.0.1.tar.gz -C tests/pymol
+  - if [[ PYMOL_VER == '1.8' ]]; then wget https://github.com/msgpack/msgpack-c/releases/download/cpp-1.0.1/msgpack-1.0.1.tar.gz -P tests/pymol ; fi
+  - if [[ PYMOL_VER == '1.8' ]]; then tar -xvf tests/pymol/msgpack-1.0.1.tar.gz -C tests/pymol ; fi
 install:
   - pip install -r requirements.txt
   #Build PyMOL
