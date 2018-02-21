@@ -1,0 +1,12 @@
+language: python
+python:
+  - "2.7"
+# command to install dependencies
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libfreetype6-dev libpng12-dev gromacs
+install:
+  - pip install -r requirements.txt
+# command to run tests
+script:
+  - sh tests/run.sh

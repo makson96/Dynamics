@@ -1032,7 +1032,7 @@ def getWaterModelsInfo(gmxOutputLines):
 	return watersInfo2
 
 ##This function will initialize all plugin stufs
-def init_function():
+def init_function(travisCI=False):
 	##Global variables
 	global stop, status, error, em_init_config, pr_init_config, md_init_config, project_name, dynamics_dir, project_dir
 	global gmxExe, gmxVersion, gmxBuildArch, gmxOnCygwin
@@ -1168,19 +1168,20 @@ coulombtype = PME"""
 		global vectors_prody
 		vectors_prody = Vectors()
 		print "ProDy correctly imported"
-
-	##Creating objects - data from those windows will be used by rootWindow
-	if status[0] == "ok":
-		global calculationW, waterW, restraintsW, genionW
-		calculationW = CalculationWindow()
-		waterW = WaterWindows()
-		restraintsW = RestraintsWindow()
-		genionW = GenionWindow()
-		##Start graphic interface
-		rootWindow()
-	##Break now if status is not ok and print message
-	elif status[0] == "fail":
-		tkMessageBox.showerror("Initialization error", status[1])
+	
+	if travisCI == False:
+		##Creating objects - data from those windows will be used by rootWindow
+		if status[0] == "ok":
+			global calculationW, waterW, restraintsW, genionW
+			calculationW = CalculationWindow()
+			waterW = WaterWindows()
+			restraintsW = RestraintsWindow()
+			genionW = GenionWindow()
+			##Start graphic interface
+			rootWindow()
+		##Break now if status is not ok and print message
+		elif status[0] == "fail":
+			tkMessageBox.showerror("Initialization error", status[1])
 
 ##--Graphic Interface--
 ##Root menu window
