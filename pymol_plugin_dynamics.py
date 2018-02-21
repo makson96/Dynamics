@@ -386,7 +386,7 @@ class Gromacs_input:
 		except:
 			pass
 		
-		command = gromacs.command+" grompp -f em -c "+project_name+"_solv.gro -o "+project_name+"_ions.tpr -p "+project_name+".top"
+		command = gromacs.command+" grompp -f em -c "+project_name+"_solv.gro -o "+project_name+"_ions.tpr -p "+project_name+".top"+" -maxwarn 1"
 		status_update(status)
 		executeAndMonitorSubprocess(command,  None, 'log1.txt', 'log.txt')
 		
