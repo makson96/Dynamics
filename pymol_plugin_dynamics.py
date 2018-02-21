@@ -1067,16 +1067,12 @@ def init_function(travisCI=False):
 	if not len(gmxExe):
 		print "GROMACS 5 or newer not detected."
 		status = ["fail", "GROMACS not detected. Please install and setup GROMACS 5 or newer correctly for your platform. Check '~/.dynamics/test_gromacs.txt' for more details. Don't forget to add GROMACS bin directory to your PATH"]
-		tkMessageBox.showerror("Initialization error", status[1])
-		return
 	else:
 		print "Found GROMACS VERSION " + gmxVersion
-
-	##Gromacs variables
-	global gromacs, gromacs2
-		
-	gromacs = Gromacs_output()
-	gromacs2 = Gromacs_input()
+		##Gromacs variables
+		global gromacs, gromacs2
+		gromacs = Gromacs_output()
+		gromacs2 = Gromacs_input()
 	
 	em_init_config = """define = -DFLEX_SPC
 constraints = none
