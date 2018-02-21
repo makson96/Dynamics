@@ -1,5 +1,4 @@
 Pmw
 numpy
 matplotlib
-pymol
 ProDy

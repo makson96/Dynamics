@@ -5,9 +5,22 @@ python:
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y libfreetype6-dev libpng12-dev
+  #PyMOL dependencies
+  - sudo apt-get install build-essential libglew-dev freeglut3-dev libxml2-dev libmsgpack-dev
+  - wget https://sourceforge.net/projects/pymol/files/pymol/1.8/pymol-v1.8.6.0.tar.bz2 -P tests
+  - tar -xvf tests/pymol-v1.8.6.0.tar.bz2 -C tests
+  - mv tests/pymol tests/pymol-1.8
+  - wget https://github.com/msgpack/msgpack-c/releases/download/cpp-1.0.1/msgpack-1.0.1.tar.gz -P tests/pymol-1.8
+  - tar -xvf tests/pymol-v1.8/msgpack-1.0.1.tar.gz -P tests/pymol-1.8
+env:
+  - PYMOL_PREFIX=$PWD/tests/pymol-1.8/install
+  - PYMOL_MODULES=$PYMOL_PREFIX/tests/pymol-1.8/modules
+  - CPATH=$PWD/tests/pymol-1.8/msgpack-1.0.1/include
+  - PYTHONPATH=$PYMOL_MODULES
 install:
   - pip install -r requirements.txt
-# TODO: prepare proper PyMOL and GROMACS for tests
+  #Build PyMOL
+  - cd tests/pymol-1.8 ; python setup.py build install --home=$PYMOL_PREFIX --install-lib=$PYMOL_MODULES --install-scripts=$PYMOL_PREFIX
 # command to run tests
 script:
   - sh tests/run.sh
