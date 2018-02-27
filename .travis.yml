@@ -30,7 +30,7 @@ before_install:
   - wget $GROMACS_LINK -P tests
   - tar -xvf tests/gromacs*.tar.gz -C tests
   - rm tests/gromacs*.tar.gz
-  - mv gromacs* gromacs
+  - mv tests/gromacs* tests/gromacs
 install:
   - pip install -r requirements.txt
   #Build PyMOL
