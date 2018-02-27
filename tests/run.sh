@@ -9,3 +9,7 @@
 if ! python tests/init_test.py ; then
 exit 1
 fi
+
+if ! python tests/gromacs_ver_test.py ; then
+exit 1
+fi
