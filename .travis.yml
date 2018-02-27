@@ -35,15 +35,15 @@ install:
   - pip install -r requirements.txt
   #Build PyMOL
   - cd tests/pymol
-  - if [[ $PYMOL_VER = 1.7 ]]; then CPPFLAGS="-std=c++0x" python setup.py build install --home=$PYMOL_PREFIX --install-lib=$PYMOL_MODULES --install-scripts=$PYMOL_PREFIX | grep -C 20 error -i ; fi
-  - if [[ $PYMOL_VER = 1.8 ]]; then CPATH=$PWD/msgpack-1.0.1/include python setup.py build install --home=$PYMOL_PREFIX --install-lib=$PYMOL_MODULES --install-scripts=$PYMOL_PREFIX | grep -C 20 error -i ; fi
+  - if [[ $PYMOL_VER = 1.7 ]]; then CPPFLAGS="-std=c++0x" python setup.py build install --home=$PYMOL_PREFIX --install-lib=$PYMOL_MODULES --install-scripts=$PYMOL_PREFIX | grep -C 20 "error:" -i ; fi
+  - if [[ $PYMOL_VER = 1.8 ]]; then CPATH=$PWD/msgpack-1.0.1/include python setup.py build install --home=$PYMOL_PREFIX --install-lib=$PYMOL_MODULES --install-scripts=$PYMOL_PREFIX | grep -C 20 "error:" -i ; fi
   - cd ../..
   #Build GROMACS
   - cd tests/gromacs
   - mkdir build_dir
   - cd build_dir
   - cmake -DCMAKE_INSTALL_PREFIX=../install -DGMX_OPENMP=ON ..
-  - make install | grep -C 20 error -i
+  - make install | grep -C 20 "error:" -i
   - cd ../../..
 # command to run tests
 script:
