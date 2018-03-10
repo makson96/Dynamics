@@ -6,12 +6,20 @@
 ##Contributors:
 ##- Tomasz Makarewicz (makson96@gmail.com)
 ##
+#This is simple initialization check script
+
+print "######################"
+print "Starting Initialization test"
+print "######################"
 
 import os, sys
 one_up = os.path.os.path.abspath(__file__)
 one_up = one_up.split("tests")[0]
 sys.path.insert(0, one_up)
 
-print "This is simple initialization check script"
 import pymol_plugin_dynamics
 pymol_plugin_dynamics.init_function(travisCI=True)
+
+print "######################"
+print "Initialization finished successfully"
+print "######################"
