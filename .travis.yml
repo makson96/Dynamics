@@ -4,8 +4,8 @@ python:
 # test environments
 env:
   global:
-    - PYMOL_PREFIX=$PWD/tests/pymol/install
-    - PYMOL_MODULES=$PWD/tests/pymol/modules
+    - PYMOL_PREFIX=/opt/pymol
+    - PYMOL_MODULES=/opt/pymol/modules
     - PYTHONPATH=$PYMOL_MODULES
   matrix:
     #For PyMOL 1.7, GROMACS 5.1
