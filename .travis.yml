@@ -9,31 +9,19 @@ env:
     - PYTHONPATH=$PYMOL_MODULES
   matrix:
     #For PyMOL 1.7, GROMACS 5.1
-    - PYMOL_VER=1.7 PYMOL_LINK=https://sourceforge.net/projects/pymol/files/pymol/1.7/pymol-v1.7.6.0.tar.bz2 GROMACS_VER=5.1.5 GROMACS_PACKAGE=travisci-gromacs-51
+    - PYMOL_VER=1.7 PYMOL_PACKAGE=travisci-pymol-17 GROMACS_VER=5.1.5 GROMACS_PACKAGE=travisci-gromacs-51
     #For PyMOL 1.8, GROMACS 5.1
-    - PYMOL_VER=1.8 PYMOL_LINK=https://sourceforge.net/projects/pymol/files/pymol/1.8/pymol-v1.8.6.0.tar.bz2 GROMACS_VER=5.1.5 GROMACS_PACKAGE=travisci-gromacs-51
+    #- PYMOL_VER=1.8 PYMOL_PACKAGE=travisci-pymol-18 GROMACS_VER=5.1.5 GROMACS_PACKAGE=travisci-gromacs-51
 # command to install dependencies
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y libfreetype6-dev libpng12-dev
-  #GROMACS install
+  #GROMACS any PyMOL install
   - sudo add-apt-repository ppa:makson96/dynamics -y
   - sudo apt-get update -q
-  - sudo apt-get install $GROMACS_PACKAGE
-  #PyMOL dependencies
-  - sudo apt-get install build-essential libglew-dev freeglut3-dev libxml2-dev libmsgpack-dev
-  - wget $PYMOL_LINK -P tests
-  - tar -xvf tests/pymol*.tar.bz2 -C tests
-  - rm tests/pymol*.tar.bz2
-  - if [[ $PYMOL_VER = 1.8 ]]; then wget https://github.com/msgpack/msgpack-c/releases/download/cpp-1.0.1/msgpack-1.0.1.tar.gz -P tests/pymol ; fi
-  - if [[ $PYMOL_VER = 1.8 ]]; then tar -xvf tests/pymol/msgpack-1.0.1.tar.gz -C tests/pymol ; fi
+  - sudo apt-get install $GROMACS_PACKAGE $PYMOL_PACKAGE
 install:
-  - pip install -r requirements.txt
-  #Build PyMOL
-  - cd tests/pymol
-  - if [[ $PYMOL_VER = 1.7 ]]; then CPPFLAGS="-std=c++0x" python setup.py -q build install --home=$PYMOL_PREFIX --install-lib=$PYMOL_MODULES --install-scripts=$PYMOL_PREFIX &> pymol_install.log ; fi
-  - if [[ $PYMOL_VER = 1.8 ]]; then CPATH=$PWD/msgpack-1.0.1/include python setup.py -q build install --home=$PYMOL_PREFIX --install-lib=$PYMOL_MODULES --install-scripts=$PYMOL_PREFIX &> pymol_install.log ; fi
-  - cd ../..
+  - pip install -r tests/requirements.txt
 # command to run tests
 script:
   - sh tests/run.sh
