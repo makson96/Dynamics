@@ -2323,9 +2323,10 @@ def create_config_files():
 	else:
 		md_file = Mdp_config("md.mdp",md_init_config, 0)
 	save_options()
-	if project_name in cmd.get_names("objects"): #PyMOL API
-		cmd.save(project_dir+project_name+".pdb", project_name) #PyMOL API
-		print "cmd saved"
+	if cmd.get_names("objects") != None:
+		if project_name in cmd.get_names("objects"): #PyMOL API
+			cmd.save(project_dir+project_name+".pdb", project_name) #PyMOL API
+			print "cmd saved"
 
 #This function will create the window with configuration files based on MDP class
 def mdp_configure(config_name, master):
