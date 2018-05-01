@@ -29,8 +29,9 @@ urllib.urlretrieve ("https://files.rcsb.org/download/1RO3.pdb", pymol_plugin_dyn
 
 pymol_plugin_dynamics.status = ["ok", "ok"]
 pymol_plugin_dynamics.stop = 0
+pymol_plugin_dynamics.create_config_files()
 
-
+#Execute dynamics simulation
 pymol_plugin_dynamics.dynamics()
 
 if os.path.isfile(pymol_plugin_dynamics.project_dir + "1ro3_multimodel.pdb") == False:
