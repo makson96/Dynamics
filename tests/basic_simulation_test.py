@@ -29,10 +29,10 @@ status = ["ok", "ok"]
 stop = 0
 project_name = "1ro3"
 
-pymol_plugin_dynamics.dynamics(pymol_plugin_dynamics.project_dir + "1ro3_multimodel.pdb") == False:
-	sys.exit(1)
+pymol_plugin_dynamics.dynamics()
 
-if os.path.isfile()
+if os.path.isfile(pymol_plugin_dynamics.project_dir + "1ro3_multimodel.pdb") == False:
+	sys.exit(1)
 
 print "######################"
 print "Basic Simulation test finished successfully"
