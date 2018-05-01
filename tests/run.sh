@@ -13,3 +13,7 @@ fi
 if ! python tests/gromacs_ver_test.py ; then
 exit 1
 fi
+
+if ! python tests/basic_simulation_test.py ; then
+exit 1
+fi
