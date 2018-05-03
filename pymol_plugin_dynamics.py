@@ -2323,10 +2323,12 @@ def create_config_files():
 	else:
 		md_file = Mdp_config("md.mdp",md_init_config, 0)
 	save_options()
-	if cmd.get_names("objects") != None:
+	try:
 		if project_name in cmd.get_names("objects"): #PyMOL API
 			cmd.save(project_dir+project_name+".pdb", project_name) #PyMOL API
 			print "cmd saved"
+	except (AttributeError, TypeError), e:
+		pass
 
 #This function will create the window with configuration files based on MDP class
 def mdp_configure(config_name, master):
@@ -2627,7 +2629,7 @@ def no_molecule_warning():
 
 ##This function will start real workflow of the plugin, once everything is set
 def dynamics():
-	print "Starting PyMOL plugin 'dynamics' ver."+plugin_ver+" by Tomasz Makarewicz"
+	print "Starting PyMOL plugin 'dynamics' ver."+plugin_ver
 	global status, stop, gromacs, project_name
 	
 	file_path = project_dir + project_name
@@ -2747,13 +2749,16 @@ def mdp_files():
 	if not os.path.isfile(dynamics_dir + "md.mdp"):
 		md_file.save_file()
 
-##Show multimodel PDB file in PyMOOL
+##Show multimodel PDB file in PyMOL
 def show_multipdb():
 	try:
 		cmd.hide("everything", project_name) #PyMOL API
 	except:
 		pass
-	cmd.load(project_name+"_multimodel.pdb") #PyMOL API
+	try:
+		cmd.load(project_name+"_multimodel.pdb") #PyMOL API
+	except AttributeError:
+		pass
 
 ##Saving tar.bz file
 def save_file(destination_path):

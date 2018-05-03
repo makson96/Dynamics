@@ -7,7 +7,6 @@ env:
     - PYMOL_PREFIX=/opt/pymol
     - PYMOL_MODULES=/opt/pymol/modules
     - PYTHONPATH=$PYMOL_MODULES
-    - OMP_NUM_THREADS=4
   matrix:
     #For PyMOL 1.7, GROMACS 5.1
     - PYMOL_VER=1.7 PYMOL_PACKAGE=travisci-pymol-17 GROMACS_VER=5.1.5 GROMACS_PACKAGE=travisci-gromacs-51

@@ -21,20 +21,21 @@ import pymol_plugin_dynamics
 pymol_plugin_dynamics.init_function(travisCI=True)
 
 #Download molecule for tests
-pymol_plugin_dynamics.project_name = "1ro3"
+pymol_plugin_dynamics.project_name = "2fjz"
 pymol_plugin_dynamics.setGromacsProjectDir()
 os.makedirs(pymol_plugin_dynamics.project_dir)
 import urllib
-urllib.urlretrieve ("https://files.rcsb.org/download/1RO3.pdb", pymol_plugin_dynamics.project_dir + "1ro3.pdb")
+urllib.urlretrieve ("https://files.rcsb.org/download/2FJZ.pdb", pymol_plugin_dynamics.project_dir + "2fjz.pdb")
 
 pymol_plugin_dynamics.status = ["ok", "ok"]
 pymol_plugin_dynamics.stop = 0
+pymol_plugin_dynamics.prody_true = 0
 pymol_plugin_dynamics.create_config_files()
 
 #Execute dynamics simulation
 pymol_plugin_dynamics.dynamics()
 
-if os.path.isfile(pymol_plugin_dynamics.project_dir + "1ro3_multimodel.pdb") == False:
+if os.path.isfile(pymol_plugin_dynamics.project_dir + "2fjz_multimodel.pdb") == False:
 	sys.exit(1)
 
 print "######################"
