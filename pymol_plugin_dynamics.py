@@ -10,18 +10,36 @@
 ##- Manish Sud (msud@san.rr.com; URL: www.MayaChemTools.org)
 ##
 
+from __future__ import print_function
+
 ##Plugin Version
 plugin_ver = " 2.2.0pre"
 
 ##--Import libraries--
 ##Import nativ python libraries
-import subprocess, time, os, shutil, thread, pickle, Queue, re
+import subprocess, time, os, shutil, pickle, re
 ##Import libraries for tk graphic interface
-from Tkinter import *
-from ttk import Progressbar, Scrollbar
-import tkSimpleDialog, tkMessageBox, tkFileDialog, Pmw
+import Pmw
 ##Import libraries from PyMOL specific work.
 from pymol import cmd, stored, cgo
+import sys
+
+if sys.version_info[0] < 3:
+	import thread
+	import Queue
+	from Tkinter import *
+	import tkSimpleDialog
+	import tkMessageBox
+	import tkFileDialog
+	from ttk import Progressbar, Scrollbar
+else:
+	import _thread as thread
+	import queue as Queue
+	from tkinter import *
+	from tkinter import simpledialog as tkSimpleDialog
+	from tkinter import messagebox as tkMessageBox
+	from tkinter import filedialog as tkFileDialog
+	from tkinter.ttk import Progressbar, Scrollbar
 
 ##Check for ProDy
 try:
@@ -63,10 +81,10 @@ class Gromacs_output:
 		os.chdir(current_dir)
 				
 	def init2(self):
-		print "Reading available force fields and water models"
+		print("Reading available force fields and water models")
 		
 		fo = open("test_gromacs.pdb", "wb")
-		fo.write("ATOM      1  N   LYS     1      24.966  -0.646  22.314  1.00 32.74      1SRN  99\n");
+		fo.write(b"ATOM      1  N   LYS     1      24.966  -0.646  22.314  1.00 32.74      1SRN  99\n")
 		fo.close()
 		
 		gmxStdinFilePath = "gromacs_stdin.txt"
@@ -101,7 +119,7 @@ class Gromacs_output:
 		#Reading available water models
 		self.water_list = getWaterModelsInfo(lista_gromacs)
 		
-		print "Reading available groups"
+		print("Reading available groups")
 		
 		gmxStdinFilePath = "gromacs_stdin.txt"
 		fo = open(gmxStdinFilePath, "w")
@@ -141,7 +159,7 @@ class Gromacs_output:
 		current_dir = os.getcwd()
 		os.chdir(dynamics_dir)
 		
-		print "Updating available water models"
+		print("Updating available water models")
 		gmxStdinFilePath = "gromacs_stdin.txt"
 		fo = open(gmxStdinFilePath, "w")
 		fo.write( "%d\n" % force_number);
@@ -246,7 +264,7 @@ class Gromacs_input:
 			elif key == "explicit":
 				self.explicit = value
 		save_options()
-		print "gromacs updated"
+		print("gromacs updated")
 
 	##This function will create initial topology and trajectory using pdb file and choosen force field
 	def pdb2top(self, file_path, project_name):
@@ -333,7 +351,7 @@ class Gromacs_input:
 		executeAndMonitorSubprocess(command,  None, 'log1.txt', 'log.txt')
 		
 		water_name = gromacs.water_list[self.water-1][1][4:8].lower()
-		print water_name
+		print(water_name)
 		if water_name == "tip4":
 			water_gro = "tip4p.gro"
 		elif water_name == "tip5":
@@ -618,7 +636,7 @@ class Vectors:
 	##Show contact map on PyMOL screen
 	def show_contact_map(self, sensitivity):
 		contact_matrix = self.enm.getKirchhoff()
-		print contact_matrix
+		print(contact_matrix)
 		c_alpha_nr = 0
 		for c_alpha_list in contact_matrix:
 			c_alpha_nr = c_alpha_nr + 1
@@ -916,7 +934,7 @@ def executeSubprocess(command, stdinFilePath = None, stdoutFilePath = None):
 		stdoutFile = open(stdoutFilePath, "w")
 		stdoutMsg = stdoutFilePath
 		
-	print "Running command: " + command + "; STDIN: " + stdinMsg + "; STDOUT: " + stdoutMsg
+	print("Running command: " + command + "; STDIN: " + stdinMsg + "; STDOUT: " + stdoutMsg)
         
 	returnCode = subprocess.call(command, stdin=stdinFile, stdout=stdoutFile, stderr=subprocess.STDOUT, shell=True)
 	
@@ -951,7 +969,7 @@ def executeAndMonitorSubprocess(command, stdinFilePath = None, stdoutFilePath = 
 		stdoutFile = open(stdoutFilePath, "w")
 		stdoutMsg = stdoutFilePath
 				
-	print "Running command: " + command + "; STDIN: " + stdinMsg + "; STDOUT: " + stdoutMsg
+	print("Running command: " + command + "; STDIN: " + stdinMsg + "; STDOUT: " + stdoutMsg)
         
 	gmx = subprocess.Popen(command,  stdin=stdinFile, stdout=stdoutFile, stderr=subprocess.STDOUT, shell=True)
 	while gmx.poll() is None:
@@ -1027,7 +1045,7 @@ def init_function(travisCI=False):
 	if homeDir:
 		os.chdir(homeDir)
 	else:
-		print "HOME environment variable not defined"
+		print("HOME environment variable not defined")
 		status = ["fail", "HOME environment variable not defined. Please set its value and try again."]
 		tkMessageBox.showerror("Initialization error", status[1])
 		return
@@ -1040,16 +1058,16 @@ def init_function(travisCI=False):
 	if not os.path.isdir(project_dir):
 		os.makedirs(project_dir)
 	
-	print "Searching for GROMACS installation"
+	print("Searching for GROMACS installation")
 	os.chdir(dynamics_dir)
 	gmxExe, gmxVersion, gmxBuildArch, gmxOnCygwin = getGromacsExeInfo()
 	os.chdir(homeDir)
 
 	if not len(gmxExe):
-		print "GROMACS 5 or newer not detected."
+		print("GROMACS 5 or newer not detected.")
 		status = ["fail", "GROMACS not detected. Please install and setup GROMACS 5 or newer correctly for your platform. Check '~/.dynamics/test_gromacs.txt' for more details. Don't forget to add GROMACS bin directory to your PATH"]
 	else:
-		print "Found GROMACS VERSION " + gmxVersion
+		print("Found GROMACS VERSION " + gmxVersion)
 		##Gromacs variables
 		global gromacs, gromacs2
 		gromacs = Gromacs_output()
@@ -1144,7 +1162,7 @@ coulombtype = PME"""
 	if prody_true == 1:
 		global vectors_prody
 		vectors_prody = Vectors()
-		print "ProDy correctly imported"
+		print("ProDy correctly imported")
 	
 	if travisCI == False:
 		##Creating objects - data from those windows will be used by rootWindow
@@ -1463,7 +1481,7 @@ class CalculationWindow:
 	
 	##This function will create main Calculation Window
 	def window(self, root):
-		print project_name
+		print(project_name)
 		balloon = Pmw.Balloon(root)
 		root.wm_title("Calculation Window")
 		frame1 = Frame(root)
@@ -1729,7 +1747,7 @@ class InterpretationWindow:
 		log_button.pack(side=LEFT)
 		
 		if prody_true != 1:
-			print "No ProDy found"
+			print("No ProDy found")
 			one_button.configure(state=DISABLED)
 			two_button.configure(state=DISABLED)
 			three_button.configure(state=DISABLED)
@@ -2231,7 +2249,7 @@ def select_file(v_name):
 		if os.path.isdir(project_dir) == False:
 			os.makedirs(project_dir)
 			shutil.copyfile(file.name, project_dir + project_name + ".pdb")
-			print "pdb_copied"
+			print("pdb_copied")
 		create_config_files()	
 	except:
 		pass
@@ -2267,7 +2285,7 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
 
 ##This function sets variables after choosing new molecule
 def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_restraints):
-	print "Set Variables"
+	print("Set Variables")
 	##Set project name and dir
 	if name != "":
 		global project_name, project_dir
@@ -2292,7 +2310,7 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
 
 ##This function creates files needed by the project
 def create_config_files():
-	print "Create config files"
+	print("Create config files")
 	global em_file, pr_file, md_file, progress
 	if not os.path.isfile(project_dir + "options.pickle"):
 		progress = Progress_status()
@@ -2300,7 +2318,7 @@ def create_config_files():
 		load_options()
 	if os.path.isfile(dynamics_dir + "em.mdp"):
 		shutil.copy(dynamics_dir + "em.mdp", project_dir + "em.mdp")
-		print "Found em.mdp file. Using it instead of local configuration."
+		print("Found em.mdp file. Using it instead of local configuration.")
 	elif os.path.isfile(project_dir + "em.mdp"):
 		em_file_config = open(project_dir + "em.mdp", "r").read()
 		em_file = Mdp_config("em.mdp",em_file_config, 1)
@@ -2308,7 +2326,7 @@ def create_config_files():
 		em_file = Mdp_config("em.mdp",em_init_config, 0)
 	if os.path.isfile(dynamics_dir + "pr.mdp"):
 		shutil.copy(dynamics_dir + "pr.mdp", project_dir + "pr.mdp")
-		print "Found pr.mdp file. Using it instead of local configuration."
+		print("Found pr.mdp file. Using it instead of local configuration.")
 	elif os.path.isfile(project_dir + "pr.mdp"):
 		pr_file_config = open(project_dir + "pr.mdp", "r").read()
 		pr_file = Mdp_config("pr.mdp",pr_file_config, 1)
@@ -2316,7 +2334,7 @@ def create_config_files():
 		pr_file = Mdp_config("pr.mdp",pr_init_config, 0)
 	if os.path.isfile(dynamics_dir + "md.mdp"):
 		shutil.copy(dynamics_dir + "md.mdp", project_dir + "md.mdp")
-		print "Found md.mdp file. Using it instead of local configuration."
+		print("Found md.mdp file. Using it instead of local configuration.")
 	elif os.path.isfile(project_dir + "md.mdp"):
 		md_file_config = open(project_dir + "md.mdp", "r").read()
 		md_file = Mdp_config("md.mdp",md_file_config, 1)
@@ -2326,8 +2344,8 @@ def create_config_files():
 	try:
 		if project_name in cmd.get_names("objects"): #PyMOL API
 			cmd.save(project_dir+project_name+".pdb", project_name) #PyMOL API
-			print "cmd saved"
-	except (AttributeError, TypeError), e:
+			print("cmd saved")
+	except (AttributeError, TypeError) as e:
 		pass
 
 #This function will create the window with configuration files based on MDP class
@@ -2591,7 +2609,7 @@ def steps_status_done(step_nr):
 def status_update(input_status):
 	global status
 	status = input_status
-	print status[1]
+	print(status[1])
 
 ##Help window
 def helpWindow(master):
@@ -2629,7 +2647,7 @@ def no_molecule_warning():
 
 ##This function will start real workflow of the plugin, once everything is set
 def dynamics():
-	print "Starting PyMOL plugin 'dynamics' ver."+plugin_ver
+	print("Starting PyMOL plugin 'dynamics' ver."+plugin_ver)
 	global status, stop, gromacs, project_name
 	
 	file_path = project_dir + project_name
@@ -2735,7 +2753,7 @@ def dynamics():
 		progress.to_do[9] = 0
 		save_options()
 	elif status[0] == "fail":
-		print status[1]
+		print(status[1])
 		if stop == 0:
 			error_message()
 	
@@ -2762,7 +2780,7 @@ def show_multipdb():
 
 ##Saving tar.bz file
 def save_file(destination_path):
-	print "Saving"
+	print("Saving")
 	import tarfile
 	save_options()
 	tar = tarfile.open(destination_path+".tar.bz2", "w:bz2")
@@ -2772,7 +2790,7 @@ def save_file(destination_path):
 
 ##Load tar.bz file
 def load_file(file_path):
-	print "Loading file: " + file_path
+	print("Loading file: " + file_path)
 	import tarfile
 	tar = tarfile.open(file_path, "r:bz2")
 	names = tar.getnames()
@@ -2793,10 +2811,10 @@ def save_options():
 	global vectors_prody
 	if prody_true == 0:
 		vectors_prody = 0
-	print "updating project files"
+	print("updating project files")
 	if os.path.isdir(project_dir) == False:
 		os.makedirs(project_dir)
-	destination_option = file(project_dir + "options.pickle", "w")
+	destination_option = open(project_dir + "options.pickle", "wb")
 	pickle_list = [plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress, vectors_prody]
 	pickle.dump(pickle_list, destination_option)
 	del destination_option
@@ -2805,13 +2823,13 @@ def save_options():
 def load_options():
 	global gromacs2, em_file, pr_file, md_file, progress, vectors_prody
 	
-	pickle_file = file(project_dir +"options.pickle")
+	pickle_file = open(project_dir +"options.pickle", "rb")
 	options = pickle.load(pickle_file)
 	
-	print "Loading project " + project_name
-	print "Project was created for Dynamics PyMOL Plugin"+options[0]+" and GROMACS "+options[1]
+	print("Loading project " + project_name)
+	print("Project was created for Dynamics PyMOL Plugin"+options[0]+" and GROMACS "+options[1])
 	if gromacs.version != options[1]:
-		print "GROMACS versions is different for loaded file."
+		print("GROMACS versions is different for loaded file.")
 	
 	if options[0][1:4] == "2.2":
 		gromacs2.update({"force" : options[2].force, "water" : options[2].water, "group" : options[2].group, "box_type"  : options[2].box_type, "hydro" : options[2].hydro,
@@ -2824,7 +2842,7 @@ def load_options():
 		if prody_true == 1 and options[7] != 0:
 			vectors_prody = options[7]
 	elif options[0][1:4] == "2.1":
-		print "plugin 2.1 compatibility layer"
+		print("plugin 2.1 compatibility layer")
 		gromacs2.update({"force" : options[2].force, "water" : options[2].water, "group" : options[2].group, "box_type"  : options[2].box_type, "hydro" : options[2].hydro,
 		"box_distance"  : options[2].box_distance, "box_density" : options[2].box_density, "restraints_nr" : options[2].restraints_nr, "neutrality" : options[2].neutrality,
 		"salt_conc" : options[2].salt_conc, "positive_ion" : options[2].positive_ion, "negative_ion" : options[2].negative_ion})
@@ -2836,7 +2854,7 @@ def load_options():
 		if prody_true == 1 and options[8] != 0:
 			vectors_prody = options[8]
 	else:
-		print "Warning. Importing projects from plugin version " + options[0] + " is not supported. Aboring import."
+		print("Warning. Importing projects from plugin version " + options[0] + " is not supported. Aboring import.")
 
 ##Text for "Help"
 def help_option():
@@ -2867,7 +2885,7 @@ You can click Play button in order to see animation."""
 ##Clean function
 def clean_option():
 	shutil.rmtree(dynamics_dir)
-	print "Temporary files are now removed."
+	print("Temporary files are now removed.")
 
 ##If molecular dynamics simulation fails, this function will show the error
 def error_message():
@@ -2887,4 +2905,4 @@ def error_message():
 	error = ""
 	for line in error_list:
 		error = error + line
-	print error
+	print(error)
