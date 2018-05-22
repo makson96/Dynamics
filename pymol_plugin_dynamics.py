@@ -402,7 +402,10 @@ class Gromacs_input:
 		
 		##Check if waterbox was added and adjust accordingly.
 		if not os.path.isfile(file_path+"_b4em.gro"):
-			shutil.copy(project_name+".gro", project_name+"_b4em.gro")
+			if os.path.isfile(project_name+"_solv.gro"):
+				shutil.copy(project_name+"_solv.gro", project_name+"_b4em.gro")
+			elif os.path.isfile(project_name+".gro"):
+				shutil.copy(project_name+".gro", project_name+"_b4em.gro")
 		
 		status_update(status)		
 		command = gromacs.command+" grompp -f em -c "+project_name+"_b4em -p "+project_name+" -o "+project_name+"_em"
@@ -2677,9 +2680,7 @@ def dynamics():
 		if status[0] == "ok":
 			progress.status[3] = 1
 			progress.to_do[3] = 0
-			save_options()
-	elif status[0] == "ok" and stop == 0 and progress.to_do[3] == 0 and progress.status[3] == 0:
-		shutil.copy(project_name+"_solv.gro",project_name+"_b4em.gro")		
+			save_options()	
 
 	##EM	
 	if status[0] == "ok" and stop == 0 and progress.to_do[4] == 1:
