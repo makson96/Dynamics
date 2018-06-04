@@ -414,7 +414,7 @@ class Gromacs_input:
 		command = gromacs.command+" mdrun -nice 4 -s "+project_name+"_em -o "+project_name+"_em -c "+project_name+"_b4pr -v"
 		executeAndMonitorSubprocess(command,  None, 'log1.txt', 'log.txt')
 		
-		if os.path.isfile(file_path+"_em.tpr") == True and stop == 0:
+		if (os.path.isfile(file_path+"_em.tpr") == True) and (os.path.isfile(file_path+"_b4pr.gro") == True) and (stop == 0):
 			status = ["ok", "Energy Minimized"]
 		else:
 			status = ["fail", "Unable to perform Energy Minimization"]
