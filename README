@@ -33,20 +33,20 @@ Table of Content:
 2.2.1. Ubuntu	4
 2.2.2. Gentoo	4
 2.2.3. Other Linux distributions and macOS	4
-2.2.4. Windows/Cygwin	5
+2.2.4. Windows/Cygwin	4
 3. Instruction	6
 3.1. Molecule	6
-3.2. Force Field and Water Model	9
-3.3. Simulation Steps	12
-3.4. Restraints	13
-3.5. Configuration	14
-3.6. Additional Options	15
-3.7. Vectors Options	15
-3.8. Additional Buttons	16
-4. Interpretation Window	18
-4.1. Contact Map	18
-5. Changelog	20
-6. Copyright	21
+3.2. Force Field and Water Model	8
+3.3. Simulation Steps	11
+3.4. Restraints	11
+3.5. Configuration	13
+3.6. Additional Options	13
+3.7. Vectors Options	13
+3.8. Additional Buttons	14
+4. Interpretation Window	15
+4.1. Contact Map	15
+5. Changelog	17
+6. Copyright	18
 1. Introduction
 
 PyMOL is powerful and easy to use open source tool for viewing and manipulating molecules. Thanks to its API capabilities it can be extended by developing third party plugins in high level programming language Python. This project is focused on developing plugin for PyMOL, which add molecular dynamics simulation feature. It is meant to be easy to use. The plugin uses GROMACS tools as a back-end. Project is developed as an open source and as such create full open source stack together with PyMOL and GROMACS.
@@ -57,16 +57,16 @@ Plugin is developed and maintained by Laboratory of Biomolecular Systems Simulat
 
 The plugin should work on Linux, Windows/Cygwin and MacOS X.
 Linux and MacOS X dependencies:
-Bash
-Python2 with TkInter
-PyMOL
-GROMACS 5.x or newer
-Windows/Cygwin dependencies:
-Cygwin
-PyMOL
-GROMACS 5.x or newer
+        ◦ Bash
+        ◦ Python2 with TkInter
+        ◦ PyMOL
+        ◦ GROMACS 5.x, 2016.x, 2018.x
+      Windows/Cygwin dependencies:
+        ◦ Cygwin
+        ◦ PyMOL
+        ◦ GROMACS 5.x, 2016.x, 2018.x
 
-Prody is recommended for advanced features. Plugin can take use of PLUMED compiled into GROMACS.
+Prody is recommended for advanced features.
 
 2.2. Installation
 
@@ -78,7 +78,7 @@ If you are Ubuntu user, then you can just add repository and install package:
 	sudo add-apt-repository ppa:makson96/dynamics
 	sudo apt-get update
 	sudo apt-get install pymol-plugin-dynamics
-All required libraries will be downloaded as dependencies. Supported versions of Ubuntu are 14.04 and 16.04.
+All required libraries will be downloaded as dependencies. Supported versions of Ubuntu are 16.04 and 18.04.
 
 2.2.2. Gentoo
 
@@ -97,20 +97,20 @@ Then run PyMOL as a root. On the top Menu choose Plugin->Manage Plugins->Install
 
 2.2.4. Windows/Cygwin
 
-Download and install the latest version of Cygwin including appropriate code development packages.
-Download, compile, and install the latest version of GROMACS 2016.3 under Cygwin. Follow the standard compilation, installation and testing instructions to build, compile and install GROMACS 2016.3 under Cygwin. For example:
-% cd gromacs-2016.3
-% mkdir build
-% cmake .. -DBUILD_SHARED_LIBS=off -DGMX_BUILD_OWN_FFTW=ON -DCMAKE_INSTALL_PREFIX=/cygdrive/c/<YOUR_GROMACS_ROOT>
-% make >& make.log
-% make install >& make.install.log
-Test GROMACS from Cywin command line.
-Download and install 64 bit PyMOL 1.8.2.0, which comes with Python 2.7.9.
-Test PyMOL.
-Update PATH environment variable on Windows to include the following bin directories corresponding to GROMACS and Cygwin:
-C:\<YOUR_GROMACS_ROOT>\bin
-C:\<YOUR_CYGWIN_PATH>\bin
-Install the GROMACS plugin following standard PyMOL instructions. Download latest plugin version from link: https://github.com/makson96/Dynamics/archive/master.zip and unpack it. Run PyMOL. On the top Menu choose Plugin->Manage Plugins->Install... Then choose pymol_plugin_dynamics.py file. After installation restart PyMOL.
+    • Download and install the latest version of Cygwin including appropriate code development packages.
+    • Download, compile, and install the proper GROMACS version under Cygwin. Follow the standard compilation, installation and testing instructions to build, compile and install GROMACS under Cygwin. For example:
+      % cd gromacs-2016.3
+      % mkdir build
+      % cmake .. -DBUILD_SHARED_LIBS=off -DGMX_BUILD_OWN_FFTW=ON -DCMAKE_INSTALL_PREFIX=/cygdrive/c/<YOUR_GROMACS_ROOT>
+      % make >& make.log
+      % make install >& make.install.log
+    • Test GROMACS from Cywin command line.
+    • Download and install 64 bit PyMOL 1.8.2.0, which comes with Python 2.7.9.
+    • Test PyMOL.
+    • Update PATH environment variable on Windows to include the following bin directories corresponding to GROMACS and Cygwin:
+      C:\<YOUR_GROMACS_ROOT>\bin
+      C:\<YOUR_CYGWIN_PATH>\bin
+    • Install the GROMACS plugin following standard PyMOL instructions. Download latest plugin version from link: https://github.com/makson96/Dynamics/archive/v2.2.0.zip and unpack it. Run PyMOL. On the top Menu choose Plugin->Manage Plugins->Install... Then choose pymol_plugin_dynamics.py file. After installation restart PyMOL.
 3. Instruction
 
 	Dynamics PyMOL plugin is meant to be as easy to use as it is possible. As an input it takes PDB molecule model. As an output it creates PDB multimodel molecule, which could be easily stored and viewed. After starting PyMOL load PDB file for which molecular dynamics simulation needs to be performed. If you want some specific atoms to restraints just select them on displayed molecule model. Now all you need to do is to click on top Menu->Plugin->dynamics and plugin menu should open. All available options are described in this chapter.
@@ -184,7 +184,7 @@ http://manual.gromacs.org/current/online/mdp_opt.html
 
 3.8. Additional buttons
 
-	In the main menu on the bottom there are six buttons. From the left. Quit button will exit the plugin. Clean button will remove all temporary plugin files including previous project files. Help button will display brief help information. Save button will allow you to save your molecule with all settings and any previous work as at tar.bz2 archive. Load button will allow you to load previously saved tar.bz2 archive. OK button will take you to next window, in which you will perform molecular dynamics simulation.
+	In the main menu on the bottom there are six buttons. From the left. Exit button will exit the plugin. Clean button will remove all temporary plugin files including previous project files. Help button will display brief help information. Save button will allow you to save your molecule with all settings and any previous work as at tar.bz2 archive. Load button will allow you to load previously saved tar.bz2 archive. OK button will take you to next window, in which you will perform molecular dynamics simulation.
 
 
 In the next menu there are 5 buttons. From the left. EXIT button will quit plugin. SAVE button will allow you to save current project with its progress and settings as a tar.bz2 archive. STOP button will suspend calculations, while START button will resume or start counting. LOG button will display GROMACS output, which may be very useful if the calculation fails. Note that after starting calculations the GROMACS installation will perform the simulation. Status bar will show you the progress. If GROMACS will fail, the additional windows will pop up and show GROMACS error status. Full log of GROMACS work can be found in ~/.dynamics/molecule_name/log.txt .
@@ -192,7 +192,7 @@ In the next menu there are 5 buttons. From the left. EXIT button will quit plugi
 
 4. Interpretation Window
 
-	When the calculation is finished, the model which is the result will be displayed in main PyMOL window. Additionally, you will be presented with Interpretation Window. The upper half options are always accessible, while lower half options are unlocked only if calculation with vectors was performed. In this window you can play and pause model movement, go to accurate moment [ps] of dynamics, select model look and labels. For the vectors (ProDy) options, you can choose vector model nr, you can scale vectors and change their colors to be able to see and present them better. Also, you can display here Contact Map and Cross-correlation if such an option was selected in Vectors Options.
+	When the calculation is finished, the model which is the result will be displayed in main PyMOL window. Additionally, you will be presented with Interpretation Window. The upper half options are always accessible, while lower half options are unlocked only if calculation with vectors was performed. In this window you can play and pause model movement, go to accurate moment [ps] of dynamics, select model look and labels. For the vectors (ProDy) options, you can choose vector model number, you can scale vectors and change their colors to be able to see and present them better. Also, you can display here Contact Map and Cross-correlation if such an option was selected in Vectors Options.
 
 4.1. Contact Map
 
@@ -201,12 +201,14 @@ In the next menu there are 5 buttons. From the left. EXIT button will quit plugi
 5. Changelog
 
 What's new in 2.2:
-Remove support for GROMACS 5.0
+    • Introduction of Travis CI for managing tool development
+    • Add support for GROMACS 2018
 
 Known issues:
-Gausian network model will most certainly fail because of wrong nmd files generetad by ProDy.
-There are some differences between nmd files displayed by this plugin and Normal Mode Wizard.
-ProDy can sometimes make this plugin (and PyMOL) to crash.
+    • Gausian network model will most certainly fail because of wrong nmd files generetad by ProDy.
+    • There are some differences between nmd files displayed by this plugin and Normal Mode Wizard.
+    • ProDy can sometimes make this plugin (and PyMOL) to crash.
+    • Default configuration of Implicit Solvent will not work with GROMACS 2018
 6. Copyright
 
 	This software (including its Debian packaging) is available to you under the terms of the GPL-3, see "/usr/share/common-licenses/GPL-3".
