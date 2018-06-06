@@ -845,7 +845,7 @@ class Progress_status:
 ##init function - puts plugin into menu and starts 'init_function' after clicking.
 def __init__(self):
 	self.menuBar.addmenuitem("Plugin", "command", "Dynamics_Gromacs"+plugin_ver, label = "Dynamics_Gromacs"+plugin_ver,
-	command = init_function)
+	command = lambda: init_function(parent=self.root))
 
 # Detect gmx executable along with other associated information...
 def getGromacsExeInfo():
@@ -1016,10 +1016,13 @@ def getWaterModelsInfo(gmxOutputLines):
 	return watersInfo2
 
 ##This function will initialize all plugin stufs
-def init_function(travisCI=False):
+def init_function(travisCI=False, parent=None):
 	##Global variables
 	global stop, status, error, em_init_config, pr_init_config, md_init_config, project_name, dynamics_dir, project_dir
 	global gmxExe, gmxVersion, gmxBuildArch, gmxOnCygwin
+
+	global g_parent
+	g_parent = parent
 
 	stop = 1
 	status = ["ok", ""]
@@ -1158,16 +1161,16 @@ coulombtype = PME"""
 			restraintsW = RestraintsWindow()
 			genionW = GenionWindow()
 			##Start graphic interface
-			rootWindow()
+			rootWindow(parent)
 		##Break now if status is not ok and print message
 		elif status[0] == "fail":
 			tkMessageBox.showerror("Initialization error", status[1])
 
 ##--Graphic Interface--
 ##Root menu window
-def rootWindow():
+def rootWindow(parent=None):
 
-	root = Tk()
+	root = Toplevel(parent)
 	balloon = Pmw.Balloon(root)
 	root.wm_title("Dynamics with Gromacs"+plugin_ver)
 	
@@ -1437,8 +1440,6 @@ def rootWindow():
 		balloon.bind(prody_button, "Set vectors options")
 	else:
 		balloon.bind(prody_button, "In order to use this option install ProDy")
-	
-	root.mainloop()
 
 ##Molecular Dynamics Performing window
 class CalculationWindow:
@@ -1458,9 +1459,8 @@ class CalculationWindow:
 	def check_window(self, master):
 		if project_name != "nothing":
 			master.destroy()
-			root = Tk()
+			root = Toplevel(g_parent)
 			self.window(root)
-			root.mainloop()
 		elif project_name == "nothing":
 			no_molecule_warning()
 	
@@ -1534,8 +1534,6 @@ class CalculationWindow:
 				self.queue_status.put("User Stoped")
 		if error != "":
 			self.queue_status.put("Fatal Error")
-			self.start_counting(0)
-			self.start_button.configure(state=DISABLED)
 	
 	##This function will update status bar in thread safe manner
 	def bar_display(self, root):
@@ -1550,15 +1548,9 @@ class CalculationWindow:
 		except:
 			pass
 		if status == "Fatal Error":
-			root1 = Tk()
-			root1.wm_title("GROMACS Error Message")
-			frame = Frame(root1)
-			frame.pack()
-			w = Label(frame, text=error)
-			w.pack()
-			ok_button = Button(frame, text = "OK", command=root1.destroy)
-			ok_button.pack()
-			root1.mainloop()
+			self.start_counting(0)
+			self.start_button.configure(state=DISABLED)
+			tkMessageBox.showerror("GROMACS Error Message", error)
 		if status == "Finished!":
 			root.destroy()
 			#Show interpretation window after successful completion of the calculations...
@@ -1594,9 +1586,8 @@ class InterpretationWindow:
 	def __init__(self):
 		self.queue_time = Queue.Queue()
 		self.md_time()
-		root = Tk()
+		root = Toplevel(g_parent)
 		self.window(root)
-		root.mainloop()
 	
 	def md_time(self):
 		md_file = open(project_dir+"md.mdp", "r")
