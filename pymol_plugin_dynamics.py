@@ -13,7 +13,7 @@
 from __future__ import print_function
 
 ##Plugin Version
-plugin_ver = " 2.2.0pre"
+plugin_ver = " 3.0.0pre"
 
 ##--Import libraries--
 ##Import nativ python libraries
