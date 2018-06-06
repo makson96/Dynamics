@@ -8,6 +8,7 @@
 ##- Ajit B. Datta (ajit@jcbose.ac.in)
 ##- Sara Boch Kminikowska
 ##- Manish Sud (msud@san.rr.com; URL: www.MayaChemTools.org)
+##- Thomas Holder
 ##
 
 from __future__ import print_function
