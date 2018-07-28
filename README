@@ -60,11 +60,11 @@ Linux and MacOS X dependencies:
         ◦ Bash
         ◦ Python2 with TkInter
         ◦ PyMOL
-        ◦ GROMACS 5.x, 2016.x, 2018.x
+        ◦ GROMACS 2016.x, 2018.x
       Windows/Cygwin dependencies:
         ◦ Cygwin
         ◦ PyMOL
-        ◦ GROMACS 5.x, 2016.x, 2018.x
+        ◦ GROMACS 2016.x, 2018.x
 
 Prody is recommended for advanced features.
 
