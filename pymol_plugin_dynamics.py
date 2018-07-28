@@ -782,6 +782,13 @@ class Mdp_config:
 		list2 = []
 		for line in list1:
 			list2.append(line.split(" = "))
+		#Change ns_type simple to grid for GROMACS 5.0
+		if gromacs.version[0:3] == "5.0":
+			index = 0
+			for option in list2:
+				if option == ["ns_type", "simple"]:
+					list2[index] = ["ns_type", "grid"]
+				index = index + 1	
 		self.options = list2			
 	
 	def update(self, option_nr, value, check=1):
