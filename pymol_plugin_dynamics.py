@@ -1069,11 +1069,15 @@ def init_function(travisCI=False, parent=None):
 	os.chdir(dynamics_dir)
 	gmxExe, gmxVersion, gmxBuildArch, gmxOnCygwin = getGromacsExeInfo()
 	os.chdir(homeDir)
-
+	
+	supported_gmxVersions = ["2016" , "2018"]
 	if not len(gmxExe):
 		print("GROMACS 2016 or newer not detected.")
 		status = ["fail", "GROMACS not detected. Please install and setup GROMACS 2016 or newer correctly for your platform. Check '~/.dynamics/test_gromacs.txt' for more details. Don't forget to add GROMACS bin directory to your PATH"]
-	else:
+	elif gmxVersion[0:4] not in supported_gmxVersions:
+		print("Warning. Unsupported GROMACS Version")
+		gmxVersion = gmxVersion + " (Unsupported)"
+	if len(gmxExe):
 		print("Found GROMACS VERSION " + gmxVersion)
 		##Gromacs variables
 		global gromacs, gromacs2
