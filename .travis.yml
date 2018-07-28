@@ -15,7 +15,7 @@ env:
     #For PyMOL 1.8, GROMACS 2016
     - PYMOL_VER=1.8 PYMOL_PACKAGE=travisci-pymol-18 GROMACS_VER=2016.5 GROMACS_PACKAGE=travisci-gromacs-2016
     #For PyMOL 1.8, GROMACS 2018
-    - PYMOL_VER=1.8 PYMOL_PACKAGE=travisci-pymol-18 GROMACS_VER=2018 GROMACS_PACKAGE=travisci-gromacs-2018
+    - PYMOL_VER=1.8 PYMOL_PACKAGE=travisci-pymol-18 GROMACS_VER=2018.2 GROMACS_PACKAGE=travisci-gromacs-2018
 # command to install dependencies
 before_install:
   - sudo apt-get -qq update
