@@ -913,7 +913,7 @@ def setGromacsDynamicsAndProjectDirs():
 	
 	project_name = "nothing"
 	
-	homeDir = os.getenv("HOME")
+	homeDir = os.path.expanduser('~')
 	
 	gmxHomeDirPath = os.path.abspath(homeDir)
 	dynamics_dir = os.path.join(gmxHomeDirPath, '.dynamics', '')
@@ -1048,7 +1048,7 @@ def init_function(travisCI=False, parent=None):
 	error = ""
 	
 	# Make sure HOME environment variable is defined before setting up directories...
-	homeDir = os.getenv("HOME") 
+	homeDir = os.path.expanduser('~')
 	if homeDir:
 		os.chdir(homeDir)
 	else:
