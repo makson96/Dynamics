@@ -16,19 +16,15 @@ env:
 # add ppa
 matrix:
   include:
-    env: PYMOL_PACKAGE=travisci-pymol-18 GROMACS_PACKAGE=travisci-gromacs-2018
+    env: PYMOL_VER=1.8 PYMOL_PACKAGE=travisci-pymol-18 GROMACS_VER=2018.3 GROMACS_PACKAGE=travisci-gromacs-2018
     addons:
       apt:
         sources:
           - sourceline: 'ppa:makson96/dynamics'
         packages:
         - travisci-pdb-files
-        - $PYMOL_PACKAGE
-        - $GROMACS_PACKAGE
-# command to install dependencies
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libfreetype6-dev libpng12-dev
+        - travisci-pymol-18
+        - travisci-gromacs-2018
 install:
   - pip install -r tests/requirements.txt
 # command to run tests
