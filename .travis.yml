@@ -1,3 +1,6 @@
+# distribution
+dist: trusty
+# language
 language: python
 python:
   - "2.7"
