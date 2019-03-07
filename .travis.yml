@@ -1,3 +1,6 @@
+# distribution
+dist: xenial
+# language
 language: python
 python:
   - "2.7"
@@ -8,20 +11,21 @@ env:
     - PYMOL_MODULES=/opt/pymol/modules
     - PYTHONPATH=$PYMOL_MODULES
   matrix:
-    #For PyMOL 1.7, GROMACS 2016
-    - PYMOL_VER=1.7 PYMOL_PACKAGE=travisci-pymol-17 GROMACS_VER=2016.5 GROMACS_PACKAGE=travisci-gromacs-2016
-    #For PyMOL 1.8, GROMACS 2016
-    - PYMOL_VER=1.8 PYMOL_PACKAGE=travisci-pymol-18 GROMACS_VER=2016.5 GROMACS_PACKAGE=travisci-gromacs-2016
     #For PyMOL 1.8, GROMACS 2018
-    - PYMOL_VER=1.8 PYMOL_PACKAGE=travisci-pymol-18 GROMACS_VER=2018.2 GROMACS_PACKAGE=travisci-gromacs-2018
+    - PYMOL_VER=1.8 PYMOL_PACKAGE=travisci-pymol-18 GROMACS_VER=2018.3 GROMACS_PACKAGE=travisci-gromacs-2018
+# add ppa
+addons:
+  apt:
+    sources:
+      - ppa:makson96/dynamics
+    packages:
+    - travisci-pdb-files
+    - $PYMOL_PACKAGE
+    - $GROMACS_PACKAGE
 # command to install dependencies
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y libfreetype6-dev libpng12-dev
-  #GROMACS any PyMOL install
-  - sudo add-apt-repository ppa:makson96/dynamics -y
-  - sudo apt-get update -q
-  - sudo apt-get install $GROMACS_PACKAGE $PYMOL_PACKAGE
 install:
   - pip install -r tests/requirements.txt
 # command to run tests

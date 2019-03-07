@@ -12,7 +12,7 @@ print "######################"
 print "Starting Basic Simulation test"
 print "######################"
 
-import os, sys
+import os, sys, shutil
 one_up = os.path.os.path.abspath(__file__)
 one_up = one_up.split("tests")[0]
 sys.path.insert(0, one_up)
@@ -24,8 +24,7 @@ pymol_plugin_dynamics.init_function(travisCI=True)
 pymol_plugin_dynamics.project_name = "2fjz"
 pymol_plugin_dynamics.setGromacsProjectDir()
 os.makedirs(pymol_plugin_dynamics.project_dir)
-import urllib
-urllib.urlretrieve ("https://files.rcsb.org/download/2FJZ.pdb", pymol_plugin_dynamics.project_dir + "2fjz.pdb")
+shutil.copy("/usr/share/pdb-files/2fjz.pdb", pymol_plugin_dynamics.project_dir + "2fjz.pdb")
 
 pymol_plugin_dynamics.status = ["ok", "ok"]
 pymol_plugin_dynamics.stop = 0
