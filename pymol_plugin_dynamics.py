@@ -1814,10 +1814,6 @@ class InterpretationWindow:
 ## Show interpretation window...
 def showInterpretationWindow():
 	interpretation = InterpretationWindow()
-	try:
-		interpretation()
-	except AttributeError:
-		pass
 
 ##Gather all water options windows in one class
 class WaterWindows:
