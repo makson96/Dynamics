@@ -183,6 +183,7 @@ class SimulationParameters:
     vectors_prody = False
     stop = True
     project_name = "nothing"
+    progress = ""
 
     def __init__(self):
         self.gmx_output = GromacsOutput()
@@ -191,6 +192,7 @@ class SimulationParameters:
         if prody:
             self.vectors_prody = Vectors()
             print("ProDy correctly imported")
+        self.progress = ProgressStatus()
 
     def change_stop_value(self, value):
         if value:
@@ -733,6 +735,7 @@ class Vectors:
     nmd_bfactors = []
     nmd_coordinates = []
     nmd_mode = []
+    nmd_scale_mode = []
     color = "gray"
     scale = 1.0
     mode_nr = 0
@@ -744,7 +747,8 @@ class Vectors:
     enm = 0
 
     # Change Multimodel PDB file into NMD vector file
-    def prody(self):
+    def prody(self, s_params):
+        project_name = s_params.project_name
         # Silence ProDy and create logs
         prody.confProDy(verbosity='none')
         prody.startLogfile("log_prody.log")
@@ -779,8 +783,9 @@ class Vectors:
         prody.closeLogfile("log_prody.log")
 
     # Read NMD file
-    def nmd_format(self):
-        file_nmd = open(project_name + '.nmd', "r")
+    def nmd_format(self, s_params):
+        project_name = s_params.project_name
+        file_nmd = open('{}.nmd'.format(project_name), "r")
         list_nmd = file_nmd.readlines()
 
         self.nmd_mode = []
@@ -811,7 +816,8 @@ class Vectors:
                 self.nmd_scale_mode.append(pre_mode[2])
 
     # Show contact map on PyMOL screen
-    def show_contact_map(self, sensitivity):
+    def show_contact_map(self, sensitivity, s_params):
+        project_name = s_params.project_name
         contact_matrix = self.enm.getKirchhoff()
         print(contact_matrix)
         c_alpha_nr = 0
@@ -822,9 +828,9 @@ class Vectors:
                 c_alpha_target_nr = c_alpha_target_nr + 1
                 if c_alpha_nr != c_alpha_target_nr and float(c_alpha_1) < float(sensitivity):
                     cmd.select("sele1",
-                               "n. ca and " + project_name + "_multimodel and i. " + str(c_alpha_nr))  # PyMOL API
-                    cmd.select("sele2", "n. ca and " + project_name + "_multimodel and i. " + str(
-                        c_alpha_target_nr))  # PyMOL API
+                               "n. ca and {}_multimodel and i. {}".format(project_name, str(c_alpha_nr)))  # PyMOL API
+                    cmd.select("sele2", "n. ca and {}_multimodel and i. {}".format(project_name,
+                                                                                   str(c_alpha_target_nr)))  # PyMOL API
                     cmd.distance("contact_map", "sele1", "sele2")  # PyMOL API
         try:
             cmd.hide("labels", "contact_map")  # PyMOL API
@@ -923,41 +929,6 @@ class Vectors:
         self.mode_nr = mode_nr
         self.show_vectors()
 
-    # This is the window to setup ProDy options
-    def window(self, master):
-        if project_name != "nothing":
-            root = Toplevel(master)
-            root.wm_title("Vectors Configuration")
-
-            frame1 = Frame(root)
-            frame1.pack()
-
-            v1 = IntVar(root)
-            v1.set(self.calculation_type)
-            v2 = IntVar(root)
-            v2.set(self.contact_map)
-
-            radio_button0 = Radiobutton(frame1, text="Anisotropic network model", value=0, variable=v1,
-                                        command=lambda: self.block_contact(0, c1, v2))
-            radio_button0.pack()
-            radio_button1 = Radiobutton(frame1, text="Principal component analysis", value=1, variable=v1,
-                                        command=lambda: self.block_contact(1, c1, v2))
-            radio_button1.pack()
-            radio_button2 = Radiobutton(frame1, text="Gaussian network model (experimental)", value=2, variable=v1,
-                                        command=lambda: self.block_contact(0, c1, v2))
-            radio_button2.pack()
-
-            c1 = Checkbutton(frame1, text="Show Contact Map", variable=v2)
-            c1.pack()
-            if self.block_contact_map == 1:
-                c1.configure(state=DISABLED)
-
-            ok_button = Button(frame1, text="OK", command=lambda: self.options_change(v1, v2, root))
-            ok_button.pack(side=TOP)
-
-        elif project_name == "nothing":
-            no_molecule_warning()
-
     def options_change(self, v1, v2, root):
         self.calculation_type = v1.get()
         self.contact_map = v2.get()
@@ -996,14 +967,16 @@ class MdpConfig:
             self.options[option_nr][0] = self.options[option_nr][0][1:]
         self.clean_artefacts()
 
-    def save_file(self):
+    def save_file(self, s_params):
+        project_name = s_params.project_name
+        project_dir = get_project_dirs(project_name)
         config = ""
         for option in self.options:
             # pass empty option
             if option == ['']:
                 pass
             else:
-                config = config + str(option[0]) + " = " + str(option[1]) + "\n"
+                config = "{}{} = {}\n".format(config, str(option[0]), str(option[1]))
         mdp = open(project_dir + self.file_name, "w")
         mdp.write(config)
         mdp.close()
@@ -1046,7 +1019,6 @@ class ProgressStatus:
             elif work == 1:
                 to_do.append(0)
         self.to_do = to_do
-
 
 
 # Detect gmx executable along with other associated information...
@@ -1104,11 +1076,6 @@ def get_project_dirs(project_name="nothing"):
     return project_dir
 
 
-# Setup project directory for running gmx...
-def set_gromacs_project_dir():
-    project_dir = os.path.join(dynamics_dir, project_name, '')
-
-
 # Execute command using stdin/stdout as needed...
 def execute_subprocess(command, stdin_file_path=None, stdout_file_path=None):
     stdin_file = None
@@ -1142,7 +1109,8 @@ def execute_and_monitor_subprocess(command, stdin_file_path=None, stdout_file_pa
             log_file = open(log_file_path, 'a')
         else:
             log_file = open(log_file_path, 'w')
-        log_file.write("\n!************************!\n" + command + "\n!************************!\n")
+        star_mark = "\n!{0}!\n".format("*"*25)
+        log_file.write("{0}{1}{0}".format(star_mark, command))
         log_file.close()
 
     stdin_file = None
@@ -1157,14 +1125,14 @@ def execute_and_monitor_subprocess(command, stdin_file_path=None, stdout_file_pa
         stdout_file = open(stdout_file_path, "w")
         stdout_msg = stdout_file_path
 
-    print("Running command: " + command + "; STDIN: " + stdin_msg + "; STDOUT: " + stdout_msg)
+    print("Running command: {}; STDIN: {}; STDOUT: {}".format(command, stdin_msg, stdout_msg))
 
     gmx = subprocess.Popen(command, stdin=stdin_file, stdout=stdout_file, stderr=subprocess.STDOUT, shell=True)
-    while gmx.poll() is None:
-        if stop == 1:
-            gmx.kill()
-            break
-        time.sleep(1.0)
+#    while gmx.poll() is None:
+#        if stop == 1:
+#            gmx.kill()
+#            break
+#        time.sleep(1.0)
 
     if stdin_file_path:
         stdin_file.close()
@@ -1222,9 +1190,9 @@ def get_water_models_info(gmx_output_lines):
     return waters_info2
 
 
-
 # Steps mark work as done.
-def steps_status_done(step_nr):
+def steps_status_done(step_nr, s_params):
+    progress = s_params.progress
     if progress.status[step_nr] == 1:
         return " [done]"
     elif progress.status[step_nr] == 0:
@@ -1238,8 +1206,14 @@ def status_update(input_status):
 
 
 # This function will start real workflow of the plugin, once everything is set
-def dynamics():
+def dynamics(s_params):
     print("Starting PyMOL plugin 'dynamics' ver." + plugin_ver)
+    status = ["ok", ""]
+    project_name = s_params.project_name
+    project_dir = get_project_dirs(project_name)
+    progress = s_params.progress
+    gromacs2 = s_params.gmx_input
+    vectors_prody = s_params.vectors_prody
     file_path = project_dir + project_name
     os.chdir(project_dir)
     stop = 0
@@ -1346,11 +1320,12 @@ def dynamics():
 
 # Saving configuration files
 def mdp_files():
-    if not os.path.isfile(dynamics_dir + "em.mdp"):
+    dynamics_dir = get_dynamics_dir()
+    if not os.path.isfile("{}em.mdp".format(dynamics_dir)):
         em_file.save_file()
-    if not os.path.isfile(dynamics_dir + "pr.mdp"):
+    if not os.path.isfile("{}pr.mdp".format(dynamics_dir)):
         pr_file.save_file()
-    if not os.path.isfile(dynamics_dir + "md.mdp"):
+    if not os.path.isfile("{}md.mdp".format(dynamics_dir)):
         md_file.save_file()
 
 
@@ -2352,7 +2327,7 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
 def create_config_files():
     print("Create config files")
     if not os.path.isfile(project_dir + "options.pickle"):
-        progress = ProgressStatus()
+        pass
     else:
         load_options()
     if os.path.isfile(dynamics_dir + "em.mdp"):
@@ -2999,3 +2974,39 @@ class GenionWindow:
         ok_button = Button(root, text="OK", command=lambda: gromacs2.update(
             {"salt_conc": salt.get(), "positive_ion": posit.get(), "negative_ion": negat.get()}, root))
         ok_button.pack(side=TOP)
+
+
+# This is the window to setup ProDy options
+def vectors_window(master):
+    if project_name != "nothing":
+        root = Toplevel(master)
+        root.wm_title("Vectors Configuration")
+
+        frame1 = Frame(root)
+        frame1.pack()
+
+        v1 = IntVar(root)
+        v1.set(self.calculation_type)
+        v2 = IntVar(root)
+        v2.set(self.contact_map)
+
+        radio_button0 = Radiobutton(frame1, text="Anisotropic network model", value=0, variable=v1,
+                                        command=lambda: self.block_contact(0, c1, v2))
+        radio_button0.pack()
+        radio_button1 = Radiobutton(frame1, text="Principal component analysis", value=1, variable=v1,
+                                        command=lambda: self.block_contact(1, c1, v2))
+        radio_button1.pack()
+        radio_button2 = Radiobutton(frame1, text="Gaussian network model (experimental)", value=2, variable=v1,
+                                        command=lambda: self.block_contact(0, c1, v2))
+        radio_button2.pack()
+
+        c1 = Checkbutton(frame1, text="Show Contact Map", variable=v2)
+        c1.pack()
+        if self.block_contact_map == 1:
+            c1.configure(state=DISABLED)
+
+        ok_button = Button(frame1, text="OK", command=lambda: self.options_change(v1, v2, root))
+        ok_button.pack(side=TOP)
+
+    elif project_name == "nothing":
+        no_molecule_warning()
