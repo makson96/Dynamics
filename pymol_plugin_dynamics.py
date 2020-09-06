@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # This software (including its Debian packaging) is available to you under the terms of the GPL-3,
@@ -2114,10 +2114,6 @@ class InterpretationWindow:
 # Show interpretation window...
 def show_interpretation_window():
     interpretation = InterpretationWindow()
-    try:
-        interpretation()
-    except AttributeError:
-        pass
 
 
 def help_window(master):

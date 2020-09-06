@@ -10,14 +10,14 @@
 
 export PYTHONPATH=$PWD
 
-if ! python tests/init_test.py ; then
+if ! python3 tests/init_test.py ; then
 exit 1
 fi
 
-if ! python tests/gromacs_ver_test.py ; then
+if ! python3 tests/gromacs_ver_test.py ; then
 exit 1
 fi
 
-if ! python tests/basic_simulation_test.py ; then
+if ! python3 tests/basic_simulation_test.py ; then
 exit 1
 fi

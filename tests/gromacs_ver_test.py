@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # This software (including its Debian packaging) is available to you under the terms of the GPL-3, see
