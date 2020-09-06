@@ -41,6 +41,166 @@ except ModuleNotFoundError:
 # Plugin Version
 plugin_ver = " 3.0.0pre"
 
+EM_INIT_CONFIG = """define = -DFLEX_SPC
+constraints = none
+integrator = steep
+nsteps = 10000
+nstlist = 10
+ns_type = simple
+rlist = 1.5
+rcoulomb = 1.5
+rvdw = 1.5
+emtol = 1000.0
+emstep = 0.01
+implicit-solvent = no
+;gb-algorithm = Still
+;pbc = no
+;rgbradii = 0
+cutoff-scheme = Verlet
+coulombtype = PME"""
+
+PR_INIT_CONFIG = """define = -DPOSRES
+constraints = all-bonds
+integrator = md-vv
+dt = 0.002
+nsteps = 5000
+nstcomm = 1
+nstxout = 100
+nstvout = 100
+nstfout = 0
+nstlog = 10
+nstenergy = 10
+nstlist = 10
+ns_type = simple
+rlist = 1.5
+rcoulomb = 1.5
+rvdw = 1.5
+Tcoupl = v-rescale
+tau_t = 0.1 0.1
+tc-grps = protein Non-Protein
+ref_t = 298 298
+Pcoupl = no
+tau_p = 0.5
+compressibility = 4.5e-5
+ref_p = 1.0
+gen_vel = yes
+gen_temp = 298.0
+gen_seed = 173529
+cutoff-scheme = Verlet
+coulombtype = PME"""
+
+MD_INIT_CONFIG = """;define = -DPOSRES
+integrator = md-vv
+dt = 0.002
+nsteps = 5000
+nstcomm = 1
+nstxout = 50
+nstvout = 50
+nstfout = 0
+nstlist = 10
+ns_type = simple
+rlist = 1.5
+rcoulomb = 1.5
+rvdw = 1.5
+Tcoupl = v-rescale
+tau_t = 0.1 0.1
+tc-grps = protein Non-Protein
+ref_t = 298 298
+Pcoupl = no
+tau_p = 0.5
+compressibility = 4.5e-5
+ref_p = 1.0
+gen_vel = yes
+gen_temp = 298.0
+gen_seed = 173529
+constraints = all-bonds
+constraint-algorithm = Lincs
+continuation = no
+shake-tol = 0.0001
+lincs-order = 4
+lincs-warnangle = 30
+morse = no
+implicit-solvent = no
+;gb-algorithm = Still
+;pbc = no
+;rgbradii = 0
+;comm_mode = ANGULAR
+cutoff-scheme = Verlet
+coulombtype = PME"""
+
+
+# This function will initialize all plugin stufs
+def init_function(travis_ci=False, parent=None):
+    g_parent = parent
+
+    stop = 1
+    status = ["ok", ""]
+    error = ""
+
+    # Make sure HOME environment variable is defined before setting up directories...
+    home_dir = os.path.expanduser('~')
+    if home_dir:
+        os.chdir(home_dir)
+    else:
+        print("HOME environment variable not defined")
+        status = ["fail", "HOME environment variable not defined. Please set its value and try again."]
+        tkMessageBox.showerror("Initialization error", status[1])
+        return
+    dynamics_dir = get_dynamics_dir()
+    project_dir = get_project_dirs()
+    # Clean up any temporary project directory...
+    if os.path.isdir(project_dir):
+        shutil.rmtree(project_dir)
+    # Create temporary project directory along with any subdirectories...
+    if not os.path.isdir(project_dir):
+        os.makedirs(project_dir)
+
+    print("Searching for GROMACS installation")
+    os.chdir(dynamics_dir)
+    gmx_exe, gmx_version, gmx_build_arch, gmx_on_cygwin = get_gromacs_exe_info()
+    os.chdir(home_dir)
+
+    supported_gmx_versions = ["2016", "2018"]
+    if not len(gmx_exe):
+        print("GROMACS 2016 or newer not detected.")
+        status = ["fail",
+                  "GROMACS not detected. Please install and setup GROMACS 2016 or newer correctly for your platform."
+                  " Check '~/.dynamics/test_gromacs.txt' for more details. Don't forget to add GROMACS bin directory"
+                  " to your PATH"]
+    elif gmx_version[0:4] not in supported_gmx_versions:
+        print("Warning. Unsupported GROMACS Version")
+    if status[0] == "ok":
+        simulation_parameters = SimulationParameters()
+        if not travis_ci:
+            # Creating objects - data from those windows will be used by rootWindow
+            gui_library = "tk"
+            create_gui(gui_library, status, simulation_parameters, parent)
+
+
+class SimulationParameters:
+    gmx_output = ""
+    gmx_input = ""
+    vectors_prody = False
+    stop = True
+    project_name = "nothing"
+
+    def __init__(self):
+        self.gmx_output = GromacsOutput()
+        self.gmx_input = GromacsInput()
+        print("Found GROMACS VERSION {}".format(self.gmx_output.version))
+        if prody:
+            self.vectors_prody = Vectors()
+            print("ProDy correctly imported")
+
+    def change_stop_value(self, value):
+        if value:
+            self.stop = True
+        else:
+            self.stop = False
+
+    def change_project_name(self, name):
+        self.project_name = name
+
 
 # This class is responsible for interface to GROMACS. It will read all important data from GROMACS tools.
 class GromacsOutput:
@@ -52,15 +212,14 @@ class GromacsOutput:
     restraints = []
 
     def __init__(self):
-        global status
         # Remove garbage
+        dynamics_dir = get_dynamics_dir()
         garbage_files = next(os.walk(dynamics_dir))[2]
         for garbage in garbage_files:
             if garbage[0] == "#":
                 os.remove(dynamics_dir + garbage)
-        status = ["ok", ""]
 
-        global gmx_exe, gmx_version
+        gmx_exe, gmx_version, gmx_build_arch, gmx_on_cygwin = get_gromacs_exe_info()
         self.version = gmx_version
         self.command = gmx_exe
 
@@ -88,7 +247,7 @@ class GromacsOutput:
 
         gmx_stdout_file_path = "test_gromacs.txt"
 
-        cmd = self.command + " pdb2gmx -f test_gromacs.pdb -o test_gromacs.gro -p test_gromacs.top"
+        cmd = "{} pdb2gmx -f test_gromacs.pdb -o test_gromacs.gro -p test_gromacs.top".format(self.command)
         execute_subprocess(cmd, gmx_stdin_file_path, gmx_stdout_file_path)
         lista_gromacs = read_text_lines(gmx_stdout_file_path)
 
@@ -121,7 +280,7 @@ class GromacsOutput:
 
         gmx_stdout_file_path = "test_gromacs.txt"
 
-        cmd = self.command + " trjconv -f  test_gromacs.pdb -s test_gromacs.pdb -o test_gromacs2.pdb"
+        cmd = "{} trjconv -f  test_gromacs.pdb -s test_gromacs.pdb -o test_gromacs2.pdb".format(self.command)
         execute_subprocess(cmd, gmx_stdin_file_path, gmx_stdout_file_path)
 
         group_test_list = read_text_lines(gmx_stdout_file_path)
@@ -150,7 +309,7 @@ class GromacsOutput:
     def water_update(self, force_number):
         # Track current directiry and switch to dynamics_dir before invoking gmx...
         current_dir = os.getcwd()
-        os.chdir(dynamics_dir)
+        os.chdir(get_dynamics_dir())
 
         print("Updating available water models")
         gmx_stdin_file_path = "gromacs_stdin.txt"
@@ -161,7 +320,7 @@ class GromacsOutput:
 
         gmx_stdout_file_path = "test_gromacs.txt"
 
-        cmd = self.command + " pdb2gmx -f  test_gromacs.pdb -o test_gromacs.gro -p test_gromacs.top"
+        cmd = "{} pdb2gmx -f  test_gromacs.pdb -o test_gromacs.gro -p test_gromacs.top".format(self.command)
         execute_subprocess(cmd, gmx_stdin_file_path, gmx_stdout_file_path)
 
         lista_gromacs = read_text_lines(gmx_stdout_file_path)
@@ -174,15 +333,15 @@ class GromacsOutput:
         return self.water_list
 
     # This function will read atoms group for restraints for current molecule.
-    def restraints_index(self):
+    def restraints_index(self, project_name):
         self.restraints = []
-        os.chdir(project_dir)
+        os.chdir(get_project_dirs(project_name))
 
         fo = open("gromacs_stdin.txt", "w")
         fo.write("q")
         fo.close()
 
-        cmd = self.command + " make_ndx -f " + project_name + ".pdb -o index.ndx"
+        cmd = "{} make_ndx -f {}.pdb -o index.ndx".format(self.command, project_name)
         execute_subprocess(cmd, "gromacs_stdin.txt", "restraints.log")
 
         index_list = read_text_lines("restraints.log")
@@ -222,13 +381,7 @@ class GromacsInput:
     command_distinction = "\n!************************!\n"
 
     # This function will change given variabless stored by the class (needed for lambda statements)
-    def update(self, gmx_options, root=""):
-        # Close mother window if present
-        try:
-            root.destroy()
-        except:
-            pass
-
+    def update(self, gmx_options):
         for key, value in gmx_options.items():
             if key == "force":
                 self.force = value
@@ -260,14 +413,16 @@ class GromacsInput:
         print("gromacs updated")
 
     # This function will create initial topology and trajectory using pdb file and choosen force field
-    def pdb2top(self, file_path, project_name):
+    def pdb2top(self, s_params):
         status = ["ok", "Calculating topology using Force fields"]
         status_update(status)
         hh = "-" + self.hydro
+        gmx_cmd = s_params.gromacs_output.command
+        project_name = s_params.project_name
         try:
-            os.remove(project_name + ".gro")
-            os.remove(project_name + ".top")
-        except:
+            os.remove("{}.gro".format(project_name))
+            os.remove("{}.top".format(project_name))
+        except FileNotFoundError:
             pass
 
         fo = open("gromacs_stdin.txt", "w")
@@ -275,38 +430,43 @@ class GromacsInput:
         fo.write("%s" % str(self.water))
         fo.close()
 
-        command = gromacs.command + " pdb2gmx -f " + project_name + ".pdb -o " + project_name + ".gro -p " + project_name + ".top " + hh
+        command = "{0} pdb2gmx -f {1}.pdb -o {1}.gro -p {1}.top {2}".format(gmx_cmd, project_name, hh)
         execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
 
-        if os.path.isfile(file_path + ".gro"):
+        if os.path.isfile("{}.gro".format((project_name))):
             status = ["ok", ""]
         else:
             status = ["fail", "Warning. Trying to ignore unnecessary hydrogen atoms."]
 
-            command = gromacs.command + " pdb2gmx -ignh -f " + project_name + ".pdb -o " + project_name + ".gro -p " + project_name + ".top " + hh
+            command = "{0} pdb2gmx -ignh -f {1}.pdb -o {1}.gro -p {1}.top {2}".format(gmx_cmd, project_name, hh)
             execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
         status_update(status)
 
-        if os.path.isfile(file_path + ".gro") and stop == 0:
+        stop = s_params.stop
+        if os.path.isfile("{}.gro".format(project_name)) and not stop:
             status = ["ok", "Calculated topology using Force fields"]
         else:
             status = ["fail", "Force field unable to create topology file"]
         return status
 
     # This is alternative function to create initial topology and triectory using pdb file
-    def x2top(self, file_path, project_name):
+    @staticmethod
+    def x2top(s_params):
         status = ["ok", "Calculating topology using Force fields"]
         status_update(status)
+        gmx_cmd = s_params.gromacs_output.command
+        project_name = s_params.project_name
         try:
-            os.remove(project_name + ".gro")
-            os.remove(project_name + ".top")
-        except:
+            os.remove("{}.gro".format(project_name))
+            os.remove("{}.top".format(project_name))
+        except FileNotFoundError:
             pass
 
-        command = gromacs.command + " x2top -f " + project_name + ".pdb -o " + project_name + ".top"
+        command = "{0} x2top -f {1}.pdb -o {1}.top".format(gmx_cmd, project_name)
         execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
-        if os.path.isfile(file_path + ".top") and stop == 0:
+        stop = s_params.stop
+        if os.path.isfile("{}.top".format(project_name)) and not stop:
             status = ["ok", "Calculating structure using trjconv."]
         else:
             status = ["fail", "Unable to create topology file."]
@@ -317,33 +477,36 @@ class GromacsInput:
             fo.write("0")
             fo.close()
 
-            command = gromacs.command + " trjconv -f " + project_name + ".pdb -s " + project_name + ".pdb -o " + project_name + ".gro"
+            command = "{0} trjconv -f {1}.pdb -s {1}.pdb -o {1}.gro".format(gmx_cmd, project_name)
             execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
 
-            if os.path.isfile(file_path + ".gro") == True and stop == 0:
+            stop = s_params.stop
+            if os.path.isfile("{}.gro".format(project_name)) and not stop:
                 status = ["ok", "Calculated structure using trjconv."]
             else:
                 status = ["fail", "Unable to create structure file."]
         return status
 
     # This function will create and add waterbox.
-    def waterbox(self, file_path, project_name):
+    def waterbox(self, s_params):
         status = ["ok", "Generating waterbox"]
-        box_type = "-bt " + self.box_type + " "
-        distance = "-d " + self.box_distance + " "
-        density = "-density " + self.box_density
-
+        box_type = "-bt {}".format(self.box_type)
+        distance = "-d {}".format(self.box_distance)
+        density = "-density {}".format(self.box_density)
+        gmx_cmd = s_params.gromacs_output.command
+        project_name = s_params.project_name
         try:
-            os.remove(project_name + "1.gro")
-            os.remove(project_name + "_solv.gro")
-        except:
+            os.remove("{}1.gro".format(project_name))
+            os.remove("{}_solv.gro".format(project_name))
+        except FileNotFoundError:
             pass
 
         status_update(status)
-        command = gromacs.command + " editconf -f " + project_name + ".gro -o " + project_name + "1.gro -c " + box_type + distance + density
+        command = "{0} editconf -f {1}.gro -o {1}1.gro -c {2} {3} {4}".format(gmx_cmd, project_name, box_type, distance,
+                                                                              density)
         execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
-        water_name = gromacs.water_list[self.water - 1][1][4:8].lower()
+        water_name = s_params.gromacs_output.water_list[self.water - 1][1][4:8].lower()
         print(water_name)
         if water_name == "tip4":
             water_gro = "tip4p.gro"
@@ -352,33 +515,36 @@ class GromacsInput:
         else:
             water_gro = "spc216.gro"
 
-        command = gromacs.command + " solvate -cp " + project_name + "1.gro -cs " + water_gro + " -o " + project_name + "_solv.gro -p " + project_name + ".top"
+        command = "{0} solvate -cp {1}1.gro -cs {2} -o {1}_solv.gro -p {1}.top".format(gmx_cmd, project_name, water_gro)
 
         status = ["ok", "Adding Water Box"]
         status_update(status)
 
         execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
-        if os.path.isfile(file_path + "1.gro") and stop == 0:
+        stop = s_params.stop
+        if os.path.isfile("{}1.gro".format(project_name)) and not stop:
             status = ["ok", "Water Box Added"]
         else:
             status = ["fail", "Unable to add water box"]
         return status
 
     # This function will add ions/salts to the protein in waterbox
-    def saltadd(self, file_path, project_name):
+    def saltadd(self, s_params):
         status = ["ok", "Preparing to add ions or salt"]
-        salt = "-conc " + self.salt_conc + " "
-        positive = "-pname " + self.positive_ion + " "
-        negative = "-nname " + self.negative_ion + " "
-        neu = "-" + self.neutrality
+        salt = "-conc {}".format(self.salt_conc)
+        positive = "-pname {}".format(self.positive_ion)
+        negative = "-nname {}".format(self.negative_ion)
+        neu = "-{}".format(self.neutrality)
+        gmx_cmd = s_params.gromacs_output.command
+        project_name = s_params.project_name
         try:
             os.remove(project_name + "_b4em.gro")
             os.remove(project_name + "_ions.tpr")
-        except:
+        except FileNotFoundError:
             pass
 
-        command = gromacs.command + " grompp -f em -c " + project_name + "_solv.gro -o " + project_name + "_ions.tpr -p " + project_name + ".top" + " -maxwarn 1"
+        command = "{0} grompp -f em -c {1}_solv.gro -o {1}_ions.tpr -p {1}.top -maxwarn 1".format(gmx_cmd, project_name)
         status_update(status)
         execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
@@ -389,10 +555,13 @@ class GromacsInput:
         status = ["ok", "Adding salts and ions"]
         status_update(status)
 
-        command = gromacs.command + " genion -s " + project_name + "_ions.tpr -o " + project_name + "_b4em.gro " + positive + negative + salt + neu + " -p " + project_name + ".top"
+        command = "{0} genion -s {1}_ions.tpr -o {1}_b4em.gro {2} {3} {4} {5} -p {1}.top".format(gmx_cmd,
+                                                                                                 project_name, positive,
+                                                                                                 negative, salt, neu)
         execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
 
-        if os.path.isfile(file_path + "_b4em.gro") == True and stop == 0:
+        stop = s_params.stop
+        if os.path.isfile("{}_b4em.gro".format(project_name)) and not stop:
             status = ["ok", "Ions added successfully"]
         elif stop == 0:
             status = ["ok", "Find out what's wrong!"]
@@ -401,56 +570,62 @@ class GromacsInput:
         return status
 
     # This function will perform energy minimization
-    def em(self, file_path, project_name):
+    @staticmethod
+    def em(s_params):
         status = ["ok", "Energy Minimization"]
-
+        gmx_cmd = s_params.gromacs_output.command
+        project_name = s_params.project_name
         try:
-            os.remove(project_name + "_em.tpr")
-            os.remove(project_name + "_em.trr")
-            os.remove(project_name + "_b4pr.gro")
-        except:
+            os.remove("{}_em.tpr".format(project_name))
+            os.remove("{}_em.trr".format(project_name))
+            os.remove("{}_b4pr.gro".format(project_name))
+        except FileNotFoundError:
             pass
 
         # Check if waterbox was added and adjust accordingly.
-        if not os.path.isfile(file_path + "_b4em.gro"):
-            if os.path.isfile(project_name + "_solv.gro"):
-                shutil.copy(project_name + "_solv.gro", project_name + "_b4em.gro")
-            elif os.path.isfile(project_name + ".gro"):
-                shutil.copy(project_name + ".gro", project_name + "_b4em.gro")
+        if not os.path.isfile("{}_b4em.gro".format(project_name)):
+            if os.path.isfile("{}_solv.gro".format(project_name)):
+                shutil.copy("{}_solv.gro".format(project_name), "{}_b4em.gro".format(project_name))
+            elif os.path.isfile(project_name + "{}.gro".format(project_name)):
+                shutil.copy("{}.gro".format(project_name), "{}_b4em.gro".format(project_name))
 
         status_update(status)
-        command = gromacs.command + " grompp -f em -c " + project_name + "_b4em -p " + project_name + " -o " + project_name + "_em"
+        command = "{0} grompp -f em -c {1}_b4em -p {1} -o {1}_em".format(gmx_cmd, project_name)
         execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
-        command = gromacs.command + " mdrun -nice 4 -s " + project_name + "_em -o " + project_name + "_em -c " + project_name + "_b4pr -v"
+        command = "{0} mdrun -nice 4 -s {1}_em -o {1}_em -c {1}_b4pr -v".format(gmx_cmd, project_name)
         execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
-        if (os.path.isfile(file_path + "_em.tpr") == True) and (os.path.isfile(file_path + "_b4pr.gro") == True) and (
-                stop == 0):
+        stop = s_params.stop
+        if os.path.isfile("{}_em.tpr".format(project_name)) and os.path.isfile("{}_b4pr.gro".format(project_name)) and\
+                not stop:
             status = ["ok", "Energy Minimized"]
         else:
             status = ["fail", "Unable to perform Energy Minimization"]
         return status
 
     # This function will perform position restrained MD
-    def pr(self, file_path, project_name):
+    @staticmethod
+    def pr(s_params):
         status = ["ok", "Position Restrained MD"]
-
+        gmx_cmd = s_params.gromacs_output.command
+        project_name = s_params.project_name
         try:
-            os.remove(project_name + "_pr.tpr")
-            os.remove(project_name + "_pr.trr")
-            os.remove(project_name + "_b4md.gro")
-        except:
+            os.remove("{}_pr.tpr".format(project_name))
+            os.remove("{}_pr.trr".format(project_name))
+            os.remove("{}_b4md.gro".format(project_name))
+        except FileNotFoundError:
             pass
 
         status_update(status)
-        command = gromacs.command + " grompp -f pr -c " + project_name + "_b4pr -r " + project_name + "_b4pr -p " + project_name + " -o " + project_name + "_pr"
+        command = "{0} grompp -f pr -c {1}_b4pr -r {1}_b4pr -p {1} -o {1}_pr".format(gmx_cmd, project_name)
         execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
-        command = gromacs.command + " mdrun -nice 4 -s " + project_name + "_pr -o " + project_name + "_pr -c " + project_name + "_b4md -v"
+        command = "{0} mdrun -nice 4 -s {1}_pr -o {1}_pr -c {1}_b4md -v".format(gmx_cmd, project_name)
         execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
-        if os.path.isfile(file_path + "_pr.tpr") == True and stop == 0:
+        stop = s_params.stop
+        if os.path.isfile("{}_pr.tpr".format(project_name)) and not stop:
             status = ["ok", "Position Restrained MD finished"]
         else:
             status = ["fail", "Unable to perform Position Restrained"]
@@ -458,12 +633,14 @@ class GromacsInput:
 
     # This function will create posre.itp file for molecular dynamics simulation with choosen atoms if
     # restraints were selected
-    def restraints(self, project_name):
+    @staticmethod
+    def restraints(s_params):
         status = ["ok", "Adding Restraints"]
-
+        gmx_cmd = s_params.gromacs_output.command
+        project_name = s_params.project_name
         try:
             os.remove("posre_2.itp")
-        except:
+        except FileNotFoundError:
             pass
 
         fo = open("gromacs_stdin.txt", "w")
@@ -471,10 +648,11 @@ class GromacsInput:
         fo.close()
 
         status_update(status)
-        command = gromacs.command + " genrestr -f " + project_name + ".pdb -o posre_2.itp -n index_dynamics.ndx"
+        command = "{0} genrestr -f {1}.pdb -o posre_2.itp -n index_dynamics.ndx".format(gmx_cmd, project_name)
         execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
 
-        if os.path.isfile("posre_2.itp") == True and stop == 0:
+        stop = s_params.stop
+        if os.path.isfile("posre_2.itp") and not stop:
             status = ["ok", "Added Restraints"]
             if os.path.isfile("posre.itp"):
                 os.remove("posre.itp")
@@ -484,57 +662,62 @@ class GromacsInput:
         return status
 
     # This function will perform position final molecular dynamics simulation
-    def md(self, file_path, project_name):
+    @staticmethod
+    def md(s_params):
         status = ["ok", "Molecular Dynamics Simulation"]
-
+        gmx_cmd = s_params.gromacs_output.command
+        project_name = s_params.project_name
         try:
-            os.remove(project_name + "_md.tpr")
-            os.remove(project_name + "_md.trr")
-        except:
+            os.remove("{}_md.tpr".format(project_name))
+            os.remove("{}_md.trr".format(project_name))
+        except FileNotFoundError:
             pass
 
         # Check if em and/or pr was done and adjust accordingly.
-        if not os.path.isfile(file_path + "_b4md.gro"):
-            if not os.path.isfile(file_path + "_b4pr.gro"):
+        if not os.path.isfile("{}_b4md.gro".format(project_name)):
+            if not os.path.isfile("{}_b4pr.gro".format(project_name)):
                 # No em and pr
-                shutil.copy(project_name + "_b4em.gro", project_name + "_b4md.gro")
+                shutil.copy("{}_b4em.gro".format(project_name), "{}_b4md.gro".format(project_name))
             else:
                 # No pr
-                shutil.copy(project_name + "_b4pr.gro", project_name + "_b4md.gro")
+                shutil.copy("{}_b4pr.gro".format(project_name), "{}_b4md.gro".format(project_name))
 
         status_update(status)
-        command = gromacs.command + " grompp -f md -c " + project_name + "_b4md  -p " + project_name + " -o " + project_name + "_md"
+        command = "{0} grompp -f md -c {1}_b4md  -p {1} -o {1}_md".format(gmx_cmd, project_name)
         execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
-        command = gromacs.command + " mdrun -nice 4 -s " + project_name + "_md -o " + project_name + "_md -c " + project_name + "_after_md -v"
+        command = "{0} mdrun -nice 4 -s {1}_md -o {1}_md -c {1}_after_md -v".format(gmx_cmd, project_name)
         execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
-        if os.path.isfile(file_path + "_md.tpr") == True and stop == 0:
+        stop = s_params.stop
+        if os.path.isfile("{}_md.tpr".format(project_name)) and not stop:
             status = ["ok", "Molecular Dynamics Simulation finished"]
         else:
             status = ["fail", "Unable to perform Molecular Dynamics Simulation"]
         return status
 
     # This function will convert final results to multimodel pdb file
-    def trjconv(self, file_path, project_name):
+    def trjconv(self, s_params):
         status = ["ok", "Creating Multimodel PDB"]
-
+        gmx_cmd = s_params.gromacs_output.command
+        project_name = s_params.project_name
         try:
-            os.remove(project_name + "_multimodel.pdb")
-        except:
+            os.remove("{}_multimodel.pdb".format(project_name))
+        except FileNotFoundError:
             pass
-        if os.path.isfile(project_name + "_multimodel.pdb"):
-            os.remove(project_name + "_multimodel.pdb")
+        if os.path.isfile("{}_multimodel.pdb".format(project_name)):
+            os.remove("{}_multimodel.pdb".format(project_name))
 
         fo = open("gromacs_stdin.txt", "w")
         fo.write("%s" % str(self.group))
         fo.close()
 
         status_update(status)
-        command = gromacs.command + " trjconv -f " + project_name + "_md.trr -s " + project_name + "_md.tpr -o " + project_name + "_multimodel.pdb"
+        command = "{0} trjconv -f {1}_md.trr -s {1}_md.tpr -o {1}_multimodel.pdb".format(gmx_cmd, project_name)
         execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
 
-        if os.path.isfile(file_path + "_multimodel.pdb") and stop == 0:
+        stop = s_params.stop
+        if os.path.isfile("{}_multimodel.pdb".format(project_name)) and not stop:
             status = ["ok", "Finished!"]
         else:
             status = ["fail", "Unable to generate multimodel PDB file"]
@@ -865,12 +1048,6 @@ class ProgressStatus:
         self.to_do = to_do
 
 
-# init function - puts plugin into menu and starts 'init_function' after clicking.
-def __init__(self):
-    self.menuBar.addmenuitem("Plugin", "command", "Dynamics_Gromacs" + plugin_ver,
-                             label="Dynamics_Gromacs" + plugin_ver,
-                             command=lambda: init_function(parent=self.root))
-
 
 # Detect gmx executable along with other associated information...
 def get_gromacs_exe_info():
@@ -914,22 +1091,21 @@ def get_gromacs_exe_info():
     return gmx_exe, version, build_arch, build_on_cygwin
 
 
-# Setup directories for running gmx...
-def set_gromacs_dynamics_and_project_dirs():
-    global project_name, dynamics_dir, project_dir
-
-    project_name = "nothing"
-
+def get_dynamics_dir():
     home_dir = os.path.expanduser('~')
-
     gmx_home_dir_path = os.path.abspath(home_dir)
     dynamics_dir = os.path.join(gmx_home_dir_path, '.dynamics', '')
+    return dynamics_dir
+
+
+def get_project_dirs(project_name="nothing"):
+    dynamics_dir = get_dynamics_dir()
     project_dir = os.path.join(dynamics_dir, project_name, '')
+    return project_dir
 
 
 # Setup project directory for running gmx...
 def set_gromacs_project_dir():
-    global project_name, project_dir
     project_dir = os.path.join(dynamics_dir, project_name, '')
 
 
@@ -961,8 +1137,6 @@ def execute_subprocess(command, stdin_file_path=None, stdout_file_path=None):
 
 # Start a subprocess and wait for it to complete along with an option to kill it...
 def execute_and_monitor_subprocess(command, stdin_file_path=None, stdout_file_path=None, log_file_path=None):
-    global stop
-
     if log_file_path:
         if os.path.isfile(log_file_path):
             log_file = open(log_file_path, 'a')
@@ -1048,164 +1222,6 @@ def get_water_models_info(gmx_output_lines):
     return waters_info2
 
 
-# This function will initialize all plugin stufs
-def init_function(travis_ci=False, parent=None):
-    # Global variables
-    global stop, status, error, em_init_config, pr_init_config, md_init_config, project_name, dynamics_dir, project_dir
-    global gmxExe, gmxVersion, gmxBuildArch, gmxOnCygwin
-
-    global g_parent
-    g_parent = parent
-
-    stop = 1
-    status = ["ok", ""]
-    error = ""
-
-    # Make sure HOME environment variable is defined before setting up directories...
-    home_dir = os.path.expanduser('~')
-    if home_dir:
-        os.chdir(home_dir)
-    else:
-        print("HOME environment variable not defined")
-        status = ["fail", "HOME environment variable not defined. Please set its value and try again."]
-        tkMessageBox.showerror("Initialization error", status[1])
-        return
-    set_gromacs_dynamics_and_project_dirs()
-
-    # Clean up any temporary project directory...
-    if os.path.isdir(project_dir):
-        shutil.rmtree(project_dir)
-    # Create temporary project directory along with any subdirectories...
-    if not os.path.isdir(project_dir):
-        os.makedirs(project_dir)
-
-    print("Searching for GROMACS installation")
-    os.chdir(dynamics_dir)
-    gmx_exe, gmx_version, gmx_build_arch, gmx_on_cygwin = get_gromacs_exe_info()
-    os.chdir(home_dir)
-
-    supported_gmx_versions = ["2016", "2018"]
-    if not len(gmx_exe):
-        print("GROMACS 2016 or newer not detected.")
-        status = ["fail",
-                  "GROMACS not detected. Please install and setup GROMACS 2016 or newer correctly for your platform."
-                  " Check '~/.dynamics/test_gromacs.txt' for more details. Don't forget to add GROMACS bin directory"
-                  " to your PATH"]
-    elif gmx_version[0:4] not in supported_gmx_versions:
-        print("Warning. Unsupported GROMACS Version")
-        gmx_version = gmx_version + " (Unsupported)"
-    if len(gmx_exe):
-        print("Found GROMACS VERSION " + gmx_version)
-        # Gromacs variables
-        global gromacs, gromacs2
-        gromacs = GromacsOutput()
-        gromacs2 = GromacsInput()
-
-    em_init_config = """define = -DFLEX_SPC
-constraints = none
-integrator = steep
-nsteps = 10000
-nstlist = 10
-ns_type = simple
-rlist = 1.5
-rcoulomb = 1.5
-rvdw = 1.5
-emtol = 1000.0
-emstep = 0.01
-implicit-solvent = no
-;gb-algorithm = Still
-;pbc = no
-;rgbradii = 0
-cutoff-scheme = Verlet
-coulombtype = PME"""
-    pr_init_config = """define = -DPOSRES
-constraints = all-bonds
-integrator = md-vv
-dt = 0.002
-nsteps = 5000
-nstcomm = 1
-nstxout = 100
-nstvout = 100
-nstfout = 0
-nstlog = 10
-nstenergy = 10
-nstlist = 10
-ns_type = simple
-rlist = 1.5
-rcoulomb = 1.5
-rvdw = 1.5
-Tcoupl = v-rescale
-tau_t = 0.1 0.1
-tc-grps = protein Non-Protein
-ref_t = 298 298
-Pcoupl = no
-tau_p = 0.5
-compressibility = 4.5e-5
-ref_p = 1.0
-gen_vel = yes
-gen_temp = 298.0
-gen_seed = 173529
-cutoff-scheme = Verlet
-coulombtype = PME"""
-    md_init_config = """;define = -DPOSRES
-integrator = md-vv
-dt = 0.002
-nsteps = 5000
-nstcomm = 1
-nstxout = 50
-nstvout = 50
-nstfout = 0
-nstlist = 10
-ns_type = simple
-rlist = 1.5
-rcoulomb = 1.5
-rvdw = 1.5
-Tcoupl = v-rescale
-tau_t = 0.1 0.1
-tc-grps = protein Non-Protein
-ref_t = 298 298
-Pcoupl = no
-tau_p = 0.5
-compressibility = 4.5e-5
-ref_p = 1.0
-gen_vel = yes
-gen_temp = 298.0
-gen_seed = 173529
-constraints = all-bonds
-constraint-algorithm = Lincs
-continuation = no
-shake-tol = 0.0001
-lincs-order = 4
-lincs-warnangle = 30
-morse = no
-implicit-solvent = no
-;gb-algorithm = Still
-;pbc = no
-;rgbradii = 0
-;comm_mode = ANGULAR
-cutoff-scheme = Verlet
-coulombtype = PME"""
-
-    # Prody variables
-    if prody:
-        global vectors_prody
-        vectors_prody = Vectors()
-        print("ProDy correctly imported")
-
-    if not travis_ci:
-        # Creating objects - data from those windows will be used by rootWindow
-        if status[0] == "ok":
-            global calculationW, waterW, restraintsW, genionW
-            calculationW = CalculationWindow()
-            waterW = WaterWindows()
-            restraintsW = RestraintsWindow()
-            genionW = GenionWindow()
-            # Start graphic interface
-            RootWindow(parent)
-        # Break now if status is not ok and print message
-        elif status[0] == "fail":
-            tkMessageBox.showerror("Initialization error", status[1])
-
 
 # Steps mark work as done.
 def steps_status_done(step_nr):
@@ -1217,7 +1233,6 @@ def steps_status_done(step_nr):
 
 # This function will receive status from gromacs2 class and change it to global variable.
 def status_update(input_status):
-    global status
     status = input_status
     print(status[1])
 
@@ -1225,8 +1240,6 @@ def status_update(input_status):
 # This function will start real workflow of the plugin, once everything is set
 def dynamics():
     print("Starting PyMOL plugin 'dynamics' ver." + plugin_ver)
-    global status, stop, gromacs, project_name
-
     file_path = project_dir + project_name
     os.chdir(project_dir)
     stop = 0
@@ -1377,7 +1390,6 @@ def load_file(file_path):
             back_folder = back_folder + "_b"
         os.rename(dynamics_dir + names[0], back_folder)
     tar.extractall(dynamics_dir)
-    global project_dir, project_name
     project_name = names[0]
     set_gromacs_project_dir()
     load_options()
@@ -1385,7 +1397,6 @@ def load_file(file_path):
 
 # Save all settings to options.pickle file
 def save_options():
-    global vectors_prody
     if not prody:
         vectors_prody = 0
     print("updating project files")
@@ -1399,8 +1410,6 @@ def save_options():
 
 # Load all settings from options.pickle file
 def load_options():
-    global gromacs2, em_file, pr_file, md_file, progress, vectors_prody
-
     pickle_file = open(project_dir + "options.pickle", "rb")
     options = pickle.load(pickle_file)
 
@@ -1444,7 +1453,8 @@ def load_options():
 # Text for "Help"
 def help_option():
     help_message = """This is the dynamics PyMOL Plugin.
-This software (including its Debian packaging) is available to you under the terms of the GPL-3, see "/usr/share/common-licenses/GPL-3".
+This software (including its Debian packaging) is available to you under the terms of the GPL-3,
+see "/usr/share/common-licenses/GPL-3".
 Software is created and maintained by Laboratory of Biomolecular Systems Simulation at University of Gdansk.
 Contributors:
 - Tomasz Makarewicz (makson96@gmail.com)
@@ -1476,8 +1486,6 @@ def clean_option():
 
 # If molecular dynamics simulation fails, this function will show the error
 def error_message():
-    global error
-
     log = open(project_dir + "log.txt", "r")
     log_list = log.readlines()
 
@@ -1512,9 +1520,30 @@ else:
     from tkinter.ttk import Progressbar, Scrollbar
 
 
-# --Graphic Interface--
+# init function - puts plugin into menu and starts 'init_function' after clicking.
+def __init__(self):
+    self.menuBar.addmenuitem("Plugin", "command", "Dynamics_Gromacs" + plugin_ver,
+                             label="Dynamics_Gromacs" + plugin_ver,
+                             command=lambda: init_function(parent=self.root))
+
+
+def create_gui(gui_library, status, s_parameters, parent):
+    if status[0] == "ok":
+        if gui_library == "tk":
+            RootWindow(status, s_parameters, parent)
+    else:
+        if gui_library == "tk":
+            tkMessageBox.showerror("Initialization error", status[1])
+
+#    calculationW = CalculationWindow()
+#    waterW = WaterWindows()
+#    restraintsW = RestraintsWindow()
+#    genionW = GenionWindow()
+
+
+# --Graphic Interface Tk--
 # Root menu window
-def RootWindow(parent=None):
+def RootWindow(status, s_parameters, parent=None):
     root = Toplevel(parent)
     root.wm_title("Dynamics with Gromacs" + plugin_ver)
 
@@ -1533,7 +1562,6 @@ def RootWindow(parent=None):
         allNames = ["nothing"]
 
     # TkInter variables
-    global project_dir, project_name, molecule_from_pymol
     project_name = allNames[0]
     set_gromacs_project_dir()
     if allNames != ["nothing"]:
@@ -1874,9 +1902,8 @@ class CalculationWindow:
         else:
             root.after(100, self.bar_display, root)
 
-    ##This function will change global value if stop is clicked during simulation
+    # This function will change global value if stop is clicked during simulation
     def start_counting(self, value):
-        global stop
         if value == 1:
             stop = 0
             thread.start_new_thread(dynamics, ())
@@ -1890,7 +1917,7 @@ class CalculationWindow:
             self.log_button.configure(state=ACTIVE)
 
 
-##This window will allow to manipulate final molecule to interprate MD simulation results
+# This window will allow to manipulate final molecule to interprate MD simulation results
 class InterpretationWindow:
     dt = 0.0
     nsteps = 0.0
@@ -2229,7 +2256,6 @@ class RestraintsWindow:
 
     # This function will activ or disable restraints button in main window based on check box
     def check(self, check, config_button):
-        global md_file, progress
         if check == 1:
             config_button.configure(state=ACTIVE)
             md_file.update(2, md_file.options[2][1], 1)
@@ -2251,7 +2277,6 @@ def select_file(v_name):
         name = file.name.split("/")
         name2 = name[-1].split(".")
         # Checking directories
-        global project_name, project_dir
         project_name = name2[0]
         set_gromacs_project_dir()
         v_name.set(project_name)
@@ -2303,7 +2328,6 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
     print("Set Variables")
     # Set project name and dir
     if name != "":
-        global project_name, project_dir
         project_name = name
         set_gromacs_project_dir()
     if os.path.isfile(project_dir + "options.pickle"):
@@ -2327,7 +2351,6 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
 # This function creates files needed by the project
 def create_config_files():
     print("Create config files")
-    global em_file, pr_file, md_file, progress
     if not os.path.isfile(project_dir + "options.pickle"):
         progress = ProgressStatus()
     else:
@@ -2691,7 +2714,8 @@ class WaterWindows:
         ok_button = Button(root, text="OK", command=root.destroy)
         ok_button.pack(side=TOP)
 
-    # This function will change force field and water model when choosing Force Field in Main Window and also change water model after choosing one in "waterChoose"
+    # This function will change force field and water model when choosing Force Field in Main Window and also change
+    # water model after choosing one in "waterChoose"
     def change(self, v4_water, water_v, force=""):
         if force == "":
             force = gromacs2.force
