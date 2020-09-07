@@ -22,9 +22,10 @@ import shutil
 import subprocess
 import sys
 import time
+import tarfile
 
 # Import libraries from PyMOL specific work.
-from pymol import cmd, cgo
+from pymol import cmd, cgo, parsing
 
 # TODO: It seams that stored is removed from PyMOL API. We need to handle it correctly
 try:
@@ -131,12 +132,7 @@ coulombtype = PME"""
 
 # This function will initialize all plugin stufs
 def init_function(travis_ci=False, parent=None):
-    g_parent = parent
-
-    stop = 1
     status = ["ok", ""]
-    error = ""
-
     # Make sure HOME environment variable is defined before setting up directories...
     home_dir = os.path.expanduser('~')
     if home_dir:
@@ -184,6 +180,9 @@ class SimulationParameters:
     stop = True
     project_name = "nothing"
     progress = ""
+    em_file = ""
+    pr_file = ""
+    md_file = ""
 
     def __init__(self):
         self.gmx_output = GromacsOutput()
@@ -193,6 +192,9 @@ class SimulationParameters:
             self.vectors_prody = Vectors()
             print("ProDy correctly imported")
         self.progress = ProgressStatus()
+
+    def create_cfg_files(self):
+        self.em_file, self.pr_file, self.md_file = create_config_files(self.project_name)
 
     def change_stop_value(self, value):
         if value:
@@ -989,6 +991,50 @@ class MdpConfig:
             pass
 
 
+# This function creates files needed by the project
+def create_config_files(project_name):
+    dynamics_dir = get_dynamics_dir()
+    project_dir = get_project_dirs(project_name)
+    print("Create config files")
+    project_dir = get_project_dirs(project_name)
+#    if not os.path.isfile(project_dir + "options.pickle"):
+#        pass
+#    else:
+#        load_options(s_params)
+    if os.path.isfile(dynamics_dir + "em.mdp"):
+        shutil.copy(dynamics_dir + "em.mdp", project_dir + "em.mdp")
+        print("Found em.mdp file. Using it instead of local configuration.")
+    elif os.path.isfile(project_dir + "em.mdp"):
+        em_file_config = open(project_dir + "em.mdp", "r").read()
+        em_file = MdpConfig("em.mdp", em_file_config, 1)
+    else:
+        em_file = MdpConfig("em.mdp", EM_INIT_CONFIG, 0)
+    if os.path.isfile(dynamics_dir + "pr.mdp"):
+        shutil.copy(dynamics_dir + "pr.mdp", project_dir + "pr.mdp")
+        print("Found pr.mdp file. Using it instead of local configuration.")
+    elif os.path.isfile(project_dir + "pr.mdp"):
+        pr_file_config = open(project_dir + "pr.mdp", "r").read()
+        pr_file = MdpConfig("pr.mdp", pr_file_config, 1)
+    else:
+        pr_file = MdpConfig("pr.mdp", PR_INIT_CONFIG, 0)
+    if os.path.isfile(dynamics_dir + "md.mdp"):
+        shutil.copy(dynamics_dir + "md.mdp", project_dir + "md.mdp")
+        print("Found md.mdp file. Using it instead of local configuration.")
+    elif os.path.isfile(project_dir + "md.mdp"):
+        md_file_config = open(project_dir + "md.mdp", "r").read()
+        md_file = MdpConfig("md.mdp", md_file_config, 1)
+    else:
+        md_file = MdpConfig("md.mdp", MD_INIT_CONFIG, 0)
+#    save_options()
+    try:
+        if project_name in cmd.get_names("objects"):  # PyMOL API
+            cmd.save(project_dir + project_name + ".pdb", project_name)  # PyMOL API
+            print("cmd saved")
+    except (AttributeError, TypeError) as e:
+        pass
+    return em_file, pr_file, md_file
+
+
 # Status and to_do maintaining class
 class ProgressStatus:
     # 0:Save configuration files; 1:Generate topology file from pdb; 2:Adding Water Box;
@@ -1319,7 +1365,7 @@ def dynamics(s_params):
 
 
 # Saving configuration files
-def mdp_files():
+def mdp_files(em_file, pr_file, md_file):
     dynamics_dir = get_dynamics_dir()
     if not os.path.isfile("{}em.mdp".format(dynamics_dir)):
         em_file.save_file()
@@ -1330,19 +1376,22 @@ def mdp_files():
 
 
 # Show multimodel PDB file in PyMOL
-def show_multipdb():
+def show_multipdb(s_params):
+    project_name = s_params.project_name
     try:
         cmd.hide("everything", project_name)  # PyMOL API
-    except:
+    except parsing.QuietException:  # PyMOL API
         pass
     try:
-        cmd.load(project_name + "_multimodel.pdb")  # PyMOL API
+        cmd.load("{}_multimodel.pdb".format(project_name))  # PyMOL API
     except AttributeError:
         pass
 
 
 # Saving tar.bz file
-def save_file(destination_path):
+def save_file(destination_path, s_params):
+    project_name = s_params.project_name
+    project_dir = get_project_dirs(project_name)
     print("Saving")
     import tarfile
     save_options()
@@ -1353,9 +1402,9 @@ def save_file(destination_path):
 
 
 # Load tar.bz file
-def load_file(file_path):
+def load_file(file_path, s_params):
     print("Loading file: " + file_path)
-    import tarfile
+    dynamics_dir = get_dynamics_dir()
     tar = tarfile.open(file_path, "r:bz2")
     names = tar.getnames()
     # Backup same name folder if file is loaded
@@ -1366,31 +1415,42 @@ def load_file(file_path):
         os.rename(dynamics_dir + names[0], back_folder)
     tar.extractall(dynamics_dir)
     project_name = names[0]
-    set_gromacs_project_dir()
-    load_options()
+    s_params.change_project_name(project_name)
+    load_options(s_params)
 
 
 # Save all settings to options.pickle file
-def save_options():
+def save_options(em_file, pr_file, md_file, s_params):
+    project_name = s_params.project_name
+    project_dir = get_project_dirs(project_name)
+    gmx_version = s_params.gmx_output.version
+    gromacs2 = s_params.gmx_input
+    progress = s_params.progress
     if not prody:
         vectors_prody = 0
+    else:
+        vectors_prody = s_params.vectors_prody
     print("updating project files")
     if not os.path.isdir(project_dir):
         os.makedirs(project_dir)
     destination_option = open(project_dir + "options.pickle", "wb")
-    pickle_list = [plugin_ver, gromacs.version, gromacs2, em_file, pr_file, md_file, progress, vectors_prody]
+    pickle_list = [plugin_ver, gmx_version, gromacs2, em_file, pr_file, md_file, progress, vectors_prody]
     pickle.dump(pickle_list, destination_option)
     del destination_option
 
 
 # Load all settings from options.pickle file
-def load_options():
+def load_options(s_params):
+    project_name = s_params.project_name
+    project_dir = get_project_dirs(project_name)
+    gmx_version = s_params.gmx_output.version
+    gromacs2 = s_params.gmx_input
     pickle_file = open(project_dir + "options.pickle", "rb")
     options = pickle.load(pickle_file)
 
-    print("Loading project " + project_name)
-    print("Project was created for Dynamics PyMOL Plugin" + options[0] + " and GROMACS " + options[1])
-    if gromacs.version != options[1]:
+    print("Loading project {}".format(project_name))
+    print("Project was created for Dynamics PyMOL Plugin {} and GROMACS {}".format(options[0], options[1]))
+    if gmx_version != options[1]:
         print("GROMACS versions is different for loaded file.")
 
     if options[0][1:4] == "2.2":
@@ -1455,12 +1515,14 @@ You can click Play button in order to see animation."""
 
 # Clean function
 def clean_option():
-    shutil.rmtree(dynamics_dir)
+    shutil.rmtree(get_dynamics_dir())
     print("Temporary files are now removed.")
 
 
 # If molecular dynamics simulation fails, this function will show the error
-def error_message():
+def error_message(s_params):
+    project_name = s_params.project_name
+    project_dir = get_project_dirs(project_name)
     log = open(project_dir + "log.txt", "r")
     log_list = log.readlines()
 
@@ -1505,42 +1567,45 @@ def __init__(self):
 def create_gui(gui_library, status, s_parameters, parent):
     if status[0] == "ok":
         if gui_library == "tk":
-            RootWindow(status, s_parameters, parent)
+            root_window(status, s_parameters, parent)
     else:
         if gui_library == "tk":
             tkMessageBox.showerror("Initialization error", status[1])
 
-#    calculationW = CalculationWindow()
-#    waterW = WaterWindows()
-#    restraintsW = RestraintsWindow()
-#    genionW = GenionWindow()
-
 
 # --Graphic Interface Tk--
+# Don't care too much of below code quality, as Tk it depreciated and will be removed in plugin version 3.1
 # Root menu window
-def RootWindow(status, s_parameters, parent=None):
+def root_window(status, s_params, parent=None):
     root = Toplevel(parent)
     root.wm_title("Dynamics with Gromacs" + plugin_ver)
-
+    calculationW = CalculationWindow()
+    waterW = WaterWindows()
+    restraintsW = RestraintsWindow()
+    genionW = GenionWindow()
+    gromacs = s_params.gmx_output
+    gromacs2 = s_params.gmx_input
+    dynamics_dir = get_dynamics_dir()
+    vectors_prody = s_params.vectors_prody
     # Detect list of PyMOL loaded PDB files if no files than list "nothing"
-    allNames = cmd.get_names("objects")  # PyMOL API
-    allNames1 = []
-    for name in allNames:
+    all_names = cmd.get_names("objects")  # PyMOL API
+    all_names1 = []
+    for name in all_names:
         name1 = name.split("_")
         if name1[-1] == "multimodel" or name1[-1] == "(sele)" or (name1[0] == "Mode" and len(name1) == 3):
             pass
         else:
-            allNames1.append(name)
-    allNames = allNames1
+            all_names1.append(name)
+    all_names = all_names1
 
-    if allNames == []:
-        allNames = ["nothing"]
+    if not all_names:
+        all_names = ["nothing"]
 
     # TkInter variables
-    project_name = allNames[0]
-    set_gromacs_project_dir()
-    if allNames != ["nothing"]:
-        create_config_files()
+    project_name = all_names[0]
+    s_params.change_project_name(project_name)
+    if all_names != ["nothing"]:
+        s_params.create_cfg_files()
 
     v1_name = StringVar(root)
     v1_name.set(project_name)
@@ -1583,8 +1648,8 @@ def RootWindow(status, s_parameters, parent=None):
     frame1_1a.pack(side=TOP)
 
     # List of PyMOL loaded PDB files
-    if allNames[0] != "nothing":
-        for molecule in allNames:
+    if all_names[0] != "nothing":
+        for molecule in all_names:
             radio_button1 = Radiobutton(frame1_1a, text=molecule, value=molecule, variable=v1_name,
                                         command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water,
                                                                       water_v, check1_button))
@@ -1607,7 +1672,7 @@ def RootWindow(status, s_parameters, parent=None):
         projects = []
     projects2 = []
     for file_dir in projects:
-        if os.path.isdir(dynamics_dir + file_dir) and file_dir not in allNames and file_dir != "nothing":
+        if os.path.isdir(dynamics_dir + file_dir) and file_dir not in all_names and file_dir != "nothing":
             projects2.append(file_dir)
     if projects2:
         w1_2 = Label(frame1_1, text="Previous Projects")
@@ -1712,7 +1777,7 @@ def RootWindow(status, s_parameters, parent=None):
     re_label = Label(frame1_3_1, text="Restraints (Select Atoms)")
     re_label.pack(side=TOP)
 
-    check1_button = Button(frame1_3_1, text="Configure", command=lambda: restraintsW.window(root))
+    check1_button = Button(frame1_3_1, text="Configure", command=lambda: restraintsW.window(root, s_params))
     check1_button.pack(side=TOP)
 
     # Button for ProDy options
@@ -1732,8 +1797,8 @@ def RootWindow(status, s_parameters, parent=None):
     time_entry.pack(side=LEFT)
     time_label2 = Label(frame1_3_1_1, text="[ps]")
     time_label2.pack(side=LEFT)
-    time_button = Button(frame1_3_1_1, text="OK", command=lambda: md_file.update(3, str(
-        int(float(time_entry_value.get()) / float(md_file.options[2][1])))))
+    time_button = Button(frame1_3_1_1, text="OK", command=lambda: s_params.md_file.update(3, str(
+        int(float(time_entry_value.get()) / float(s_params.md_file.options[2][1])))))
     time_button.pack(side=LEFT)
 
     # Disable configuration of ProDy (Vectors) if ProDy is not installed
@@ -1761,7 +1826,7 @@ def RootWindow(status, s_parameters, parent=None):
                                                           check1_button))
     load_button.pack(side=LEFT)
 
-    count_button = Button(frame2, text="OK", command=lambda: calculationW.check_window(root))
+    count_button = Button(frame2, text="OK", command=lambda: calculationW.check_window(root, parent, s_params, status))
     count_button.pack(side=LEFT)
 
     # Initial configuration
@@ -1782,17 +1847,17 @@ class CalculationWindow:
         self.queue_percent = Queue.Queue()
 
     # This will prevent Calculation Window to display if non protein has been selected
-    def check_window(self, master):
+    def check_window(self, master, g_parent, s_params, status):
+        project_name = s_params.project_name
         if project_name != "nothing":
             master.destroy()
             root = Toplevel(g_parent)
-            self.window(root)
+            self.window(root, s_params, status, g_parent)
         elif project_name == "nothing":
             no_molecule_warning()
 
     # This function will create main Calculation Window
-    def window(self, root):
-        print(project_name)
+    def window(self, root, s_params, status, parent):
         root.wm_title("Calculation Window")
         frame1 = Frame(root)
         frame1.pack(side=TOP)
@@ -1815,7 +1880,8 @@ class CalculationWindow:
 
         stop_button = Button(frame2, text="STOP", command=lambda: self.start_counting(0))
         stop_button.pack(side=LEFT)
-        if stop == 1:
+        stop = s_params.stop
+        if stop:
             stop_button.configure(state=DISABLED)
         self.stop_button = stop_button
 
@@ -1832,30 +1898,30 @@ class CalculationWindow:
 
         # Updateing status bar
         tasks_nr = 0.0
-        for task in progress.to_do:
+        for task in s_params.progress.to_do:
             tasks_nr = tasks_nr + task
         self.tasks_to_do = tasks_nr
-        thread.start_new_thread(self.bar_update, ())
-        self.bar_display(root)
+        thread.start_new_thread(self.bar_update, s_params, status)
+        self.bar_display(root, parent, s_params)
 
     # This function will update status bar during molecular dynamics simulation (beware this is separate thread)
-    def bar_update(self):
+    def bar_update(self, s_params, status):
         percent = 0.0
-        while stop == 1:
+        while s_params.stop:
             time.sleep(0.5)
-        while error == "" and percent != 100:
+        while percent != 100:  # and error == ""
             time.sleep(0.5)
             percent = steps_status_bar("only_bar")
             self.queue_percent.put(percent)
-            if stop == 0:
+            if s_params.stop == 0:
                 self.queue_status.put(status[1])
-            elif stop == 1:
+            elif s_params.stop == 1:
                 self.queue_status.put("User Stoped")
-        if error != "":
-            self.queue_status.put("Fatal Error")
+#        if error != "":
+#            self.queue_status.put("Fatal Error")
 
     # This function will update status bar in thread safe manner
-    def bar_display(self, root):
+    def bar_display(self, root, parent, s_params):
         try:
             status = self.queue_status.get(block=False)
             self.bar_var.set(status)
@@ -1869,11 +1935,11 @@ class CalculationWindow:
         if status == "Fatal Error":
             self.start_counting(0)
             self.start_button.configure(state=DISABLED)
-            tkMessageBox.showerror("GROMACS Error Message", error)
+            tkMessageBox.showerror("GROMACS Error Message", "Error")  # error)
         if status == "Finished!":
             root.destroy()
             # Show interpretation window after successful completion of the calculations...
-            show_interpretation_window()
+            show_interpretation_window(parent, s_params)
         else:
             root.after(100, self.bar_display, root)
 
@@ -1901,13 +1967,15 @@ class InterpretationWindow:
     tentry_value = ""
     pause = 1
 
-    def __init__(self):
+    def __init__(self, g_parent, s_params):
         self.queue_time = Queue.Queue()
-        self.md_time()
+        self.md_time(s_params)
         root = Toplevel(g_parent)
-        self.window(root)
+        self.window(root, s_params)
 
-    def md_time(self):
+    def md_time(self, s_params):
+        project_name = s_params.project_name
+        project_dir = get_project_dirs(project_name)
         md_file = open(project_dir + "md.mdp", "r")
         for lines in md_file.readlines():
             splited_line = lines.split(" ")
@@ -1923,7 +1991,8 @@ class InterpretationWindow:
         max_time = dt * nsteps
         self.max_time = max_time
 
-    def window(self, root):
+    def window(self, root, s_params):
+        vectors_prody = s_params.vector_prody
         root.wm_title("MD Interpretation")
         self.tentry_value = StringVar(root)
         self.tentry_value.set("0.0")
@@ -1957,13 +2026,13 @@ class InterpretationWindow:
         frame1_3.pack(side=TOP, anchor=W)
         mlabel = Label(frame1_3, text="Model Type")
         mlabel.pack(side=LEFT)
-        lines_button = Button(frame1_3, text="Lines", command=lambda: self.shape("lines"))
+        lines_button = Button(frame1_3, text="Lines", command=lambda: self.shape("lines", s_params))
         lines_button.pack(side=LEFT)
-        sticks_button = Button(frame1_3, text="Sticks", command=lambda: self.shape("sticks"))
+        sticks_button = Button(frame1_3, text="Sticks", command=lambda: self.shape("sticks", s_params))
         sticks_button.pack(side=LEFT)
-        ribbon_button = Button(frame1_3, text="Ribbon", command=lambda: self.shape("ribbon"))
+        ribbon_button = Button(frame1_3, text="Ribbon", command=lambda: self.shape("ribbon", s_params))
         ribbon_button.pack(side=LEFT)
-        cartoon_button = Button(frame1_3, text="Cartoon", command=lambda: self.shape("cartoon"))
+        cartoon_button = Button(frame1_3, text="Cartoon", command=lambda: self.shape("cartoon", s_params))
         cartoon_button.pack(side=LEFT)
         frame1_3_1 = Frame(frame1)
         frame1_3_1.pack(side=TOP, anchor=W)
@@ -2079,20 +2148,22 @@ class InterpretationWindow:
         return frame
 
     @staticmethod
-    def shape(shape_type):
+    def shape(shape_type, s_params):
+        project_name = s_params.project_name
         cmd.hide("everything", project_name + "_multimodel")  # PyMOL API
         cmd.show(shape_type, project_name + "_multimodel")  # PyMOL API
 
     @staticmethod
-    def label(name):
+    def label(name, s_params):
+        project_name = s_params.project_name
         if name == "terminus":
-            cmd.label("n. ca and " + project_name + "_multimodel and i. 1", '"N-terminus"')  # PyMOL API
+            cmd.label("n. ca and {}_multimodel and i. 1".format(project_name), '"N-terminus"')  # PyMOL API
             ca_number = cmd.count_atoms("n. ca and " + project_name + "_multimodel")  # PyMOL API
-            cmd.label("n. ca and " + project_name + "_multimodel and i. " + str(ca_number), '"C-terminus"')  # PyMOL API
+            cmd.label("n. ca and {}_multimodel and i. {}".format(project_name, str(ca_number)), '"C-terminus"')  # PyMOL API
         elif name == "acids":
-            cmd.label("n. ca and " + project_name + "_multimodel", "resn")  # PyMOL API
+            cmd.label("n. ca and {}_multimodel".format(project_name), "resn")  # PyMOL API
         elif name == "clear":
-            cmd.label("n. ca and " + project_name + "_multimodel", "")  # PyMOL API
+            cmd.label("n. ca and {}_multimodel".format(project_name), "")  # PyMOL API
 
     # This function will watch time (beware this is separate thread)
     def watch_frames(self):
@@ -2114,8 +2185,8 @@ class InterpretationWindow:
 
 
 # Show interpretation window...
-def show_interpretation_window():
-    interpretation = InterpretationWindow()
+def show_interpretation_window(parent, s_params):
+    InterpretationWindow(parent, s_params)
 
 
 def help_window(master):
@@ -2130,16 +2201,17 @@ def help_window(master):
     ok_button.pack()
 
 
-def log_window():
-    import sys
+def log_window(s_params):
+    project_name = s_params.project_name
+    project_dir = get_project_dirs(project_name)
     if sys.platform == "linux2":
-        cmd = "xdg-open " + project_dir + "log.txt"
+        cmd = "xdg-open {}log.txt".format(project_dir)
         execute_subprocess(cmd)
     elif sys.platform == "darwin":
-        cmd = "open " + project_dir + "log.txt"
+        cmd = "open {}log.txt".format(project_dir)
         execute_subprocess(cmd)
     elif sys.platform.startswith('win'):
-        cmd = "start " + project_dir + "log.txt"
+        cmd = "start {}log.txt".format(project_dir)
         execute_subprocess(cmd)
 
 
@@ -2158,7 +2230,9 @@ class RestraintsWindow:
     check_var = ""
 
     # This function will create main window for restraints
-    def window(self, master):
+    def window(self, master, s_params):
+        gromacs2 = s_params.gmx_input
+        gromacs = s_params.gmx_output
         root = Toplevel(master)
         root.wm_title("Restraints Configure")
 
@@ -2216,7 +2290,9 @@ class RestraintsWindow:
         self.atom_list.append(text1)
 
     # This function will modyfie index_dynamics.ndx file based on user choosed restraints
-    def index(self, root_to_kill=""):
+    def index(self, s_params, root_to_kill=False):
+        gromacs2 = s_params.gmx_input
+        gromacs = s_params.gmx_output
         index_nr = self.check_var.get()
         gromacs2.restraints_nr = index_nr
         text = self.atom_list[index_nr]
@@ -2226,11 +2302,14 @@ class RestraintsWindow:
         index_file = open("index_dynamics.ndx", "w")
         index_file.write("[ Dynamics Selected ]\n" + text.get(1.0, END))
         index_file.close()
-        if root_to_kill != "":
+        if root_to_kill:
             root_to_kill.destroy()
 
     # This function will activ or disable restraints button in main window based on check box
-    def check(self, check, config_button):
+    def check(self, check, config_button, s_params):
+        md_file = s_params.md_file
+        gromacs = s_params.gmx_output
+        progress = s_params.progress
         if check == 1:
             config_button.configure(state=ACTIVE)
             md_file.update(2, md_file.options[2][1], 1)
@@ -2245,7 +2324,7 @@ class RestraintsWindow:
 
 
 # This function will create window, which allow you to choose PDB file if no file is loaded to PyMOL
-def select_file(v_name):
+def select_file(v_name, s_params):
     root = Tk()
     file = tkFileDialog.askopenfile(parent=root, mode='rb', title='Choose PDB file')
     try:
@@ -2253,39 +2332,44 @@ def select_file(v_name):
         name2 = name[-1].split(".")
         # Checking directories
         project_name = name2[0]
-        set_gromacs_project_dir()
+        s_params.change_project_name(project_name)
+        project_dir = get_project_dirs(project_name)
         v_name.set(project_name)
         if not os.path.isdir(project_dir):
             os.makedirs(project_dir)
             shutil.copyfile(file.name, project_dir + project_name + ".pdb")
             print("pdb_copied")
-        create_config_files()
+        create_config_files(project_name)
     except:
         pass
     root.destroy()
 
 
 # This function will create window, which allow you to save current work
-def select_file_save(rest_of_work=0):
+def select_file_save(s_params, rest_of_work=0):
+    project_name = s_params.project_name
+    progress = s_params.progress
     if project_name != "nothing":
         if rest_of_work == 1:
             progress.to_do_status()
         root = Tk()
         file = tkFileDialog.asksaveasfile(parent=root, mode='w', title='Choose save file')
         if not file:
-            save_file(file.name)
+            save_file(file.name, s_params)
         root.destroy()
     elif project_name == "nothing":
         no_molecule_warning()
 
 
 # This function will create window, which allow you to load previously saved work
-def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, config_button_restraints):
-    prody_button = False
+def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, config_button_restraints, s_params):
+    project_name = s_params.project_name
+    gromacs = s_params.gmx_output
+    gromacs2 = s_params.gmx_input
     root = Tk()
     file = tkFileDialog.askopenfile(parent=root, mode='rb', defaultextension=".tar.bz2", title='Choose file to load')
     if not file:
-        load_file(file.name)
+        load_file(file.name, s_params)
         v1_name.set(project_name)
         v2_group.set(gromacs.group_list[gromacs2.group][0])
         v3_force.set(gromacs.force_list[gromacs2.force - 1][0])
@@ -2293,26 +2377,30 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
         water_v.set(gromacs.water_list[v4_water.get() - 1][1])
         radio_button1 = Radiobutton(frame1_1a, text=project_name, value=project_name, variable=v1_name,
                                     command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v,
-                                                                  config_button_restraints, prody_button))
+                                                                  config_button_restraints))
         radio_button1.pack(side=TOP, anchor=W)
     root.destroy()
 
 
 # This function sets variables after choosing new molecule
-def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_restraints):
+def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_restraints, s_params):
     print("Set Variables")
+    gromacs = s_params.gmx_output
+    gromacs2 = s_params.gmx_input
+    progress = s_params.progress
     # Set project name and dir
-    if name != "":
-        project_name = name
-        set_gromacs_project_dir()
-    if os.path.isfile(project_dir + "options.pickle"):
-        load_options()
+    project_name = name
+    if name:
+        s_params.change_project_name(project_name)
+    project_dir = get_project_dirs(project_name)
+    if os.path.isfile("{}options.pickle".format(project_dir)):
+        load_options(s_params)
         v2_group.set(gromacs.group_list[gromacs2.group][0])
         v3_force.set(gromacs.force_list[gromacs2.force - 1][0])
         v4_water.set(gromacs.water_list[gromacs2.water - 1][0])
         water_v.set(gromacs.water_list[v4_water.get() - 1][1])
     else:
-        create_config_files()
+        create_config_files(project_name)
     # Correct set of restraints button
     if progress.to_do[6] == 0:
         config_button_restraints.configure(state=DISABLED)
@@ -2323,48 +2411,12 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
         progress.to_do = [1, 1, 1, 1, 1, 1, 0, 1, 1, 1]
 
 
-# This function creates files needed by the project
-def create_config_files():
-    print("Create config files")
-    if not os.path.isfile(project_dir + "options.pickle"):
-        pass
-    else:
-        load_options()
-    if os.path.isfile(dynamics_dir + "em.mdp"):
-        shutil.copy(dynamics_dir + "em.mdp", project_dir + "em.mdp")
-        print("Found em.mdp file. Using it instead of local configuration.")
-    elif os.path.isfile(project_dir + "em.mdp"):
-        em_file_config = open(project_dir + "em.mdp", "r").read()
-        em_file = MdpConfig("em.mdp", em_file_config, 1)
-    else:
-        em_file = MdpConfig("em.mdp", em_init_config, 0)
-    if os.path.isfile(dynamics_dir + "pr.mdp"):
-        shutil.copy(dynamics_dir + "pr.mdp", project_dir + "pr.mdp")
-        print("Found pr.mdp file. Using it instead of local configuration.")
-    elif os.path.isfile(project_dir + "pr.mdp"):
-        pr_file_config = open(project_dir + "pr.mdp", "r").read()
-        pr_file = MdpConfig("pr.mdp", pr_file_config, 1)
-    else:
-        pr_file = MdpConfig("pr.mdp", pr_init_config, 0)
-    if os.path.isfile(dynamics_dir + "md.mdp"):
-        shutil.copy(dynamics_dir + "md.mdp", project_dir + "md.mdp")
-        print("Found md.mdp file. Using it instead of local configuration.")
-    elif os.path.isfile(project_dir + "md.mdp"):
-        md_file_config = open(project_dir + "md.mdp", "r").read()
-        md_file = MdpConfig("md.mdp", md_file_config, 1)
-    else:
-        md_file = MdpConfig("md.mdp", md_init_config, 0)
-    save_options()
-    try:
-        if project_name in cmd.get_names("objects"):  # PyMOL API
-            cmd.save(project_dir + project_name + ".pdb", project_name)  # PyMOL API
-            print("cmd saved")
-    except (AttributeError, TypeError) as e:
-        pass
-
-
 # This function will create the window with configuration files based on MDP class
-def mdp_configure(config_name, master):
+def mdp_configure(config_name, master, s_params):
+    project_name = s_params.project_name
+    em_file = s_params.em_file
+    pr_file = s_params.pr_file
+    md_file = s_params.md_file
     if project_name != "nothing":
         root2 = Toplevel(master)
 
@@ -2448,7 +2500,10 @@ def mdp_configure(config_name, master):
 
 
 # This function will update MDP class objects alfter closing "mdp_configure" window
-def mdp_update(values, check_list, mdp, root_to_kill=""):
+def mdp_update(values, check_list, mdp, s_params, root_to_kill=""):
+    em_file = s_params.em_file
+    pr_file = s_params.pr_file
+    md_file = s_params.md_file
     try:
         root_to_kill.destroy()
     except:
@@ -2462,11 +2517,14 @@ def mdp_update(values, check_list, mdp, root_to_kill=""):
         elif mdp == "md":
             md_file.update(index_nr, value.get(), check_list[index_nr].get())
         index_nr = index_nr + 1
-    save_options()
+    save_options(em_file, pr_file, md_file, s_params)
 
 
 # This function will create Simulation Steps configuration window
-def steps_configure(master, restraints_button):
+def steps_configure(master, restraints_button, s_params, restraintsW):
+    project_name = s_params.project_name
+    progress = s_params.progress
+    gromacs2 = s_params.gmx_input
     if project_name != "nothing":
         root = Toplevel(master)
         root.wm_title("Simulation Steps Configuration")
@@ -2500,11 +2558,11 @@ def steps_configure(master, restraints_button):
         frame1 = Frame(root)
         frame1.pack(side=TOP)
 
-        c1 = Checkbutton(frame1, text="Save configuration files" + steps_status_done(0), variable=check_var1,
+        c1 = Checkbutton(frame1, text="Save configuration files" + steps_status_done(0, s_params), variable=check_var1,
                          command=lambda: progress.to_do_update(0, check_var1.get()))
         c1.pack(side=TOP, anchor=W)
 
-        c2 = Checkbutton(frame1, text="Generate topology file from pdb" + steps_status_done(1), variable=check_var2,
+        c2 = Checkbutton(frame1, text="Generate topology file from pdb" + steps_status_done(1, s_params), variable=check_var2,
                          command=lambda: progress.to_do_update(1, check_var2.get()))
         c2.pack(side=TOP, anchor=W)
 
@@ -2516,37 +2574,37 @@ def steps_configure(master, restraints_button):
                          command=lambda: progress.x2top_update(v1.get()))
         r2.pack(side=TOP, anchor=W)
 
-        c3 = Checkbutton(frame1, text="Adding Water Box (only for explicit solvent)" + steps_status_done(2),
+        c3 = Checkbutton(frame1, text="Adding Water Box (only for explicit solvent)" + steps_status_done(2, s_params),
                          variable=check_var3, command=lambda: progress.to_do_update(2, check_var3.get()))
         c3.pack(side=TOP, anchor=W)
 
         c4 = Checkbutton(frame1,
-                         text="Adding ions and neutralize (only for explicit solvent; Optional)" + steps_status_done(3),
+                         text="Adding ions and neutralize (only for explicit solvent; Optional)" + steps_status_done(3, s_params),
                          variable=check_var4, command=lambda: progress.to_do_update(3, check_var4.get()))
         c4.pack(side=TOP, anchor=W)
 
-        c5 = Checkbutton(frame1, text="Energy Minimization (optional)" + steps_status_done(4), variable=check_var5,
+        c5 = Checkbutton(frame1, text="Energy Minimization (optional)" + steps_status_done(4, s_params), variable=check_var5,
                          command=lambda: progress.to_do_update(4, check_var5.get()))
         c5.pack(side=TOP, anchor=W)
 
         c6 = Checkbutton(frame1,
-                         text="Position Restrained MD (optional, only for explicit solvent)" + steps_status_done(5),
+                         text="Position Restrained MD (optional, only for explicit solvent)" + steps_status_done(5, s_params),
                          variable=check_var6, command=lambda: progress.to_do_update(5, check_var6.get()))
         c6.pack(side=TOP, anchor=W)
 
-        c7 = Checkbutton(frame1, text="Restraints (optional)" + steps_status_done(6), variable=check_var7,
+        c7 = Checkbutton(frame1, text="Restraints (optional)" + steps_status_done(6, s_params), variable=check_var7,
                          command=lambda: restraintsW.check(check_var7.get(), restraints_button))
         c7.pack(side=TOP, anchor=W)
 
-        c8 = Checkbutton(frame1, text="Molecular Dynamics Simulation" + steps_status_done(7), variable=check_var8,
+        c8 = Checkbutton(frame1, text="Molecular Dynamics Simulation" + steps_status_done(7, s_params), variable=check_var8,
                          command=lambda: progress.to_do_update(7, check_var8.get()))
         c8.pack(side=TOP, anchor=W)
 
-        c9 = Checkbutton(frame1, text="Generate multimodel PDB" + steps_status_done(8), variable=check_var9,
+        c9 = Checkbutton(frame1, text="Generate multimodel PDB" + steps_status_done(8, s_params), variable=check_var9,
                          command=lambda: progress.to_do_update(8, check_var9.get()))
         c9.pack(side=TOP, anchor=W)
 
-        c10 = Checkbutton(frame1, text="Calculate vectors using ProDy (optional)" + steps_status_done(9),
+        c10 = Checkbutton(frame1, text="Calculate vectors using ProDy (optional)" + steps_status_done(9, s_params),
                           variable=check_var10, command=lambda: progress.to_do_update(9, check_var10.get()))
         c10.pack(side=TOP, anchor=W)
 
@@ -2594,14 +2652,16 @@ def steps_click_resume(var, bar, variable_list=[]):
 
 
 # This function will close steps window and update number of steps to do
-def steps_click_ok(root):
+def steps_click_ok(root, s_params):
     root.destroy()
+    progress = s_params.progress
     progress.steps = sum(progress.to_do)
 
 
 # This function will show current progress on Progress Bar and operate with Steps Simulation Window for
 # "Resume Simulation" button.
-def steps_status_bar(var, variable_list=[]):
+def steps_status_bar(var, s_params, variable_list=[]):
+    progress = s_params.progress
     percent = 0.0
     if var == 1:
         to_do_nr = 0
@@ -2642,7 +2702,9 @@ class WaterWindows:
     explicit_buttons = []
 
     # Water chooser window
-    def choose(self, v4_water, water_v, waterbox_button, master):
+    def choose(self, v4_water, water_v, waterbox_button, master, s_params):
+        gromacs = s_params.gmx_output
+        gromacs2 = s_params.gmx_input
         root = Toplevel(master)
         root.wm_title("Water Model")
 
@@ -2691,8 +2753,10 @@ class WaterWindows:
 
     # This function will change force field and water model when choosing Force Field in Main Window and also change
     # water model after choosing one in "waterChoose"
-    def change(self, v4_water, water_v, force=""):
-        if force == "":
+    def change(self, v4_water, water_v, s_params, force=False):
+        gromacs = s_params.gmx_output
+        gromacs2 = s_params.gmx_input
+        if not force:
             force = gromacs2.force
         else:
             gromacs2.force = force
@@ -2704,7 +2768,12 @@ class WaterWindows:
         gromacs2.water = v4_water.get()
 
     # This function changes explicit to implicit and vice versa water model
-    def change_e(self, value, v4_water, water_v, v2):
+    def change_e(self, value, v4_water, water_v, v2, s_params):
+        progress = s_params.progress
+        gromacs2 = s_params.gmx_input
+        em_file = s_params.em_file
+        md_file = s_params.md_file
+        dynamics_dir = get_dynamics_dir()
         gromacs2.update({"explicit": value})
         if gromacs2.explicit == 1:
             for button in self.implicit_buttons:
@@ -2834,11 +2903,14 @@ class WaterWindows:
             # in implicit solvent watermodel must be set to "None"
             v4_water.set(len(self.explicit_buttons) - 1)
 
-        self.change(v4_water, water_v)
+        self.change(v4_water, water_v, s_params)
 
     # This function changes implicit water model
     @staticmethod
-    def change_i(int_variable):
+    def change_i(int_variable, s_params):
+        em_file = s_params.em_file
+        md_file = s_params.md_file
+        dynamics_dir = get_dynamics_dir()
         if int_variable.get() == 0:
             if not os.path.isfile(dynamics_dir + "em.mdp"):
                 parameter_nr = 0
@@ -2881,7 +2953,8 @@ class WaterWindows:
 
     # Water box configuration window
     @staticmethod
-    def box(master):
+    def box(master, s_params):
+        gromacs2 = s_params.gmx_input
         root = Toplevel(master)
         root.wm_title("Water Box Options")
         root.wm_geometry("300x200")
@@ -2917,7 +2990,8 @@ class WaterWindows:
 
     # Hydrogen configuration (for bigger time steps)
     @staticmethod
-    def box2(master):
+    def box2(master, s_params):
+        gromacs2 = s_params.gmx_input
         root = Toplevel(master)
         root.wm_title("Hydrogen options (for Pdb2gmx)")
         root.wm_geometry("300x200")
@@ -2942,7 +3016,8 @@ class WaterWindows:
 class GenionWindow:
 
     # Genion box configuration window
-    def window(self, master):
+    def window(self, master, s_params):
+        gromacs2 = s_params.gmx_input
         root = Toplevel(master)
         root.wm_title("GENION options")
         root.wm_geometry("300x350")
@@ -2977,36 +3052,37 @@ class GenionWindow:
 
 
 # This is the window to setup ProDy options
-def vectors_window(master):
-    if project_name != "nothing":
-        root = Toplevel(master)
-        root.wm_title("Vectors Configuration")
-
-        frame1 = Frame(root)
-        frame1.pack()
-
-        v1 = IntVar(root)
-        v1.set(self.calculation_type)
-        v2 = IntVar(root)
-        v2.set(self.contact_map)
-
-        radio_button0 = Radiobutton(frame1, text="Anisotropic network model", value=0, variable=v1,
-                                        command=lambda: self.block_contact(0, c1, v2))
-        radio_button0.pack()
-        radio_button1 = Radiobutton(frame1, text="Principal component analysis", value=1, variable=v1,
-                                        command=lambda: self.block_contact(1, c1, v2))
-        radio_button1.pack()
-        radio_button2 = Radiobutton(frame1, text="Gaussian network model (experimental)", value=2, variable=v1,
-                                        command=lambda: self.block_contact(0, c1, v2))
-        radio_button2.pack()
-
-        c1 = Checkbutton(frame1, text="Show Contact Map", variable=v2)
-        c1.pack()
-        if self.block_contact_map == 1:
-            c1.configure(state=DISABLED)
-
-        ok_button = Button(frame1, text="OK", command=lambda: self.options_change(v1, v2, root))
-        ok_button.pack(side=TOP)
-
-    elif project_name == "nothing":
-        no_molecule_warning()
+# def vectors_window(master, s_params):
+#    project_name = s_params.project_name
+#    if project_name != "nothing":
+#        root = Toplevel(master)
+#        root.wm_title("Vectors Configuration")
+#
+#        frame1 = Frame(root)
+#        frame1.pack()
+#
+#        v1 = IntVar(root)
+#        v1.set(calculation_type)
+#        v2 = IntVar(root)
+#        v2.set(contact_map)
+#
+#        radio_button0 = Radiobutton(frame1, text="Anisotropic network model", value=0, variable=v1,
+#                                        command=lambda: block_contact(0, c1, v2))
+#        radio_button0.pack()
+#        radio_button1 = Radiobutton(frame1, text="Principal component analysis", value=1, variable=v1,
+#                                        command=lambda: block_contact(1, c1, v2))
+#        radio_button1.pack()
+#        radio_button2 = Radiobutton(frame1, text="Gaussian network model (experimental)", value=2, variable=v1,
+#                                        command=lambda: block_contact(0, c1, v2))
+#        radio_button2.pack()
+#
+#        c1 = Checkbutton(frame1, text="Show Contact Map", variable=v2)
+#        c1.pack()
+#        if block_contact_map == 1:
+#            c1.configure(state=DISABLED)
+#
+#        ok_button = Button(frame1, text="OK", command=lambda: options_change(v1, v2, root))
+#        ok_button.pack(side=TOP)
+#
+#    elif project_name == "nothing":
+#        no_molecule_warning()
