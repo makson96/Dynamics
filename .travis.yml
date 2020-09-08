@@ -10,6 +10,7 @@ env:
     - PYMOL_PREFIX=/opt/pymol
     - PYMOL_MODULES=/opt/pymol/modules
     - PYTHONPATH=$PYMOL_MODULES
+    - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/pymol/modules/pymol
   matrix:
     #For PyMOL 1.8, GROMACS 2018
     - PYMOL_VER=1.8 PYMOL_PACKAGE=travisci-pymol-18 GROMACS_VER=2018.3 GROMACS_PACKAGE=travisci-gromacs-2018
