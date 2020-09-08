@@ -8,7 +8,7 @@
 
 # Note: this script should be run from main Dynamics PyMOL Plugin Directory
 
-export PYTHONPATH=$PWD
+export PYTHONPATH=$PWD:$PYTHONPATH
 
 if ! python3 tests/init_test.py ; then
 exit 1
