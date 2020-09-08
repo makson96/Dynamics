@@ -345,6 +345,7 @@ class GromacsOutput:
     # This function will read atoms group for restraints for current molecule.
     def restraints_index(self, project_name):
         self.restraints = []
+        current_dir = os.getcwd()
         os.chdir(get_project_dirs(project_name))
 
         fo = open("gromacs_stdin.txt", "w")
@@ -369,6 +370,7 @@ class GromacsOutput:
             else:
                 atoms = atoms + line
         self.restraints[index_position - 1].append(atoms)
+        os.chdir(current_dir)
 
 
 # This class is responsible for performing molecular dynamics simulation with GROMACS tools.
@@ -1266,7 +1268,6 @@ def dynamics(s_params):
     progress = s_params.progress
     gromacs2 = s_params.gmx_input
     vectors_prody = s_params.vectors_prody
-    file_path = project_dir + project_name
     os.chdir(project_dir)
     stop = 0
 
@@ -1276,9 +1277,6 @@ def dynamics(s_params):
         if status[0] == "ok":
             progress.status[0] = 1
             progress.to_do[0] = 0
-            # Pickle trick
-            progress.status = progress.status
-            progress.to_do = progress.to_do
             save_options(s_params)
 
     # Counting topology
@@ -1537,18 +1535,28 @@ def error_message(s_params):
     project_dir = get_project_dirs(project_name)
     log = open(project_dir + "log.txt", "r")
     log_list = log.readlines()
-
     error_start_line = 0
-    while log_list[error_start_line] != "Fatal error:\n":
-        error_start_line = error_start_line + 1
+    for log_line in log_list:
+        error_start_line += 1
+        if "Fatal error:" in log_line:
+            error_start_line -= 0
+            break
     error_end_line = error_start_line
-    while log_list[error_end_line] != "-------------------------------------------------------\n":
-        error_end_line = error_end_line + 1
+    for log_line in log_list[error_start_line:]:
+        error_end_line += 1
+        if "-------------------------------------------------------" in log_line:
+            error_end_line -= 0
+            break
     error_list = log_list[error_start_line:error_end_line]
     error = ""
     for line in error_list:
         error = error + line
     print(error)
+    # Debug
+    file = open("log.txt", "r")
+    print(file.read())
+    file = open("log1.txt", "r")
+    print(file.read())
 
 
 # GUI. This is GUI section of the file. It should replace TkInter with Qt in the future.
