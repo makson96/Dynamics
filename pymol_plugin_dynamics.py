@@ -1283,14 +1283,14 @@ def dynamics(s_params):
 
     # Counting topology
     if status[0] == "ok" and stop == 0 and progress.to_do[1] == 1 and progress.x2top == 0:
-        status = gromacs2.pdb2top(file_path, project_name)
+        status = gromacs2.pdb2top(s_params)
         if status[0] == "ok":
             progress.status[1] = 1
             progress.to_do[1] = 0
             save_options(s_params)
 
     elif status[0] == "ok" and stop == 0 and progress.to_do[1] == 1 and progress.x2top == 1:
-        status = gromacs2.x2top(file_path, project_name)
+        status = gromacs2.x2top(s_params)
         if status[0] == "ok":
             progress.status[1] = 1
             progress.to_do[1] = 0
@@ -1298,7 +1298,7 @@ def dynamics(s_params):
 
     # Adding water box
     if status[0] == "ok" and stop == 0 and progress.to_do[2] == 1:
-        status = gromacs2.waterbox(file_path, project_name)
+        status = gromacs2.waterbox(s_params)
         if status[0] == "ok":
             progress.status[2] = 1
             progress.to_do[2] = 0
@@ -1306,7 +1306,7 @@ def dynamics(s_params):
 
     # Adding ions
     if status[0] == "ok" and stop == 0 and progress.to_do[3] == 1:
-        status = gromacs2.saltadd(file_path, project_name)
+        status = gromacs2.saltadd(s_params)
         if status[0] == "ok":
             progress.status[3] = 1
             progress.to_do[3] = 0
@@ -1314,7 +1314,7 @@ def dynamics(s_params):
 
     # EM
     if status[0] == "ok" and stop == 0 and progress.to_do[4] == 1:
-        status = gromacs2.em(file_path, project_name)
+        status = gromacs2.em(s_params)
         if status[0] == "ok":
             progress.status[4] = 1
             progress.to_do[4] = 0
@@ -1324,7 +1324,7 @@ def dynamics(s_params):
 
     # PR
     if status[0] == "ok" and stop == 0 and progress.to_do[5] == 1:
-        status = gromacs2.pr(file_path, project_name)
+        status = gromacs2.pr(s_params)
         if status[0] == "ok":
             progress.status[5] = 1
             progress.to_do[5] = 0
@@ -1342,7 +1342,7 @@ def dynamics(s_params):
 
     # MD
     if status[0] == "ok" and stop == 0 and progress.to_do[7] == 1:
-        status = gromacs2.md(file_path, project_name)
+        status = gromacs2.md(s_params)
         if status[0] == "ok":
             progress.status[7] = 1
             progress.to_do[7] = 0
@@ -1350,7 +1350,7 @@ def dynamics(s_params):
 
     # Trjconv
     if status[0] == "ok" and stop == 0 and progress.to_do[8] == 1:
-        status = gromacs2.trjconv(file_path, project_name)
+        status = gromacs2.trjconv(s_params)
         show_multipdb(s_params)
         progress.status[8] = 1
         progress.to_do[8] = 0
