@@ -427,7 +427,7 @@ class GromacsInput:
         status = ["ok", "Calculating topology using Force fields"]
         status_update(status)
         hh = "-" + self.hydro
-        gmx_cmd = s_params.gromacs_output.command
+        gmx_cmd = s_params.gmx_output.command
         project_name = s_params.project_name
         try:
             os.remove("{}.gro".format(project_name))
