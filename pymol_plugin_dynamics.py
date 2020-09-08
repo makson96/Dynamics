@@ -25,7 +25,7 @@ import time
 import tarfile
 
 # Import libraries from PyMOL specific work.
-from pymol import cmd, cgo, parsing
+from pymol import cmd, cgo, parsing, plugins
 
 # TODO: It seams that stored is removed from PyMOL API. We need to handle it correctly
 try:
@@ -167,10 +167,12 @@ def init_function(travis_ci=False, parent=None):
         print("Warning. Unsupported GROMACS Version")
     if status[0] == "ok":
         simulation_parameters = SimulationParameters()
-        if not travis_ci:
-            # Creating objects - data from those windows will be used by rootWindow
-            gui_library = "tk"
-            create_gui(gui_library, status, simulation_parameters, parent)
+    else:
+        simulation_parameters = False
+    if not travis_ci:
+        # Creating objects - data from those windows will be used by rootWindow
+        gui_library = "tk"
+        create_gui(gui_library, status, simulation_parameters, parent)
 
 
 class SimulationParameters:
@@ -333,7 +335,7 @@ class GromacsOutput:
         # Switch back to current directory...
         os.chdir(current_dir)
 
-        save_options()
+        # save_options()
         return self.water_list
 
     # This function will read atoms group for restraints for current molecule.
@@ -413,7 +415,7 @@ class GromacsInput:
                 self.negative_ion = value
             elif key == "explicit":
                 self.explicit = value
-        save_options()
+#        save_options()
         print("gromacs updated")
 
     # This function will create initial topology and trajectory using pdb file and choosen force field
@@ -437,7 +439,7 @@ class GromacsInput:
         command = "{0} pdb2gmx -f {1}.pdb -o {1}.gro -p {1}.top {2}".format(gmx_cmd, project_name, hh)
         execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
 
-        if os.path.isfile("{}.gro".format((project_name))):
+        if os.path.isfile("{}.gro".format(project_name)):
             status = ["ok", ""]
         else:
             status = ["fail", "Warning. Trying to ignore unnecessary hydrogen atoms."]
@@ -934,7 +936,7 @@ class Vectors:
     def options_change(self, v1, v2, root):
         self.calculation_type = v1.get()
         self.contact_map = v2.get()
-        save_options()
+        # save_options()
         root.destroy()
 
     def block_contact(self, block, contact_map_b, contact_map_v):
@@ -1051,7 +1053,7 @@ class ProgressStatus:
         if isinstance(position, int):
             self.to_do[position] = value
             self.to_do = self.to_do
-            save_options()
+#            save_options()
 
     def x2top_update(self, value):
         if isinstance(value, int):
@@ -1266,14 +1268,14 @@ def dynamics(s_params):
 
     # Saving configuration files
     if status[0] == "ok" and stop == 0 and progress.to_do[0] == 1:
-        mdp_files()
+        mdp_files(s_params)
         if status[0] == "ok":
             progress.status[0] = 1
             progress.to_do[0] = 0
             # Pickle trick
             progress.status = progress.status
             progress.to_do = progress.to_do
-            save_options()
+            save_options(s_params)
 
     # Counting topology
     if status[0] == "ok" and stop == 0 and progress.to_do[1] == 1 and progress.x2top == 0:
@@ -1281,14 +1283,14 @@ def dynamics(s_params):
         if status[0] == "ok":
             progress.status[1] = 1
             progress.to_do[1] = 0
-            save_options()
+            save_options(s_params)
 
     elif status[0] == "ok" and stop == 0 and progress.to_do[1] == 1 and progress.x2top == 1:
         status = gromacs2.x2top(file_path, project_name)
         if status[0] == "ok":
             progress.status[1] = 1
             progress.to_do[1] = 0
-            save_options()
+            save_options(s_params)
 
     # Adding water box
     if status[0] == "ok" and stop == 0 and progress.to_do[2] == 1:
@@ -1296,7 +1298,7 @@ def dynamics(s_params):
         if status[0] == "ok":
             progress.status[2] = 1
             progress.to_do[2] = 0
-            save_options()
+            save_options(s_params)
 
     # Adding ions
     if status[0] == "ok" and stop == 0 and progress.to_do[3] == 1:
@@ -1304,7 +1306,7 @@ def dynamics(s_params):
         if status[0] == "ok":
             progress.status[3] = 1
             progress.to_do[3] = 0
-            save_options()
+            save_options(s_params)
 
     # EM
     if status[0] == "ok" and stop == 0 and progress.to_do[4] == 1:
@@ -1312,7 +1314,7 @@ def dynamics(s_params):
         if status[0] == "ok":
             progress.status[4] = 1
             progress.to_do[4] = 0
-            save_options()
+            save_options(s_params)
     elif status[0] == "ok" and stop == 0 and progress.to_do[4] == 0 and progress.status[4] == 0:
         shutil.copy(project_name + "_b4em.gro", project_name + "_b4pr.gro")
 
@@ -1322,7 +1324,7 @@ def dynamics(s_params):
         if status[0] == "ok":
             progress.status[5] = 1
             progress.to_do[5] = 0
-            save_options()
+            save_options(s_params)
     elif status[0] == "ok" and stop == 0 and progress.to_do[5] == 0 and progress.status[5] == 0:
         shutil.copy(project_name + "_b4pr.gro", project_name + "_b4md.gro")
 
@@ -1332,7 +1334,7 @@ def dynamics(s_params):
         if status[0] == "ok":
             progress.status[6] = 1
             progress.to_do[6] = 0
-            save_options()
+            save_options(s_params)
 
     # MD
     if status[0] == "ok" and stop == 0 and progress.to_do[7] == 1:
@@ -1340,15 +1342,15 @@ def dynamics(s_params):
         if status[0] == "ok":
             progress.status[7] = 1
             progress.to_do[7] = 0
-            save_options()
+            save_options(s_params)
 
     # Trjconv
     if status[0] == "ok" and stop == 0 and progress.to_do[8] == 1:
         status = gromacs2.trjconv(file_path, project_name)
-        show_multipdb()
+        show_multipdb(s_params)
         progress.status[8] = 1
         progress.to_do[8] = 0
-        save_options()
+        save_options(s_params)
 
     # Calculating vectors
     if status[0] == "ok" and stop == 0 and progress.to_do[9] == 1 and prody:
@@ -1357,16 +1359,19 @@ def dynamics(s_params):
         vectors_prody.show_vectors()
         progress.status[9] = 1
         progress.to_do[9] = 0
-        save_options()
+        save_options(s_params)
     elif status[0] == "fail":
         print(status[1])
         if stop == 0:
-            error_message()
+            error_message(s_params)
 
 
 # Saving configuration files
-def mdp_files(em_file, pr_file, md_file):
+def mdp_files(s_params):
     dynamics_dir = get_dynamics_dir()
+    em_file = s_params.em_file
+    pr_file = s_params.pr_file
+    md_file = s_params.md_file
     if not os.path.isfile("{}em.mdp".format(dynamics_dir)):
         em_file.save_file()
     if not os.path.isfile("{}pr.mdp".format(dynamics_dir)):
@@ -1394,7 +1399,7 @@ def save_file(destination_path, s_params):
     project_dir = get_project_dirs(project_name)
     print("Saving")
     import tarfile
-    save_options()
+    save_options(s_params)
     tar = tarfile.open(destination_path + ".tar.bz2", "w:bz2")
     tar.add(project_dir, recursive=True, arcname=project_name)
     tar.close()
@@ -1420,12 +1425,15 @@ def load_file(file_path, s_params):
 
 
 # Save all settings to options.pickle file
-def save_options(em_file, pr_file, md_file, s_params):
+def save_options(s_params):
     project_name = s_params.project_name
     project_dir = get_project_dirs(project_name)
     gmx_version = s_params.gmx_output.version
     gromacs2 = s_params.gmx_input
     progress = s_params.progress
+    em_file = s_params.em_file
+    pr_file = s_params.pr_file
+    md_file = s_params.md_file
     if not prody:
         vectors_prody = 0
     else:
@@ -1540,6 +1548,29 @@ def error_message(s_params):
 
 
 # GUI. This is GUI section of the file. It should replace TkInter with Qt in the future.
+
+# def __init__(self):
+#    self.menuBar.addmenuitem("Plugin", "command", "Dynamics_Gromacs" + plugin_ver,
+#                             label="Dynamics_Gromacs" + plugin_ver,
+#                             command=lambda: init_function(parent=self.root))
+
+# init function - puts plugin into menu and starts 'init_function' after clicking.
+def __init_plugin__(self=None):
+    plugins.addmenuitem("Dynamics_Gromacs {}".format(plugin_ver), init_function)
+
+
+def create_gui(gui_library, status, s_parameters, parent):
+    if status[0] == "ok":
+        if gui_library == "tk":
+            print('aaa')
+            root_window(status, s_parameters, parent)
+    else:
+        if gui_library == "tk":
+            print('bbb')
+            tkMessageBox.showerror("Initialization error", status[1])
+
+
+# --Graphic Interface Tk--
 # Import libraries for tk graphic interface
 if sys.version_info[0] < 3:
     import thread
@@ -1557,27 +1588,11 @@ else:
     from tkinter.ttk import Progressbar, Scrollbar
 
 
-# init function - puts plugin into menu and starts 'init_function' after clicking.
-def __init__(self):
-    self.menuBar.addmenuitem("Plugin", "command", "Dynamics_Gromacs" + plugin_ver,
-                             label="Dynamics_Gromacs" + plugin_ver,
-                             command=lambda: init_function(parent=self.root))
-
-
-def create_gui(gui_library, status, s_parameters, parent):
-    if status[0] == "ok":
-        if gui_library == "tk":
-            root_window(status, s_parameters, parent)
-    else:
-        if gui_library == "tk":
-            tkMessageBox.showerror("Initialization error", status[1])
-
-
-# --Graphic Interface Tk--
 # Don't care too much of below code quality, as Tk it depreciated and will be removed in plugin version 3.1
 # Root menu window
 def root_window(status, s_params, parent=None):
-    root = Toplevel(parent)
+    # root = Toplevel(parent)
+    root = plugins.get_tk_root()
     root.wm_title("Dynamics with Gromacs" + plugin_ver)
     calculationW = CalculationWindow()
     waterW = WaterWindows()
@@ -1652,7 +1667,7 @@ def root_window(status, s_params, parent=None):
         for molecule in all_names:
             radio_button1 = Radiobutton(frame1_1a, text=molecule, value=molecule, variable=v1_name,
                                         command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water,
-                                                                      water_v, check1_button))
+                                                                      water_v, check1_button, s_params))
             radio_button1.pack(side=TOP, anchor=W)
     # If no loaded PDB files, than add button to choose one
     else:
@@ -1662,7 +1677,7 @@ def root_window(status, s_params, parent=None):
         frame1_1_1.pack(side=TOP)
         label1 = Label(frame1_1_1, textvariable=v1_name)
         label1.pack(side=LEFT)
-        button_e1 = Button(frame1_1_1, text="Browse", command=lambda: select_file(v1_name))
+        button_e1 = Button(frame1_1_1, text="Browse", command=lambda: select_file(v1_name, s_params))
         button_e1.pack(side=LEFT)
 
     # List of previous projects
@@ -1723,11 +1738,11 @@ def root_window(status, s_params, parent=None):
     water_label = Label(frame1_2_1, textvariable=water_v)
     water_label.pack(side=LEFT)
     water_button = Button(frame1_2_1, text="Choose...",
-                          command=lambda: waterW.choose(v4_water, water_v, waterbox_button, root))
+                          command=lambda: waterW.choose(v4_water, water_v, waterbox_button, root, s_params))
     water_button.pack(side=LEFT)
-    waterbox_button = Button(frame1_2_1, text="Configure", command=lambda: waterW.box(root))
+    waterbox_button = Button(frame1_2_1, text="Configure", command=lambda: waterW.box(root, s_params))
     waterbox_button.pack(side=LEFT)
-    waterbox_button2 = Button(frame1_2_1, text="Hydrogen Mass", command=lambda: waterW.box2(root))
+    waterbox_button2 = Button(frame1_2_1, text="Hydrogen Mass", command=lambda: waterW.box2(root, s_params))
     waterbox_button2.pack(side=LEFT)
 
     frame1_3 = Frame(frame1)
@@ -1742,33 +1757,33 @@ def root_window(status, s_params, parent=None):
     # Button for configuration of Simulation Steps
     steps_label = Label(frame1_3_1, text="Simulation Steps")
     steps_label.pack(side=TOP)
-    steps_button = Button(frame1_3_1, text="Configure", command=lambda: steps_configure(root, check1_button))
+    steps_button = Button(frame1_3_1, text="Configure", command=lambda: steps_configure(root, check1_button, s_params, restraintsW))
     steps_button.pack(side=TOP)
 
     # Button for Genion configuration
     ion_label = Label(frame1_3_1, text="Adding ions & Neutralize")
     ion_label.pack(side=TOP)
-    ion_button2 = Button(frame1_3_1, text="Configure", command=lambda: genionW.window(root))
+    ion_button2 = Button(frame1_3_1, text="Configure", command=lambda: genionW.window(root, s_params))
     ion_button2.pack(side=TOP)
 
     # Button for configuration of MDP files
     em_label = Label(frame1_3_1, text="Energy Minimization")
     em_label.pack(side=TOP)
-    em_button2 = Button(frame1_3_1, text="Configure", command=lambda: mdp_configure("em", root))
+    em_button2 = Button(frame1_3_1, text="Configure", command=lambda: mdp_configure("em", root, s_params))
     em_button2.pack(side=TOP)
     if os.path.isfile(dynamics_dir + "em.mdp"):
         em_button2.configure(state=DISABLED)
 
     pr_label = Label(frame1_3_1, text="Position Restrained MD")
     pr_label.pack(side=TOP)
-    pr_button2 = Button(frame1_3_1, text="Configure", command=lambda: mdp_configure("pr", root))
+    pr_button2 = Button(frame1_3_1, text="Configure", command=lambda: mdp_configure("pr", root,s_params))
     pr_button2.pack(side=TOP)
     if os.path.isfile(dynamics_dir + "pr.mdp"):
         pr_button2.configure(state=DISABLED)
 
     md_label = Label(frame1_3_1, text="Molecular Dynamics Simulation")
     md_label.pack(side=TOP)
-    md_button2 = Button(frame1_3_1, text="Configure", command=lambda: mdp_configure("md", root))
+    md_button2 = Button(frame1_3_1, text="Configure", command=lambda: mdp_configure("md", root, s_params))
     md_button2.pack(side=TOP)
     if os.path.isfile(dynamics_dir + "md.mdp"):
         md_button2.configure(state=DISABLED)
@@ -1823,14 +1838,14 @@ def root_window(status, s_params, parent=None):
 
     load_button = Button(frame2, text="Load",
                          command=lambda: select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v,
-                                                          check1_button))
+                                                          check1_button, s_params))
     load_button.pack(side=LEFT)
 
     count_button = Button(frame2, text="OK", command=lambda: calculationW.check_window(root, parent, s_params, status))
     count_button.pack(side=LEFT)
 
     # Initial configuration
-    set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button)
+    set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v, check1_button, s_params)
 
 
 # Molecular Dynamics Performing window
@@ -1911,7 +1926,7 @@ class CalculationWindow:
             time.sleep(0.5)
         while percent != 100:  # and error == ""
             time.sleep(0.5)
-            percent = steps_status_bar("only_bar")
+            percent = steps_status_bar("only_bar", s_params)
             self.queue_percent.put(percent)
             if s_params.stop == 0:
                 self.queue_status.put(status[1])
@@ -2038,11 +2053,11 @@ class InterpretationWindow:
         frame1_3_1.pack(side=TOP, anchor=W)
         mlabel = Label(frame1_3_1, text="Labels")
         mlabel.pack(side=LEFT)
-        end_button = Button(frame1_3_1, text="Terminus", command=lambda: self.label("terminus"))
+        end_button = Button(frame1_3_1, text="Terminus", command=lambda: self.label("terminus", s_params))
         end_button.pack(side=LEFT)
-        acids_button = Button(frame1_3_1, text="Amino Acids", command=lambda: self.label("acids"))
+        acids_button = Button(frame1_3_1, text="Amino Acids", command=lambda: self.label("acids", s_params))
         acids_button.pack(side=LEFT)
-        clear_button = Button(frame1_3_1, text="Clear", command=lambda: self.label("clear"))
+        clear_button = Button(frame1_3_1, text="Clear", command=lambda: self.label("clear", s_params))
         clear_button.pack(side=LEFT)
 
         thread.start_new_thread(self.watch_frames, ())
@@ -2108,7 +2123,7 @@ class InterpretationWindow:
         frame1_8.pack(side=TOP)
         exit_button = Button(frame1_8, text="Exit", command=root.destroy)
         exit_button.pack(side=LEFT)
-        save_button = Button(frame1_8, text="Save", command=lambda: select_file_save(1))
+        save_button = Button(frame1_8, text="Save", command=lambda: select_file_save(s_params))
         save_button.pack(side=LEFT)
         log_button = Button(frame1_8, text="Log", command=log_window)
         log_button.pack(side=LEFT)
@@ -2236,7 +2251,7 @@ class RestraintsWindow:
         root = Toplevel(master)
         root.wm_title("Restraints Configure")
 
-        ok_button = Button(root, text="OK", command=lambda: self.index(root))
+        ok_button = Button(root, text="OK", command=lambda: self.index(s_params))
         ok_button.pack(side=BOTTOM)
 
         sb = Scrollbar(root, orient=VERTICAL)
@@ -2437,13 +2452,13 @@ def mdp_configure(config_name, master, s_params):
         check_list = []
 
         if config_name == "em":
-            b = Button(root2, text="OK", command=lambda: mdp_update(values_list, check_list, "em", root2))
+            b = Button(root2, text="OK", command=lambda: mdp_update(values_list, check_list, "em", s_params, root2))
             b.pack(side=BOTTOM)
         elif config_name == "pr":
-            b = Button(root2, text="OK", command=lambda: mdp_update(values_list, check_list, "pr", root2))
+            b = Button(root2, text="OK", command=lambda: mdp_update(values_list, check_list, "pr", s_params, root2))
             b.pack(side=BOTTOM)
         elif config_name == "md":
-            b = Button(root2, text="OK", command=lambda: mdp_update(values_list, check_list, "md", root2))
+            b = Button(root2, text="OK", command=lambda: mdp_update(values_list, check_list, "md", s_params, root2))
             b.pack(side=BOTTOM)
 
         sb = Scrollbar(root2, orient=VERTICAL)
@@ -2632,22 +2647,22 @@ def steps_configure(master, restraints_button, s_params, restraintsW):
         progress_bar = Progressbar(frame1)
         progress_bar.pack(side=TOP)
         if check_var11.get() == 1:
-            percent = steps_status_bar(check_var11.get(), variable_list)
+            percent = steps_status_bar(check_var11.get(), s_params, variable_list)
             progress_bar.configure(value=percent)
 
         c11 = Checkbutton(frame1, text="Resume Simulation", variable=check_var11,
-                          command=lambda: steps_click_resume(check_var11.get(), progress_bar, variable_list))
+                          command=lambda: steps_click_resume(check_var11.get(), progress_bar, s_params, variable_list))
         c11.pack(side=TOP, anchor=W)
 
-        b1 = Button(root, text="OK", command=lambda: steps_click_ok(root))
+        b1 = Button(root, text="OK", command=lambda: steps_click_ok(root, s_params))
         b1.pack(side=TOP)
     elif project_name == "nothing":
         no_molecule_warning()
 
 
 # This function will update status bar if checkbutton is clicked
-def steps_click_resume(var, bar, variable_list=[]):
-    percent = steps_status_bar(var, variable_list)
+def steps_click_resume(var, bar, s_params, variable_list=[]):
+    percent = steps_status_bar(var, s_params, variable_list)
     bar.configure(value=percent)
 
 
@@ -2715,7 +2730,7 @@ class WaterWindows:
         v2.set(0)
 
         radio_button2 = Radiobutton(root, text="Explicit Solvent Simulation", value=1, variable=v1,
-                                    command=lambda: self.change_e(v1.get(), v4_water, water_v, v2))
+                                    command=lambda: self.change_e(v1.get(), v4_water, water_v, v2, s_params))
         radio_button2.pack(side=TOP, anchor=W)
 
         frame1 = Frame(root, padx=10)
@@ -2725,21 +2740,21 @@ class WaterWindows:
 
         for water in gromacs.water_list:
             radio_button1 = Radiobutton(frame1, text=water[1], value=water[0], variable=v4_water,
-                                        command=lambda: self.change(v4_water, water_v))
+                                        command=lambda: self.change(v4_water, water_v, s_params))
             radio_button1.pack(side=TOP, anchor=W)
             self.explicit_buttons.append(radio_button1)
         self.explicit_buttons.append(waterbox_button)
 
         radio_button2 = Radiobutton(root, text="Implicit Solvent Simulation", value=0, variable=v1,
-                                    command=lambda: self.change_e(v1.get(), v4_water, water_v, v2))
+                                    command=lambda: self.change_e(v1.get(), v4_water, water_v, v2, s_params))
         radio_button2.pack(side=TOP, anchor=W)
 
         frame2 = Frame(root, padx=10)
         frame2.pack(anchor=W)
-        radio_button3_1 = Radiobutton(frame2, text="Still", value=0, variable=v2, command=lambda: self.change_i(v2))
+        radio_button3_1 = Radiobutton(frame2, text="Still", value=0, variable=v2, command=lambda: self.change_i(v2, s_params))
         radio_button3_1.pack(side=TOP, anchor=W)
         radio_button3_2 = Radiobutton(frame2, text="Hawkins-Cramer-Truhlar", value=1, variable=v2,
-                                      command=lambda: self.change_i(v2))
+                                      command=lambda: self.change_i(v2, s_params))
         radio_button3_2.pack(side=TOP, anchor=W)
         radio_button3_3 = Radiobutton(frame2, text="Onufriev-Bashford-Case", value=2, variable=v2,
                                       command=lambda: self.change_i(v2))
@@ -2899,7 +2914,7 @@ class WaterWindows:
                     elif (parameter[0] == "coulombtype") or (parameter[0] == ";coulombtype"):
                         md_file.update(parameter_nr, "Cut-off")
                     parameter_nr = parameter_nr + 1
-            self.change_i(v2)
+            self.change_i(v2, s_params)
             # in implicit solvent watermodel must be set to "None"
             v4_water.set(len(self.explicit_buttons) - 1)
 
