@@ -27,7 +27,7 @@ status, s_params = pymol_plugin_dynamics.init_function(travis_ci=True)
 project_name = "2fjz"
 s_params.change_project_name(project_name)
 project_dir = pymol_plugin_dynamics.get_project_dirs(project_name)
-shutil.copy("/usr/share/pdb-files/2fjz.pdb", project_dir + "2fjz.pdb")
+shutil.copy("/usr/share/pdb-files/{}.pdb".format(project_name), "{}{}.pdb".format(project_dir, project_name))
 
 s_params.create_cfg_files()
 

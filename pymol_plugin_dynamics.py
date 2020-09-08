@@ -421,7 +421,7 @@ class GromacsInput:
                 self.negative_ion = value
             elif key == "explicit":
                 self.explicit = value
-#        save_options()
+        #        save_options()
         print("gromacs updated")
 
     # This function will create initial topology and trajectory using pdb file and choosen force field
@@ -609,7 +609,7 @@ class GromacsInput:
         execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
         stop = s_params.stop
-        if os.path.isfile("{}_em.tpr".format(project_name)) and os.path.isfile("{}_b4pr.gro".format(project_name)) and\
+        if os.path.isfile("{}_em.tpr".format(project_name)) and os.path.isfile("{}_b4pr.gro".format(project_name)) and \
                 not stop:
             status = ["ok", "Energy Minimized"]
         else:
@@ -1005,10 +1005,10 @@ def create_config_files(project_name):
     project_dir = get_project_dirs(project_name)
     print("Create config files")
     project_dir = get_project_dirs(project_name)
-#    if not os.path.isfile(project_dir + "options.pickle"):
-#        pass
-#    else:
-#        load_options(s_params)
+    #    if not os.path.isfile(project_dir + "options.pickle"):
+    #        pass
+    #    else:
+    #        load_options(s_params)
     if os.path.isfile(dynamics_dir + "em.mdp"):
         shutil.copy(dynamics_dir + "em.mdp", project_dir + "em.mdp")
         print("Found em.mdp file. Using it instead of local configuration.")
@@ -1033,7 +1033,7 @@ def create_config_files(project_name):
         md_file = MdpConfig("md.mdp", md_file_config, 1)
     else:
         md_file = MdpConfig("md.mdp", MD_INIT_CONFIG, 0)
-#    save_options()
+    #    save_options()
     try:
         if project_name in cmd.get_names("objects"):  # PyMOL API
             cmd.save(project_dir + project_name + ".pdb", project_name)  # PyMOL API
@@ -1059,7 +1059,8 @@ class ProgressStatus:
         if isinstance(position, int):
             self.to_do[position] = value
             self.to_do = self.to_do
-#            save_options()
+
+    #            save_options()
 
     def x2top_update(self, value):
         if isinstance(value, int):
@@ -1163,7 +1164,7 @@ def execute_and_monitor_subprocess(command, stdin_file_path=None, stdout_file_pa
             log_file = open(log_file_path, 'a')
         else:
             log_file = open(log_file_path, 'w')
-        star_mark = "\n!{0}!\n".format("*"*25)
+        star_mark = "\n!{0}!\n".format("*" * 25)
         log_file.write("{0}{1}{0}".format(star_mark, command))
         log_file.close()
 
@@ -1182,11 +1183,11 @@ def execute_and_monitor_subprocess(command, stdin_file_path=None, stdout_file_pa
     print("Running command: {}; STDIN: {}; STDOUT: {}".format(command, stdin_msg, stdout_msg))
 
     gmx = subprocess.Popen(command, stdin=stdin_file, stdout=stdout_file, stderr=subprocess.STDOUT, shell=True)
-#    while gmx.poll() is None:
-#        if stop == 1:
-#            gmx.kill()
-#            break
-#        time.sleep(1.0)
+    while gmx.poll() is None:
+        #        if stop == 1:
+        #            gmx.kill()
+        #            break
+        time.sleep(1.0)
 
     if stdin_file_path:
         stdin_file.close()
@@ -1261,7 +1262,7 @@ def status_update(input_status):
 
 # This function will start real workflow of the plugin, once everything is set
 def dynamics(s_params):
-    print("Starting PyMOL plugin 'dynamics' ver." + plugin_ver)
+    print("Starting PyMOL plugin 'dynamics' ver. {}".format(plugin_ver))
     status = ["ok", ""]
     project_name = s_params.project_name
     project_dir = get_project_dirs(project_name)
@@ -1767,7 +1768,8 @@ def root_window(status, s_params, parent=None):
     # Button for configuration of Simulation Steps
     steps_label = Label(frame1_3_1, text="Simulation Steps")
     steps_label.pack(side=TOP)
-    steps_button = Button(frame1_3_1, text="Configure", command=lambda: steps_configure(root, check1_button, s_params, restraintsW))
+    steps_button = Button(frame1_3_1, text="Configure",
+                          command=lambda: steps_configure(root, check1_button, s_params, restraintsW))
     steps_button.pack(side=TOP)
 
     # Button for Genion configuration
@@ -1786,7 +1788,7 @@ def root_window(status, s_params, parent=None):
 
     pr_label = Label(frame1_3_1, text="Position Restrained MD")
     pr_label.pack(side=TOP)
-    pr_button2 = Button(frame1_3_1, text="Configure", command=lambda: mdp_configure("pr", root,s_params))
+    pr_button2 = Button(frame1_3_1, text="Configure", command=lambda: mdp_configure("pr", root, s_params))
     pr_button2.pack(side=TOP)
     if os.path.isfile(dynamics_dir + "pr.mdp"):
         pr_button2.configure(state=DISABLED)
@@ -1942,8 +1944,9 @@ class CalculationWindow:
                 self.queue_status.put(status[1])
             elif s_params.stop == 1:
                 self.queue_status.put("User Stoped")
-#        if error != "":
-#            self.queue_status.put("Fatal Error")
+
+    #        if error != "":
+    #            self.queue_status.put("Fatal Error")
 
     # This function will update status bar in thread safe manner
     def bar_display(self, root, parent, s_params):
@@ -2184,7 +2187,8 @@ class InterpretationWindow:
         if name == "terminus":
             cmd.label("n. ca and {}_multimodel and i. 1".format(project_name), '"N-terminus"')  # PyMOL API
             ca_number = cmd.count_atoms("n. ca and " + project_name + "_multimodel")  # PyMOL API
-            cmd.label("n. ca and {}_multimodel and i. {}".format(project_name, str(ca_number)), '"C-terminus"')  # PyMOL API
+            cmd.label("n. ca and {}_multimodel and i. {}".format(project_name, str(ca_number)),
+                      '"C-terminus"')  # PyMOL API
         elif name == "acids":
             cmd.label("n. ca and {}_multimodel".format(project_name), "resn")  # PyMOL API
         elif name == "clear":
@@ -2587,7 +2591,8 @@ def steps_configure(master, restraints_button, s_params, restraintsW):
                          command=lambda: progress.to_do_update(0, check_var1.get()))
         c1.pack(side=TOP, anchor=W)
 
-        c2 = Checkbutton(frame1, text="Generate topology file from pdb" + steps_status_done(1, s_params), variable=check_var2,
+        c2 = Checkbutton(frame1, text="Generate topology file from pdb" + steps_status_done(1, s_params),
+                         variable=check_var2,
                          command=lambda: progress.to_do_update(1, check_var2.get()))
         c2.pack(side=TOP, anchor=W)
 
@@ -2604,16 +2609,19 @@ def steps_configure(master, restraints_button, s_params, restraintsW):
         c3.pack(side=TOP, anchor=W)
 
         c4 = Checkbutton(frame1,
-                         text="Adding ions and neutralize (only for explicit solvent; Optional)" + steps_status_done(3, s_params),
+                         text="Adding ions and neutralize (only for explicit solvent; Optional)" + steps_status_done(3,
+                                                                                                                     s_params),
                          variable=check_var4, command=lambda: progress.to_do_update(3, check_var4.get()))
         c4.pack(side=TOP, anchor=W)
 
-        c5 = Checkbutton(frame1, text="Energy Minimization (optional)" + steps_status_done(4, s_params), variable=check_var5,
+        c5 = Checkbutton(frame1, text="Energy Minimization (optional)" + steps_status_done(4, s_params),
+                         variable=check_var5,
                          command=lambda: progress.to_do_update(4, check_var5.get()))
         c5.pack(side=TOP, anchor=W)
 
         c6 = Checkbutton(frame1,
-                         text="Position Restrained MD (optional, only for explicit solvent)" + steps_status_done(5, s_params),
+                         text="Position Restrained MD (optional, only for explicit solvent)" + steps_status_done(5,
+                                                                                                                 s_params),
                          variable=check_var6, command=lambda: progress.to_do_update(5, check_var6.get()))
         c6.pack(side=TOP, anchor=W)
 
@@ -2621,7 +2629,8 @@ def steps_configure(master, restraints_button, s_params, restraintsW):
                          command=lambda: restraintsW.check(check_var7.get(), restraints_button))
         c7.pack(side=TOP, anchor=W)
 
-        c8 = Checkbutton(frame1, text="Molecular Dynamics Simulation" + steps_status_done(7, s_params), variable=check_var8,
+        c8 = Checkbutton(frame1, text="Molecular Dynamics Simulation" + steps_status_done(7, s_params),
+                         variable=check_var8,
                          command=lambda: progress.to_do_update(7, check_var8.get()))
         c8.pack(side=TOP, anchor=W)
 
@@ -2761,7 +2770,8 @@ class WaterWindows:
 
         frame2 = Frame(root, padx=10)
         frame2.pack(anchor=W)
-        radio_button3_1 = Radiobutton(frame2, text="Still", value=0, variable=v2, command=lambda: self.change_i(v2, s_params))
+        radio_button3_1 = Radiobutton(frame2, text="Still", value=0, variable=v2,
+                                      command=lambda: self.change_i(v2, s_params))
         radio_button3_1.pack(side=TOP, anchor=W)
         radio_button3_2 = Radiobutton(frame2, text="Hawkins-Cramer-Truhlar", value=1, variable=v2,
                                       command=lambda: self.change_i(v2, s_params))
@@ -3074,7 +3084,6 @@ class GenionWindow:
         ok_button = Button(root, text="OK", command=lambda: gromacs2.update(
             {"salt_conc": salt.get(), "positive_ion": posit.get(), "negative_ion": negat.get()}, root))
         ok_button.pack(side=TOP)
-
 
 # This is the window to setup ProDy options
 # def vectors_window(master, s_params):
