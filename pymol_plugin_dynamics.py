@@ -1377,11 +1377,11 @@ def mdp_files(s_params):
     pr_file = s_params.pr_file
     md_file = s_params.md_file
     if not os.path.isfile("{}em.mdp".format(dynamics_dir)):
-        em_file.save_file()
+        em_file.save_file(s_params)
     if not os.path.isfile("{}pr.mdp".format(dynamics_dir)):
-        pr_file.save_file()
+        pr_file.save_file(s_params)
     if not os.path.isfile("{}md.mdp".format(dynamics_dir)):
-        md_file.save_file()
+        md_file.save_file(s_params)
 
 
 # Show multimodel PDB file in PyMOL
