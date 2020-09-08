@@ -20,9 +20,9 @@ print("######################")
 print("Starting GROMACS version test")
 print("######################")
 
-pymol_plugin_dynamics.init_function(travis_ci=True)
-print("Detected GROMACS version is: " + pymol_plugin_dynamics.gmx_version)
-if os.environ['GROMACS_VER'] != pymol_plugin_dynamics.gmx_version:
+status, s_params = pymol_plugin_dynamics.init_function(travis_ci=True)
+print("Detected GROMACS version is: {}".format(s_params.gmx_output.version))
+if os.environ['GROMACS_VER'] != s_params.gmx_output.version:
 	log = open(os.environ['HOME'] + "/.dynamics/test_gromacs.txt", "r").read()
 	print(log)
 	sys.exit(1)

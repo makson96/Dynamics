@@ -173,6 +173,7 @@ def init_function(travis_ci=False, parent=None):
         # Creating objects - data from those windows will be used by rootWindow
         gui_library = "tk"
         create_gui(gui_library, status, simulation_parameters, parent)
+    return status, simulation_parameters
 
 
 class SimulationParameters:
@@ -206,6 +207,9 @@ class SimulationParameters:
 
     def change_project_name(self, name):
         self.project_name = name
+        project_dir = get_project_dirs(self.project_name)
+        if not os.path.isdir(project_dir):
+            os.makedirs(project_dir)
 
 
 # This class is responsible for interface to GROMACS. It will read all important data from GROMACS tools.
@@ -1562,11 +1566,9 @@ def __init_plugin__(self=None):
 def create_gui(gui_library, status, s_parameters, parent):
     if status[0] == "ok":
         if gui_library == "tk":
-            print('aaa')
             root_window(status, s_parameters, parent)
     else:
         if gui_library == "tk":
-            print('bbb')
             tkMessageBox.showerror("Initialization error", status[1])
 
 

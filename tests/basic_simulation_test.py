@@ -21,23 +21,20 @@ print("######################")
 print("Starting Basic Simulation test")
 print("######################")
 
-pymol_plugin_dynamics.init_function(travis_ci=True)
+status, s_params = pymol_plugin_dynamics.init_function(travis_ci=True)
 
 # Download molecule for tests
-pymol_plugin_dynamics.project_name = "2fjz"
-pymol_plugin_dynamics.set_gromacsProject_dir()
-os.makedirs(pymol_plugin_dynamics.project_dir)
-shutil.copy("/usr/share/pdb-files/2fjz.pdb", pymol_plugin_dynamics.project_dir + "2fjz.pdb")
+project_name = "2fjz"
+s_params.change_project_name(project_name)
+project_dir = pymol_plugin_dynamics.get_project_dirs(project_name)
+shutil.copy("/usr/share/pdb-files/2fjz.pdb", project_dir + "2fjz.pdb")
 
-pymol_plugin_dynamics.status = ["ok", "ok"]
-pymol_plugin_dynamics.stop = 0
-pymol_plugin_dynamics.prody_true = 0
-pymol_plugin_dynamics.create_config_files()
+s_params.create_cfg_files()
 
 # Execute dynamics simulation
-pymol_plugin_dynamics.dynamics()
+pymol_plugin_dynamics.dynamics(s_params)
 
-if not os.path.isfile(pymol_plugin_dynamics.project_dir + "2fjz_multimodel.pdb"):
+if not os.path.isfile(project_dir + "2fjz_multimodel.pdb"):
 	sys.exit(1)
 
 print("######################")
