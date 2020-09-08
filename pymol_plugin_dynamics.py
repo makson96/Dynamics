@@ -466,7 +466,7 @@ class GromacsInput:
     def x2top(s_params):
         status = ["ok", "Calculating topology using Force fields"]
         status_update(status)
-        gmx_cmd = s_params.gromacs_output.command
+        gmx_cmd = s_params.gmx_output.command
         project_name = s_params.project_name
         try:
             os.remove("{}.gro".format(project_name))
@@ -505,7 +505,7 @@ class GromacsInput:
         box_type = "-bt {}".format(self.box_type)
         distance = "-d {}".format(self.box_distance)
         density = "-density {}".format(self.box_density)
-        gmx_cmd = s_params.gromacs_output.command
+        gmx_cmd = s_params.gmx_output.command
         project_name = s_params.project_name
         try:
             os.remove("{}1.gro".format(project_name))
@@ -518,7 +518,7 @@ class GromacsInput:
                                                                               density)
         execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
-        water_name = s_params.gromacs_output.water_list[self.water - 1][1][4:8].lower()
+        water_name = s_params.gmx_output.water_list[self.water - 1][1][4:8].lower()
         print(water_name)
         if water_name == "tip4":
             water_gro = "tip4p.gro"
@@ -548,7 +548,7 @@ class GromacsInput:
         positive = "-pname {}".format(self.positive_ion)
         negative = "-nname {}".format(self.negative_ion)
         neu = "-{}".format(self.neutrality)
-        gmx_cmd = s_params.gromacs_output.command
+        gmx_cmd = s_params.gmx_output.command
         project_name = s_params.project_name
         try:
             os.remove(project_name + "_b4em.gro")
@@ -585,7 +585,7 @@ class GromacsInput:
     @staticmethod
     def em(s_params):
         status = ["ok", "Energy Minimization"]
-        gmx_cmd = s_params.gromacs_output.command
+        gmx_cmd = s_params.gmx_output.command
         project_name = s_params.project_name
         try:
             os.remove("{}_em.tpr".format(project_name))
@@ -620,7 +620,7 @@ class GromacsInput:
     @staticmethod
     def pr(s_params):
         status = ["ok", "Position Restrained MD"]
-        gmx_cmd = s_params.gromacs_output.command
+        gmx_cmd = s_params.gmx_output.command
         project_name = s_params.project_name
         try:
             os.remove("{}_pr.tpr".format(project_name))
@@ -648,7 +648,7 @@ class GromacsInput:
     @staticmethod
     def restraints(s_params):
         status = ["ok", "Adding Restraints"]
-        gmx_cmd = s_params.gromacs_output.command
+        gmx_cmd = s_params.gmx_output.command
         project_name = s_params.project_name
         try:
             os.remove("posre_2.itp")
@@ -677,7 +677,7 @@ class GromacsInput:
     @staticmethod
     def md(s_params):
         status = ["ok", "Molecular Dynamics Simulation"]
-        gmx_cmd = s_params.gromacs_output.command
+        gmx_cmd = s_params.gmx_output.command
         project_name = s_params.project_name
         try:
             os.remove("{}_md.tpr".format(project_name))
@@ -711,7 +711,7 @@ class GromacsInput:
     # This function will convert final results to multimodel pdb file
     def trjconv(self, s_params):
         status = ["ok", "Creating Multimodel PDB"]
-        gmx_cmd = s_params.gromacs_output.command
+        gmx_cmd = s_params.gmx_output.command
         project_name = s_params.project_name
         try:
             os.remove("{}_multimodel.pdb".format(project_name))
