@@ -180,7 +180,7 @@ class SimulationParameters:
     gmx_output = ""
     gmx_input = ""
     vectors_prody = False
-    stop = True
+    stop = False
     project_name = "nothing"
     progress = ""
     em_file = ""
