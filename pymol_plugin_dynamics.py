@@ -1396,6 +1396,36 @@ def show_multipdb(s_params):
         pass
 
 
+# Detect list of PyMOL loaded PDB files if no files than list "nothing"
+def get_pdb_names():
+    all_names = cmd.get_names("objects")  # PyMOL API
+    all_names1 = []
+    for name in all_names:
+        name1 = name.split("_")
+        if name1[-1] == "multimodel" or name1[-1] == "(sele)" or (name1[0] == "Mode" and len(name1) == 3):
+            pass
+        else:
+            all_names1.append(name)
+    all_names = all_names1
+    if not all_names:
+        all_names = ["nothing"]
+    return all_names
+
+
+# List of previous projects
+def list_prev_projects(all_names):
+    dynamics_dir = get_dynamics_dir()
+    if os.path.isdir(dynamics_dir):
+        projects = os.listdir(dynamics_dir)
+    else:
+        projects = []
+    projects2 = []
+    for file_dir in projects:
+        if os.path.isdir(dynamics_dir + file_dir) and file_dir not in all_names and file_dir != "nothing":
+            projects2.append(file_dir)
+    return projects2
+
+
 # Saving tar.bz file
 def save_file(destination_path, s_params):
     project_name = s_params.project_name
@@ -1617,19 +1647,7 @@ def root_window(status, s_params):
     gromacs2 = s_params.gmx_input
     dynamics_dir = get_dynamics_dir()
     vectors_prody = s_params.vectors_prody
-    # Detect list of PyMOL loaded PDB files if no files than list "nothing"
-    all_names = cmd.get_names("objects")  # PyMOL API
-    all_names1 = []
-    for name in all_names:
-        name1 = name.split("_")
-        if name1[-1] == "multimodel" or name1[-1] == "(sele)" or (name1[0] == "Mode" and len(name1) == 3):
-            pass
-        else:
-            all_names1.append(name)
-    all_names = all_names1
-
-    if not all_names:
-        all_names = ["nothing"]
+    all_names = get_pdb_names()
 
     # TkInter variables
     project_name = all_names[0]
@@ -1696,19 +1714,12 @@ def root_window(status, s_params):
         button_e1.pack(side=LEFT)
 
     # List of previous projects
-    if os.path.isdir(dynamics_dir):
-        projects = os.listdir(dynamics_dir)
-    else:
-        projects = []
-    projects2 = []
-    for file_dir in projects:
-        if os.path.isdir(dynamics_dir + file_dir) and file_dir not in all_names and file_dir != "nothing":
-            projects2.append(file_dir)
-    if projects2:
+    projects = list_prev_projects(all_names)
+    if projects:
         w1_2 = Label(frame1_1, text="Previous Projects")
         w1_2.pack(side=TOP)
 
-        for molecule in projects2:
+        for molecule in projects:
             molecule1 = molecule.split("_")
             if molecule1[-1] == "multimodel":
                 pass
@@ -1857,7 +1868,8 @@ def root_window(status, s_params):
                                                           check1_button, s_params))
     load_button.pack(side=LEFT)
 
-    count_button = Button(frame2, text="OK", command=lambda: calculationW.check_window(root, parent, s_params, status))
+    count_button = Button(frame2, text="OK", command=lambda: calculationW.check_window(root, root_pymol, s_params,
+                                                                                       status))
     count_button.pack(side=LEFT)
 
     # Initial configuration
