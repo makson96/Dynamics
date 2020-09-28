@@ -131,7 +131,7 @@ coulombtype = PME"""
 
 
 # This function will initialize all plugin stufs
-def init_function(travis_ci=False, parent=None):
+def init_function(travis_ci=False):
     status = ["ok", ""]
     # Make sure HOME environment variable is defined before setting up directories...
     home_dir = os.path.expanduser('~')
@@ -172,7 +172,7 @@ def init_function(travis_ci=False, parent=None):
     if not travis_ci:
         # Creating objects - data from those windows will be used by rootWindow
         gui_library = "tk"
-        create_gui(gui_library, status, simulation_parameters, parent)
+        create_gui(gui_library, status, simulation_parameters)
     return status, simulation_parameters
 
 
@@ -1569,13 +1569,13 @@ def error_message(s_params):
 
 # init function - puts plugin into menu and starts 'init_function' after clicking.
 def __init_plugin__(self=None):
-    plugins.addmenuitem("Dynamics_Gromacs {}".format(plugin_ver), init_function)
+    plugins.addmenuitem("Dynamics Gromacs {}".format(plugin_ver), init_function)
 
 
-def create_gui(gui_library, status, s_parameters, parent):
+def create_gui(gui_library, status, s_parameters):
     if status[0] == "ok":
         if gui_library == "tk":
-            root_window(status, s_parameters, parent)
+            root_window(status, s_parameters)
     else:
         if gui_library == "tk":
             tkMessageBox.showerror("Initialization error", status[1])
@@ -1601,9 +1601,13 @@ else:
 
 # Don't care too much of below code quality, as Tk it depreciated and will be removed in plugin version 3.1
 # Root menu window
-def root_window(status, s_params, parent=None):
-    # root = Toplevel(parent)
-    root = plugins.get_tk_root()
+def root_window(status, s_params):
+    # First try to get this root fails, but the second try works fine.
+    try:
+        root_pymol = plugins.get_tk_root()
+    except ModuleNotFoundError:
+        root_pymol = plugins.get_tk_root()
+    root = Toplevel(root_pymol)
     root.wm_title("Dynamics with Gromacs" + plugin_ver)
     calculationW = CalculationWindow()
     waterW = WaterWindows()
