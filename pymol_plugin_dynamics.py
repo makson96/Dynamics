@@ -25,7 +25,7 @@ import time
 import tarfile
 
 # Import libraries from PyMOL specific work.
-from pymol import cmd, cgo, parsing, plugins
+from pymol import cmd, cgo, parsing, plugins, CmdException
 
 # TODO: It seams that stored is removed from PyMOL API. We need to handle it correctly
 try:
@@ -1388,8 +1388,8 @@ def show_multipdb(s_params):
     project_name = s_params.project_name
     try:
         cmd.hide("everything", project_name)  # PyMOL API
-    except parsing.QuietException:  # PyMOL API
-        pass
+    except (parsing.QuietException, CmdException) as e:  # PyMOL API
+        print("Warning: {}".format(e))
     try:
         cmd.load("{}_multimodel.pdb".format(project_name))  # PyMOL API
     except AttributeError:
