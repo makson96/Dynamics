@@ -777,8 +777,7 @@ class Vectors:
     enm = 0
 
     # Change Multimodel PDB file into NMD vector file
-    def prody(self, s_params):
-        project_name = s_params.project_name
+    def prody(self, project_name):
         # Silence ProDy and create logs
         prody.confProDy(verbosity='none')
         prody.startLogfile("log_prody.log")
@@ -813,8 +812,7 @@ class Vectors:
         prody.closeLogfile("log_prody.log")
 
     # Read NMD file
-    def nmd_format(self, s_params):
-        project_name = s_params.project_name
+    def nmd_format(self, project_name):
         file_nmd = open('{}.nmd'.format(project_name), "r")
         list_nmd = file_nmd.readlines()
 
@@ -846,8 +844,7 @@ class Vectors:
                 self.nmd_scale_mode.append(pre_mode[2])
 
     # Show contact map on PyMOL screen
-    def show_contact_map(self, sensitivity, s_params):
-        project_name = s_params.project_name
+    def show_contact_map(self, sensitivity, project_name):
         contact_matrix = self.enm.getKirchhoff()
         print(contact_matrix)
         c_alpha_nr = 0
@@ -1378,9 +1375,9 @@ def dynamics(s_params):
 
     # Calculating vectors
     if status[0] == "ok" and stop == 0 and progress.to_do[9] == 1 and prody:
-        vectors_prody.prody()
-        vectors_prody.nmd_format()
-        vectors_prody.show_vectors()
+        vectors_prody.prody(project_name)
+        vectors_prody.nmd_format(project_name)
+        vectors_prody.show_vectors(project_name)
         progress.status[9] = 1
         progress.to_do[9] = 0
         save_options(s_params)
