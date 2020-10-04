@@ -1,4 +1,5 @@
 Pmw
+PyQt5
 numpy
 matplotlib
 ProDy
