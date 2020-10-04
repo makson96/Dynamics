@@ -37,3 +37,4 @@ if __name__ == "__main__":
     u_tests.test_get_project_dirs()
     u_tests.test_standardize_new_line_char1()
     u_tests.test_standardize_new_line_char2()
+    u_tests.test_standardize_new_line_char3()

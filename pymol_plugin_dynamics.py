@@ -766,7 +766,7 @@ class Vectors:
     nmd_coordinates = []
     nmd_mode = []
     nmd_scale_mode = []
-    color = "gray"
+    color = "grey"
     scale = 1.0
     mode_nr = 0
 
@@ -1628,7 +1628,7 @@ def create_gui(gui_library, status, s_parameters, parent):
             tkMessageBox.showerror("Initialization error", status[1])
     elif gui_library == "qt":
         if status[0] == "ok":
-            root_window(status, s_parameters, parent)
+            qt_root_window(status, s_parameters)
         else:
             qt_show_message(status[1], m_type="error", m_title="Initialization error")
 
@@ -1645,6 +1645,9 @@ def qt_show_message(message, m_type="error", m_title="Dynamics message"):
         QtWidgets.QMessageBox.critical(None, m_title, message)
     else:
         QtWidgets.QMessageBox.information(None, m_title, message)
+
+def qt_root_window(status, s_params):
+    return True
 
 
 # --Graphic Interface Tk--
