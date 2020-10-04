@@ -877,8 +877,18 @@ class Vectors:
 
     # Show vectors from NMD file
     def show_vectors(self):
-        color1 = list(cmd.get_color_tuple(self.color))  # PyMOL API
-        color2 = list(cmd.get_color_tuple(self.color))  # PyMOL API
+        color1 = cmd.get_color_tuple(self.color)  # PyMOL API
+        color2 = cmd.get_color_tuple(self.color)  # PyMOL API
+        if color1:
+            color1 = list(color1)
+        # Fallback to grey in case of unrecognized color
+        else:
+            color1 = [0.5, 0.5, 0.5]
+        if color2:
+            color2 = list(color2)
+        # Fallback to grey in case of unrecognized color
+        else:
+            color2 = [0.5, 0.5, 0.5]
         arrow_head_radius = 0.15
 
         x1 = []
@@ -1430,6 +1440,15 @@ def get_pdb_names():
     return all_names
 
 
+def read_and_set_init_project(s_params):
+    all_names = get_pdb_names()
+    project_name = all_names[0]
+    s_params.change_project_name(project_name)
+    if all_names != ["nothing"]:
+        s_params.create_cfg_files()
+    return all_names, project_name
+
+
 # List of previous projects
 def list_prev_projects(all_names):
     dynamics_dir = get_dynamics_dir()
@@ -1646,8 +1665,9 @@ def qt_show_message(message, m_type="error", m_title="Dynamics message"):
     else:
         QtWidgets.QMessageBox.information(None, m_title, message)
 
+
 def qt_root_window(status, s_params):
-    return True
+    all_names, project_name = read_and_set_init_project(s_params)
 
 
 # --Graphic Interface Tk--
@@ -1672,14 +1692,9 @@ def root_window(status, s_params, parent):
     gromacs2 = s_params.gmx_input
     dynamics_dir = get_dynamics_dir()
     vectors_prody = s_params.vectors_prody
-    all_names = get_pdb_names()
+    all_names, project_name = read_and_set_init_project(s_params)
 
     # TkInter variables
-    project_name = all_names[0]
-    s_params.change_project_name(project_name)
-    if all_names != ["nothing"]:
-        s_params.create_cfg_files()
-
     v1_name = StringVar(root)
     v1_name.set(project_name)
 
