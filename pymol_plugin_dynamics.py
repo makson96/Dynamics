@@ -23,7 +23,31 @@ import subprocess
 import sys
 import time
 import tarfile
+# This is actually needed if Tk will be removed.
+import re
 
+# Import libraries for tk graphic interface
+if sys.version_info[0] < 3:
+    import thread
+    import Queue
+    from Tkinter import *
+    import tkMessageBox
+    import tkFileDialog
+    from ttk import Progressbar, Scrollbar
+else:
+    import _thread as thread
+    import queue as Queue
+    from tkinter import *
+    from tkinter import messagebox as tkMessageBox
+    from tkinter import filedialog as tkFileDialog
+    from tkinter.ttk import Progressbar, Scrollbar
+# Import libraries for Qt graphic interface
+try:
+    from pymol import Qt
+    from pymol.Qt import QtWidgets
+except ImportError:
+    import PyQt5
+    from PyQt5 import QtWidgets
 # Import libraries from PyMOL specific work.
 from pymol import cmd, cgo, parsing, plugins, CmdException
 
@@ -131,7 +155,7 @@ coulombtype = PME"""
 
 
 # This function will initialize all plugin stufs
-def init_function(travis_ci=False):
+def init_function(travis_ci=False, gui_library="qt", parent=False):
     status = ["ok", ""]
     # Make sure HOME environment variable is defined before setting up directories...
     home_dir = os.path.expanduser('~')
@@ -140,8 +164,6 @@ def init_function(travis_ci=False):
     else:
         print("HOME environment variable not defined")
         status = ["fail", "HOME environment variable not defined. Please set its value and try again."]
-        tkMessageBox.showerror("Initialization error", status[1])
-        return
     dynamics_dir = get_dynamics_dir()
     project_dir = get_project_dirs()
     # Clean up any temporary project directory...
@@ -170,9 +192,7 @@ def init_function(travis_ci=False):
     else:
         simulation_parameters = False
     if not travis_ci:
-        # Creating objects - data from those windows will be used by rootWindow
-        gui_library = "tk"
-        create_gui(gui_library, status, simulation_parameters)
+        create_gui(gui_library, status, simulation_parameters, parent)
     return status, simulation_parameters
 
 
@@ -946,6 +966,7 @@ class Vectors:
         root.destroy()
 
     def block_contact(self, block, contact_map_b, contact_map_v):
+        # ToDO: Replace below Tk code with something agnostic
         self.block_contact_map = block
         if block == 0:
             contact_map_b.configure(state=ACTIVE)
@@ -1591,53 +1612,57 @@ def error_message(s_params):
 
 
 # GUI. This is GUI section of the file. It should replace TkInter with Qt in the future.
-
-# def __init__(self):
-#    self.menuBar.addmenuitem("Plugin", "command", "Dynamics_Gromacs" + plugin_ver,
-#                             label="Dynamics_Gromacs" + plugin_ver,
-#                             command=lambda: init_function(parent=self.root))
-
 # init function - puts plugin into menu and starts 'init_function' after clicking.
-def __init_plugin__(self=None):
-    plugins.addmenuitem("Dynamics Gromacs {}".format(plugin_ver), init_function)
+p_label = "Dynamics Gromacs {}".format(plugin_ver)
+if int(cmd.get_version()[0][0]) >= 2:  # PyMOL API
+    def __init_plugin__(app=None):
+        plugins.addmenuitemqt(p_label, init_function)
+else:
+    def __init_plugin__(app):
+        app.menuBar.addmenuitem('Plugin', 'command', label=p_label,
+                                command=lambda: init_function(parent=app.root, gui_library="tk"))
 
 
-def create_gui(gui_library, status, s_parameters):
-    if status[0] == "ok":
-        if gui_library == "tk":
-            root_window(status, s_parameters)
-    else:
-        if gui_library == "tk":
+def create_gui(gui_library, status, s_parameters, parent):
+    if gui_library == "tk":
+        if status[0] == "ok":
+            root_window(status, s_parameters, parent)
+        else:
             tkMessageBox.showerror("Initialization error", status[1])
+    elif gui_library == "qt":
+        if status[0] == "ok":
+            root_window(status, s_parameters, parent)
+        else:
+            qt_show_message(status[1], m_type="error", m_title="Initialization error")
+
+
+# --Graphic Interface Qt--
+def qt_show_message(message, m_type="error", m_title="Dynamics message"):
+    if m_type.lower() == "information":
+        QtWidgets.QMessageBox.information(None, m_title, message)
+    if m_type.lower() == "question":
+        QtWidgets.QMessageBox.question(None, m_title, message)
+    if m_type.lower() == "warning":
+        QtWidgets.QMessageBox.warning(None, m_title, message)
+    if m_type.lower() == "error":
+        QtWidgets.QMessageBox.critical(None, m_title, message)
+    else:
+        QtWidgets.QMessageBox.information(None, m_title, message)
 
 
 # --Graphic Interface Tk--
-# Import libraries for tk graphic interface
-if sys.version_info[0] < 3:
-    import thread
-    import Queue
-    from Tkinter import *
-    import tkMessageBox
-    import tkFileDialog
-    from ttk import Progressbar, Scrollbar
-else:
-    import _thread as thread
-    import queue as Queue
-    from tkinter import *
-    from tkinter import messagebox as tkMessageBox
-    from tkinter import filedialog as tkFileDialog
-    from tkinter.ttk import Progressbar, Scrollbar
-
-
 # Don't care too much of below code quality, as Tk it depreciated and will be removed in plugin version 3.1
 # Root menu window
-def root_window(status, s_params):
-    # First try to get this root fails, but the second try works fine.
-    try:
-        root_pymol = plugins.get_tk_root()
-    except ModuleNotFoundError:
-        root_pymol = plugins.get_tk_root()
-    root = Toplevel(root_pymol)
+def root_window(status, s_params, parent):
+    if parent:
+        root = parent
+    else:
+        # First try to get this root fails, but the second try works fine.
+        try:
+            root_pymol = plugins.get_tk_root()
+        except ModuleNotFoundError:
+            root_pymol = plugins.get_tk_root()
+        root = Toplevel(root_pymol)
     root.wm_title("Dynamics with Gromacs" + plugin_ver)
     calculationW = CalculationWindow()
     waterW = WaterWindows()
