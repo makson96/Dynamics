@@ -1377,7 +1377,7 @@ def dynamics(s_params):
     if status[0] == "ok" and stop == 0 and progress.to_do[9] == 1 and prody:
         vectors_prody.prody(project_name)
         vectors_prody.nmd_format(project_name)
-        vectors_prody.show_vectors(project_name)
+        vectors_prody.show_vectors()
         progress.status[9] = 1
         progress.to_do[9] = 0
         save_options(s_params)
@@ -2163,7 +2163,8 @@ class InterpretationWindow:
         modlabel = Label(frame1_8, text="Plot results")
         modlabel.pack(side=LEFT)
         contact_pymol_button = Button(frame1_8, text="Show Contact Map In PyMOL",
-                                      command=lambda: vectors_prody.show_contact_map(contact_entry_value.get()))
+                                      command=lambda: vectors_prody.show_contact_map(contact_entry_value.get(),
+                                                                                     s_params.project_name))
         contact_pymol_button.pack(side=LEFT)
         contact_label = Label(frame1_8, text="Sensitivity")
         contact_label.pack(side=LEFT)

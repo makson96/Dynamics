@@ -10,6 +10,10 @@
 
 export PYTHONPATH=$PWD:$PYTHONPATH
 
+if ! python3 tests/unit_tests.py ; then
+exit 1
+fi
+
 if ! python3 tests/init_test.py ; then
 exit 1
 fi
