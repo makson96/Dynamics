@@ -156,6 +156,8 @@ coulombtype = PME"""
 
 # This function will initialize all plugin stufs
 def init_function(travis_ci=False, gui_library="qt", parent=False):
+    # Fallback to tk, till qt is ready
+    gui_library = "tk"
     status = ["ok", ""]
     # Make sure HOME environment variable is defined before setting up directories...
     home_dir = os.path.expanduser('~')
