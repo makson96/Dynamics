@@ -1,39 +1,39 @@
 # distribution
-dist: xenial
+#dist: xenial
 # language
-language: python
-python:
-  - "3.6"
+#language: python
+#python:
+#  - "3.6"
 # test environments
-env:
-  global:
-    - PYMOL_PREFIX=/opt/pymol
-    - PYMOL_MODULES=/opt/pymol/modules
-    - PYTHONPATH=$PYMOL_MODULES
-jobs:
-  include:
+#env:
+#  global:
+#    - PYMOL_PREFIX=/opt/pymol
+#    - PYMOL_MODULES=/opt/pymol/modules
+#    - PYTHONPATH=$PYMOL_MODULES
+#jobs:
+#  include:
 # For PyMOL 1.8, GROMACS 2018
-  - env: PYMOL_VER=1.8 GROMACS_VER=2018.8
-    addons:
-      apt:
-        sources:
-          - sourceline: 'ppa:makson96/dynamics'
-        packages:
-        - travisci-pdb-files
-        - travisci-pymol-18
-        - travisci-gromacs-2018
+#  - env: PYMOL_VER=1.8 GROMACS_VER=2018.8
+#    addons:
+#      apt:
+#        sources:
+#          - sourceline: 'ppa:makson96/dynamics'
+#        packages:
+#        - travisci-pdb-files
+#        - travisci-pymol-18
+#        - travisci-gromacs-2018
 # For PyMOL 2.4, GROMACS 2019
-  - env: PYMOL_VER=2.4 GROMACS_VER=2019.6
-    addons:
-      apt:
-        sources:
-          - sourceline: 'ppa:makson96/dynamics'
-        packages:
-          - travisci-pdb-files
-          - travisci-pymol-24
-          - travisci-gromacs-2019
-install:
-  - pip install -r tests/requirements.txt
+#  - env: PYMOL_VER=2.4 GROMACS_VER=2019.6
+#    addons:
+#      apt:
+#        sources:
+#          - sourceline: 'ppa:makson96/dynamics'
+#        packages:
+#          - travisci-pdb-files
+#          - travisci-pymol-24
+#          - travisci-gromacs-2019
+#install:
+#  - pip install -r tests/requirements.txt
 # command to run tests
-script:
-  - bash tests/run.sh
+#script:
+#  - bash tests/run.sh
