@@ -4,7 +4,12 @@
 # This software (including its Debian packaging) is available to you under the terms of the GPL-3,
 # see "/usr/share/common-licenses/GPL-3".
 
+import sys
+import pathlib
+sys.path.append(str(pathlib.Path(__file__).parent.resolve()))
+
 from pymol import plugins
+
 from version import VERSION
 import pymol_plugin_dynamics
 
