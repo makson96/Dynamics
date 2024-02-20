@@ -1,3 +1,5 @@
+import pymol_plugin_dynamics
+import queue as Queue
 # Molecular Dynamics Performing window
 class CalculationWindow:
     tasks_to_do = 0

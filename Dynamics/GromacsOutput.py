@@ -1,4 +1,6 @@
 # This class is responsible for interface to GROMACS. It will read all important data from GROMACS tools.
+import pymol_plugin_dynamics
+import os
 class GromacsOutput:
     version = "GROMACS not found"
     command = ""
@@ -9,13 +11,13 @@ class GromacsOutput:
 
     def __init__(self):
         # Remove garbage
-        dynamics_dir = get_dynamics_dir()
+        dynamics_dir = pymol_plugin_dynamics.get_dynamics_dir()
         garbage_files = next(os.walk(dynamics_dir))[2]
         for garbage in garbage_files:
             if garbage[0] == "#":
                 os.remove(dynamics_dir + garbage)
 
-        gmx_exe, gmx_version, gmx_build_arch, gmx_on_cygwin = get_gromacs_exe_info()
+        gmx_exe, gmx_version, gmx_build_arch, gmx_on_cygwin = pymol_plugin_dynamics.get_gromacs_exe_info()
         self.version = gmx_version
         self.command = gmx_exe
 
@@ -44,8 +46,8 @@ class GromacsOutput:
         gmx_stdout_file_path = "test_gromacs.txt"
 
         cmd = "{} pdb2gmx -f test_gromacs.pdb -o test_gromacs.gro -p test_gromacs.top".format(self.command)
-        execute_subprocess(cmd, gmx_stdin_file_path, gmx_stdout_file_path)
-        lista_gromacs = read_text_lines(gmx_stdout_file_path)
+        pymol_plugin_dynamics.execute_subprocess(cmd, gmx_stdin_file_path, gmx_stdout_file_path)
+        lista_gromacs = pymol_plugin_dynamics.read_text_lines(gmx_stdout_file_path)
 
         # Reading available force fields
         force_start_line = 0
@@ -65,7 +67,7 @@ class GromacsOutput:
         self.force_list = force_list2
 
         # Reading available water models
-        self.water_list = get_water_models_info(lista_gromacs)
+        self.water_list = pymol_plugin_dynamics.get_water_models_info(lista_gromacs)
 
         print("Reading available groups")
 
@@ -77,9 +79,9 @@ class GromacsOutput:
         gmx_stdout_file_path = "test_gromacs.txt"
 
         cmd = "{} trjconv -f  test_gromacs.pdb -s test_gromacs.pdb -o test_gromacs2.pdb".format(self.command)
-        execute_subprocess(cmd, gmx_stdin_file_path, gmx_stdout_file_path)
+        pymol_plugin_dynamics.execute_subprocess(cmd, gmx_stdin_file_path, gmx_stdout_file_path)
 
-        group_test_list = read_text_lines(gmx_stdout_file_path)
+        group_test_list = pymol_plugin_dynamics.read_text_lines(gmx_stdout_file_path)
 
         # Reading available groups
         group_start_line = 0
@@ -105,7 +107,7 @@ class GromacsOutput:
     def water_update(self, force_number):
         # Track current directiry and switch to dynamics_dir before invoking gmx...
         current_dir = os.getcwd()
-        os.chdir(get_dynamics_dir())
+        os.chdir(pymol_plugin_dynamics.get_dynamics_dir())
 
         print("Updating available water models")
         gmx_stdin_file_path = "gromacs_stdin.txt"
@@ -117,10 +119,10 @@ class GromacsOutput:
         gmx_stdout_file_path = "test_gromacs.txt"
 
         cmd = "{} pdb2gmx -f  test_gromacs.pdb -o test_gromacs.gro -p test_gromacs.top".format(self.command)
-        execute_subprocess(cmd, gmx_stdin_file_path, gmx_stdout_file_path)
+        pymol_plugin_dynamics.execute_subprocess(cmd, gmx_stdin_file_path, gmx_stdout_file_path)
 
-        lista_gromacs = read_text_lines(gmx_stdout_file_path)
-        self.water_list = get_water_models_info(lista_gromacs)
+        lista_gromacs = pymol_plugin_dynamics.read_text_lines(gmx_stdout_file_path)
+        self.water_list = pymol_plugin_dynamics.get_water_models_info(lista_gromacs)
 
         # Switch back to current directory...
         os.chdir(current_dir)
@@ -132,16 +134,16 @@ class GromacsOutput:
     def restraints_index(self, project_name):
         self.restraints = []
         current_dir = os.getcwd()
-        os.chdir(get_project_dirs(project_name))
+        os.chdir(pymol_plugin_dynamics.get_project_dirs(project_name))
 
         fo = open("gromacs_stdin.txt", "w")
         fo.write("q")
         fo.close()
 
         cmd = "{} make_ndx -f {}.pdb -o index.ndx".format(self.command, project_name)
-        execute_subprocess(cmd, "gromacs_stdin.txt", "restraints.log")
+        pymol_plugin_dynamics.execute_subprocess(cmd, "gromacs_stdin.txt", "restraints.log")
 
-        index_list = read_text_lines("restraints.log")
+        index_list = pymol_plugin_dynamics.read_text_lines("restraints.log")
 
         index_position = 0
         atoms = ""

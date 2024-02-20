@@ -1,3 +1,4 @@
+import pymol_plugin_dynamics
 # This class will handle PCA by ProDy python library and show vectors from NMD file.
 class Vectors:
     nmd_name = []

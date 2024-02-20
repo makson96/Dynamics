@@ -57,6 +57,9 @@ import SimulationParameters
 import Vectors
 import MdpConfig
 import CalculationWindow
+import WaterWindows
+import RestraintsWindow
+import GenionWindow
 EM_INIT_CONFIG = """define = -DFLEX_SPC
 constraints = none
 integrator = steep
@@ -188,11 +191,6 @@ def init_function(travis_ci=False, gui_library="qt", parent=False):
         create_gui(gui_library, status, simulation_parameters, parent)
     return status, simulation_parameters
 
-
-
-# This class create and maintain abstraction mdp file representatives. em.mdp, pr.mdp, md.mdp
-
-
 # This function creates files needed by the project
 def create_config_files(project_name):
     dynamics_dir = get_dynamics_dir()
@@ -208,25 +206,25 @@ def create_config_files(project_name):
         print("Found em.mdp file. Using it instead of local configuration.")
     elif os.path.isfile(project_dir + "em.mdp"):
         em_file_config = open(project_dir + "em.mdp", "r").read()
-        em_file = MdpConfig("em.mdp", em_file_config, 1)
+        em_file = MdpConfig.MdpConfig("em.mdp", em_file_config, 1)
     else:
-        em_file = MdpConfig("em.mdp", EM_INIT_CONFIG, 0)
+        em_file = MdpConfig.MdpConfig("em.mdp", EM_INIT_CONFIG, 0)
     if os.path.isfile(dynamics_dir + "pr.mdp"):
         shutil.copy(dynamics_dir + "pr.mdp", project_dir + "pr.mdp")
         print("Found pr.mdp file. Using it instead of local configuration.")
     elif os.path.isfile(project_dir + "pr.mdp"):
         pr_file_config = open(project_dir + "pr.mdp", "r").read()
-        pr_file = MdpConfig("pr.mdp", pr_file_config, 1)
+        pr_file = MdpConfig.MdpConfig("pr.mdp", pr_file_config, 1)
     else:
-        pr_file = MdpConfig("pr.mdp", PR_INIT_CONFIG, 0)
+        pr_file = MdpConfig.MdpConfig("pr.mdp", PR_INIT_CONFIG, 0)
     if os.path.isfile(dynamics_dir + "md.mdp"):
         shutil.copy(dynamics_dir + "md.mdp", project_dir + "md.mdp")
         print("Found md.mdp file. Using it instead of local configuration.")
     elif os.path.isfile(project_dir + "md.mdp"):
         md_file_config = open(project_dir + "md.mdp", "r").read()
-        md_file = MdpConfig("md.mdp", md_file_config, 1)
+        md_file = MdpConfig.MdpConfig("md.mdp", md_file_config, 1)
     else:
-        md_file = MdpConfig("md.mdp", MD_INIT_CONFIG, 0)
+        md_file = MdpConfig.MdpConfig("md.mdp", MD_INIT_CONFIG, 0)
     #    save_options()
     try:
         if project_name in cmd.get_names("objects"):  # PyMOL API
@@ -235,40 +233,6 @@ def create_config_files(project_name):
     except (AttributeError, TypeError) as e:
         pass
     return em_file, pr_file, md_file
-
-
-# Status and to_do maintaining class
-class ProgressStatus:
-    # 0:Save configuration files; 1:Generate topology file from pdb; 2:Adding Water Box;
-    # 3: Adding ions and neutralization 4:Energy Minimization; 5:Position Restrained MD;
-    # 6:Restraints; 7:Molecular Dynamics Simulation; 8:Generate multimodel PDB; 9:Calculate vectors using ProDy
-    status = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    to_do = [1, 1, 1, 1, 1, 1, 0, 1, 1, 1]
-
-    resume = 0
-    x2top = 0
-    steps = 8
-
-    def to_do_update(self, position, value):
-        if isinstance(position, int):
-            self.to_do[position] = value
-            self.to_do = self.to_do
-
-    #            save_options()
-
-    def x2top_update(self, value):
-        if isinstance(value, int):
-            self.x2top = value
-
-    def to_do_status(self):
-        to_do = []
-        for work in self.status:
-            if work == 0:
-                to_do.append(1)
-            elif work == 1:
-                to_do.append(0)
-        self.to_do = to_do
-
 
 # Detect gmx executable along with other associated information...
 def get_gromacs_exe_info():
@@ -825,10 +789,10 @@ def root_window(status, s_params, parent):
             root_pymol = plugins.get_tk_root()
         root = Toplevel(root_pymol)
     root.wm_title("Dynamics with Gromacs" + plugin_ver)
-    calculationW = CalculationWindow()
-    waterW = WaterWindows()
-    restraintsW = RestraintsWindow()
-    genionW = GenionWindow()
+    calculationW = CalculationWindow.CalculationWindow()
+    waterW = WaterWindows.WaterWindows()
+    restraintsW = RestraintsWindow.RestraintsWindow()
+    genionW = GenionWindow.GenionWindow()
     gromacs = s_params.gmx_output
     gromacs2 = s_params.gmx_input
     dynamics_dir = get_dynamics_dir()
@@ -1059,232 +1023,6 @@ def root_window(status, s_params, parent):
 
 
 
-# This window will allow to manipulate final molecule to interprate MD simulation results
-class InterpretationWindow:
-    dt = 0.0
-    nsteps = 0.0
-    nstxout = 0.0
-    max_time = 0.0
-    tentry_value = ""
-    pause = 1
-
-    def __init__(self, g_parent, s_params):
-        self.queue_time = Queue.Queue()
-        self.md_time(s_params)
-        root = Toplevel(g_parent)
-        self.window(root, s_params)
-
-    def md_time(self, s_params):
-        project_name = s_params.project_name
-        project_dir = get_project_dirs(project_name)
-        md_file = open(project_dir + "md.mdp", "r")
-        for lines in md_file.readlines():
-            splited_line = lines.split(" ")
-            if splited_line[0] == "dt":
-                dt = float(splited_line[2])
-                self.dt = dt
-            elif splited_line[0] == "nsteps":
-                nsteps = float(splited_line[2])
-                self.nsteps = nsteps
-            elif splited_line[0] == "nstxout":
-                nstxout = float(splited_line[2])
-                self.nstxout = nstxout
-        max_time = dt * nsteps
-        self.max_time = max_time
-
-    def window(self, root, s_params):
-        vectors_prody = s_params.vector_prody
-        root.wm_title("MD Interpretation")
-        self.tentry_value = StringVar(root)
-        self.tentry_value.set("0.0")
-        sentry_value = StringVar(root)
-        sentry_value.set("1.0")
-        contact_entry_value = StringVar(root)
-        contact_entry_value.set("-1.0")
-
-        frame1 = Frame(root)
-        frame1.pack(side=TOP)
-
-        # Animation
-        alabel = Label(frame1, text="Animation", font="bold")
-        alabel.pack()
-        frame1_1 = Frame(frame1)
-        frame1_1.pack(side=TOP)
-        play_button = Button(frame1_1, text="PLAY", command=lambda: self.pause_play(0))
-        play_button.pack(side=LEFT)
-        pause_button = Button(frame1_1, text="PAUSE", command=lambda: self.pause_play(1))
-        pause_button.pack(side=LEFT)
-        frame1_2 = Frame(frame1)
-        frame1_2.pack(side=TOP, anchor=W)
-        tlabel = Label(frame1_2, text="Time [ps] (Max " + str(self.max_time) + " [ps])")
-        tlabel.pack(side=LEFT)
-        tentry = Entry(frame1_2, textvariable=self.tentry_value)
-        tentry.pack(side=LEFT)
-        tok_button = Button(frame1_2, text="OK",
-                            command=lambda: cmd.frame(self.time2frames(self.tentry_value.get())))  # PyMOL API
-        tok_button.pack(side=LEFT)
-        frame1_3 = Frame(frame1)
-        frame1_3.pack(side=TOP, anchor=W)
-        mlabel = Label(frame1_3, text="Model Type")
-        mlabel.pack(side=LEFT)
-        lines_button = Button(frame1_3, text="Lines", command=lambda: self.shape("lines", s_params))
-        lines_button.pack(side=LEFT)
-        sticks_button = Button(frame1_3, text="Sticks", command=lambda: self.shape("sticks", s_params))
-        sticks_button.pack(side=LEFT)
-        ribbon_button = Button(frame1_3, text="Ribbon", command=lambda: self.shape("ribbon", s_params))
-        ribbon_button.pack(side=LEFT)
-        cartoon_button = Button(frame1_3, text="Cartoon", command=lambda: self.shape("cartoon", s_params))
-        cartoon_button.pack(side=LEFT)
-        frame1_3_1 = Frame(frame1)
-        frame1_3_1.pack(side=TOP, anchor=W)
-        mlabel = Label(frame1_3_1, text="Labels")
-        mlabel.pack(side=LEFT)
-        end_button = Button(frame1_3_1, text="Terminus", command=lambda: self.label("terminus", s_params))
-        end_button.pack(side=LEFT)
-        acids_button = Button(frame1_3_1, text="Amino Acids", command=lambda: self.label("acids", s_params))
-        acids_button.pack(side=LEFT)
-        clear_button = Button(frame1_3_1, text="Clear", command=lambda: self.label("clear", s_params))
-        clear_button.pack(side=LEFT)
-
-        thread.start_new_thread(self.watch_frames, ())
-        self.display_time(root)
-
-        # Vectors
-        vlabel = Label(frame1, text="Vectors (Require ProDy)", font="bold")
-        vlabel.pack()
-        frame1_4 = Frame(frame1)
-        frame1_4.pack(side=TOP, anchor=W)
-        modlabel = Label(frame1_4, text="Mode Nr")
-        modlabel.pack(side=LEFT)
-        one_button = Button(frame1_4, text="1", command=lambda: vectors_prody.change_vectors_mode_nr(0))
-        one_button.pack(side=LEFT)
-        two_button = Button(frame1_4, text="2", command=lambda: vectors_prody.change_vectors_mode_nr(1))
-        two_button.pack(side=LEFT)
-        three_button = Button(frame1_4, text="3", command=lambda: vectors_prody.change_vectors_mode_nr(2))
-        three_button.pack(side=LEFT)
-        frame1_5 = Frame(frame1)
-        frame1_5.pack(side=TOP, anchor=W)
-        slabel = Label(frame1_5, text="Scale")
-        slabel.pack(side=LEFT)
-        sentry = Entry(frame1_5, textvariable=sentry_value)
-        sentry.pack(side=LEFT)
-        sok_button = Button(frame1_5, text="OK", command=lambda: vectors_prody.change_vectors_scale(sentry_value.get()))
-        sok_button.pack(side=LEFT)
-        frame1_6 = Frame(frame1)
-        frame1_6.pack(side=TOP, anchor=W)
-        modlabel = Label(frame1_6, text="Color")
-        modlabel.pack(side=LEFT)
-        gray_button = Button(frame1_6, text="Gray", command=lambda: vectors_prody.change_vectors_color("gray"))
-        gray_button.pack(side=LEFT)
-        red_button = Button(frame1_6, text="Red", command=lambda: vectors_prody.change_vectors_color("red"))
-        red_button.pack(side=LEFT)
-        blue_button = Button(frame1_6, text="Blue", command=lambda: vectors_prody.change_vectors_color("blue"))
-        blue_button.pack(side=LEFT)
-        green_button = Button(frame1_6, text="Green", command=lambda: vectors_prody.change_vectors_color("green"))
-        green_button.pack(side=LEFT)
-
-        frame1_7 = Frame(frame1)
-        frame1_7.pack(side=TOP, anchor=W)
-        modlabel = Label(frame1_7, text="Plot results")
-        modlabel.pack(side=LEFT)
-        contact_button = Button(frame1_7, text="Show Contact Map Graph",
-                                command=lambda: vectors_prody.graph_contact_map("contact"))
-        contact_button.pack(side=LEFT)
-        cross_button = Button(frame1_7, text="Show Cross-correlations Graph",
-                              command=lambda: vectors_prody.graph_contact_map("cross"))
-        cross_button.pack(side=LEFT)
-        frame1_8 = Frame(frame1)
-        frame1_8.pack(side=TOP, anchor=W)
-        modlabel = Label(frame1_8, text="Plot results")
-        modlabel.pack(side=LEFT)
-        contact_pymol_button = Button(frame1_8, text="Show Contact Map In PyMOL",
-                                      command=lambda: vectors_prody.show_contact_map(contact_entry_value.get(),
-                                                                                     s_params.project_name))
-        contact_pymol_button.pack(side=LEFT)
-        contact_label = Label(frame1_8, text="Sensitivity")
-        contact_label.pack(side=LEFT)
-        contact_entry = Entry(frame1_8, textvariable=contact_entry_value)
-        contact_entry.pack(side=LEFT)
-
-        frame1_8 = Frame(frame1)
-        frame1_8.pack(side=TOP)
-        exit_button = Button(frame1_8, text="Exit", command=root.destroy)
-        exit_button.pack(side=LEFT)
-        save_button = Button(frame1_8, text="Save", command=lambda: select_file_save(s_params))
-        save_button.pack(side=LEFT)
-        log_button = Button(frame1_8, text="Log", command=log_window)
-        log_button.pack(side=LEFT)
-
-        if not prody:
-            print("No ProDy found")
-            one_button.configure(state=DISABLED)
-            two_button.configure(state=DISABLED)
-            three_button.configure(state=DISABLED)
-            sok_button.configure(state=DISABLED)
-            gray_button.configure(state=DISABLED)
-            red_button.configure(state=DISABLED)
-            blue_button.configure(state=DISABLED)
-            green_button.configure(state=DISABLED)
-        if not prody or vectors_prody.contact_map != 1:
-            contact_button.configure(state=DISABLED)
-            cross_button.configure(state=DISABLED)
-            contact_pymol_button.configure(state=DISABLED)
-
-    def pause_play(self, value):
-        if value == 1:
-            self.pause = 1
-            cmd.mstop()  # PyMOL API
-        elif value == 0:
-            self.pause = 0
-            cmd.mplay()  # PyMOL API
-
-    def frames2time(self, text_var):
-        frame = float(text_var)
-        time = frame * self.dt * self.nstxout
-        return time
-
-    def time2frames(self, text_var):
-        nsecond = float(text_var)
-        frame = nsecond / self.dt / self.nstxout
-        frame = int(frame)
-        return frame
-
-    @staticmethod
-    def shape(shape_type, s_params):
-        project_name = s_params.project_name
-        cmd.hide("everything", project_name + "_multimodel")  # PyMOL API
-        cmd.show(shape_type, project_name + "_multimodel")  # PyMOL API
-
-    @staticmethod
-    def label(name, s_params):
-        project_name = s_params.project_name
-        if name == "terminus":
-            cmd.label("n. ca and {}_multimodel and i. 1".format(project_name), '"N-terminus"')  # PyMOL API
-            ca_number = cmd.count_atoms("n. ca and " + project_name + "_multimodel")  # PyMOL API
-            cmd.label("n. ca and {}_multimodel and i. {}".format(project_name, str(ca_number)),
-                      '"C-terminus"')  # PyMOL API
-        elif name == "acids":
-            cmd.label("n. ca and {}_multimodel".format(project_name), "resn")  # PyMOL API
-        elif name == "clear":
-            cmd.label("n. ca and {}_multimodel".format(project_name), "")  # PyMOL API
-
-    # This function will watch time (beware this is separate thread)
-    def watch_frames(self):
-        while 1:
-            pymol_frame = cmd.get_frame()  # PyMOL API
-            pymol_time = self.frames2time(pymol_frame)
-            self.queue_time.put(pymol_time)
-            time.sleep(0.1)
-
-    # This function will update display time in thread safe manner
-    def display_time(self, root):
-        try:
-            time = self.queue_time.get(block=False)
-        except Queue.Empty:
-            time = "No change"
-        if self.pause != 1:
-            self.tentry_value.set(time)
-        root.after(100, self.display_time, root)
 
 
 # Show interpretation window...
@@ -1326,104 +1064,6 @@ def clean_message():
 def no_molecule_warning():
     tkMessageBox.showinfo("No Molecule Selected", "Please choose any molecule before using this option.")
 
-
-# This class is resposible for graphic edition of restraints
-class RestraintsWindow:
-    atom_list = []
-    check_var = ""
-
-    # This function will create main window for restraints
-    def window(self, master, s_params):
-        gromacs2 = s_params.gmx_input
-        gromacs = s_params.gmx_output
-        root = Toplevel(master)
-        root.wm_title("Restraints Configure")
-
-        ok_button = Button(root, text="OK", command=lambda: self.index(s_params))
-        ok_button.pack(side=BOTTOM)
-
-        sb = Scrollbar(root, orient=VERTICAL)
-        sb.pack(side=RIGHT, fill=Y)
-
-        canvas = Canvas(root, width=600)
-        canvas.pack(side=TOP, fill="both", expand=True)
-        frame1 = Frame(canvas)
-        frame1.pack(side=TOP)
-
-        # attach canvas (with frame1 in it) to scrollbar
-        canvas.config(yscrollcommand=sb.set)
-        sb.config(command=canvas.yview)
-
-        # bind frame1 with canvas
-        canvas.create_window((1, 1), window=frame1, anchor="nw", tags="frame1")
-        frame1.bind("<Configure>", canvas.config(scrollregion=(0, 0, 0, 4500)))
-
-        self.check_var = IntVar(frame1)
-        self.check_var.set(gromacs2.restraints_nr)
-
-        self.atom_list = []
-        number = 0
-        for group in gromacs.restraints:
-            select = Radiobutton(frame1, text=group[0], value=number, variable=self.check_var)
-            select.pack()
-            text = Text(frame1)
-            text.insert(END, group[1])
-            text.pack()
-            self.atom_list.append(text)
-            number = number + 1
-
-        select1 = Radiobutton(frame1, text="[ PyMol Selected ]", value=number, variable=self.check_var)
-        select1.pack()
-        text1 = Text(frame1)
-
-        stored.list = []
-        cmd.iterate("(sele)", "stored.list.append(ID)")  # PyMOL API
-
-        stored_string = ""
-        for atom in stored.list:
-            stored_string = stored_string + str(atom)
-            lengh = stored_string.split('\n')
-            if len(lengh[-1]) < 72:
-                stored_string = stored_string + "   "
-            else:
-                stored_string = stored_string + "\n"
-
-        text1.insert(END, stored_string)
-        text1.pack()
-        self.atom_list.append(text1)
-
-    # This function will modyfie index_dynamics.ndx file based on user choosed restraints
-    def index(self, s_params, root_to_kill=False):
-        gromacs2 = s_params.gmx_input
-        gromacs = s_params.gmx_output
-        index_nr = self.check_var.get()
-        gromacs2.restraints_nr = index_nr
-        text = self.atom_list[index_nr]
-        if index_nr < len(gromacs.restraints):
-            gromacs.restraints[index_nr][1] = text.get(1.0, END)
-            gromacs.restraints = gromacs.restraints
-        index_file = open("index_dynamics.ndx", "w")
-        index_file.write("[ Dynamics Selected ]\n" + text.get(1.0, END))
-        index_file.close()
-        if root_to_kill:
-            root_to_kill.destroy()
-
-    # This function will activ or disable restraints button in main window based on check box
-    def check(self, check, config_button, s_params):
-        md_file = s_params.md_file
-        gromacs = s_params.gmx_output
-        progress = s_params.progress
-        if check == 1:
-            config_button.configure(state=ACTIVE)
-            md_file.update(2, md_file.options[2][1], 1)
-            gromacs.restraints_index()
-            progress.to_do[6] = 1
-            progress.to_do = progress.to_do
-        elif check == 0:
-            config_button.configure(state=DISABLED)
-            md_file.update(2, md_file.options[2][1], 0)
-            progress.to_do[6] = 0
-            progress.to_do = progress.to_do
 
 
 # This function will create window, which allow you to choose PDB file if no file is loaded to PyMOL
@@ -1804,360 +1444,6 @@ def steps_status_bar(var, s_params, variable_list=[]):
     return percent
 
 
-# Gather all water options windows in one class
-class WaterWindows:
-    implicit_buttons = []
-    explicit_buttons = []
-
-    # Water chooser window
-    def choose(self, v4_water, water_v, waterbox_button, master, s_params):
-        gromacs = s_params.gmx_output
-        gromacs2 = s_params.gmx_input
-        root = Toplevel(master)
-        root.wm_title("Water Model")
-
-        v1 = IntVar(root)
-        v1.set(gromacs2.explicit)
-
-        v2 = IntVar(root)
-        v2.set(0)
-
-        radio_button2 = Radiobutton(root, text="Explicit Solvent Simulation", value=1, variable=v1,
-                                    command=lambda: self.change_e(v1.get(), v4_water, water_v, v2, s_params))
-        radio_button2.pack(side=TOP, anchor=W)
-
-        frame1 = Frame(root, padx=10)
-        frame1.pack(anchor=W)
-
-        self.explicit_buttons = []
-
-        for water in gromacs.water_list:
-            radio_button1 = Radiobutton(frame1, text=water[1], value=water[0], variable=v4_water,
-                                        command=lambda: self.change(v4_water, water_v, s_params))
-            radio_button1.pack(side=TOP, anchor=W)
-            self.explicit_buttons.append(radio_button1)
-        self.explicit_buttons.append(waterbox_button)
-
-        radio_button2 = Radiobutton(root, text="Implicit Solvent Simulation", value=0, variable=v1,
-                                    command=lambda: self.change_e(v1.get(), v4_water, water_v, v2, s_params))
-        radio_button2.pack(side=TOP, anchor=W)
-
-        frame2 = Frame(root, padx=10)
-        frame2.pack(anchor=W)
-        radio_button3_1 = Radiobutton(frame2, text="Still", value=0, variable=v2,
-                                      command=lambda: self.change_i(v2, s_params))
-        radio_button3_1.pack(side=TOP, anchor=W)
-        radio_button3_2 = Radiobutton(frame2, text="Hawkins-Cramer-Truhlar", value=1, variable=v2,
-                                      command=lambda: self.change_i(v2, s_params))
-        radio_button3_2.pack(side=TOP, anchor=W)
-        radio_button3_3 = Radiobutton(frame2, text="Onufriev-Bashford-Case", value=2, variable=v2,
-                                      command=lambda: self.change_i(v2))
-        radio_button3_3.pack(side=TOP, anchor=W)
-
-        self.implicit_buttons = [radio_button3_1, radio_button3_2, radio_button3_3]
-        self.change_e(gromacs2.explicit, v4_water, water_v, v2)
-
-        ok_button = Button(root, text="OK", command=root.destroy)
-        ok_button.pack(side=TOP)
-
-    # This function will change force field and water model when choosing Force Field in Main Window and also change
-    # water model after choosing one in "waterChoose"
-    def change(self, v4_water, water_v, s_params, force=False):
-        gromacs = s_params.gmx_output
-        gromacs2 = s_params.gmx_input
-        if not force:
-            force = gromacs2.force
-        else:
-            gromacs2.force = force
-        gromacs.water_update(force)
-        if gromacs2.explicit == 1:
-            water_v.set(gromacs.water_list[v4_water.get() - 1][1])
-        elif gromacs2.explicit == 0:
-            water_v.set("Implicit Solvent")
-        gromacs2.water = v4_water.get()
-
-    # This function changes explicit to implicit and vice versa water model
-    def change_e(self, value, v4_water, water_v, v2, s_params):
-        progress = s_params.progress
-        gromacs2 = s_params.gmx_input
-        em_file = s_params.em_file
-        md_file = s_params.md_file
-        dynamics_dir = get_dynamics_dir()
-        gromacs2.update({"explicit": value})
-        if gromacs2.explicit == 1:
-            for button in self.implicit_buttons:
-                button.configure(state=DISABLED)
-            for button in self.explicit_buttons:
-                button.configure(state=ACTIVE)
-            progress.to_do[2] = 1
-            progress.to_do[3] = 1
-            progress.to_do[5] = 1
-            # em update
-            if not os.path.isfile(dynamics_dir + "em.mdp"):
-                parameter_nr = 0
-                for parameter in em_file.options:
-                    if (parameter[0] == "rlist") or (parameter[0] == ";rlist"):
-                        em_file.update(parameter_nr, "1.0")
-                    elif (parameter[0] == "rcoulomb") or (parameter[0] == ";rcoulomb"):
-                        em_file.update(parameter_nr, "1.0")
-                    elif (parameter[0] == "rvdw") or (parameter[0] == ";rvdw"):
-                        em_file.update(parameter_nr, "1.0")
-                    elif (parameter[0] == "implicit-solvent") or (parameter[0] == ";implicit-solvent"):
-                        em_file.update(parameter_nr, "no")
-                    elif (parameter[0] == "pbc") or (parameter[0] == ";pbc"):
-                        em_file.update(parameter_nr, "no", 0)
-                    elif (parameter[0] == "rgbradii") or (parameter[0] == ";rgbradii"):
-                        em_file.update(parameter_nr, "0", 0)
-                    elif (parameter[0] == "cutoff-scheme") or (parameter[0] == ";cutoff-scheme"):
-                        em_file.update(parameter_nr, "Verlet")
-                    elif (parameter[0] == "coulombtype") or (parameter[0] == ";coulombtype"):
-                        em_file.update(parameter_nr, "PME")
-                    parameter_nr = parameter_nr + 1
-            # md update
-            if not os.path.isfile(dynamics_dir + "md.mdp"):
-                parameter_nr = 0
-                for parameter in md_file.options:
-                    if (parameter[0] == "nstlist") or (parameter[0] == ";nstlist"):
-                        md_file.update(parameter_nr, "10")
-                    elif (parameter[0] == "rlist") or (parameter[0] == ";rlist"):
-                        md_file.update(parameter_nr, "1.0")
-                    elif (parameter[0] == "rcoulomb") or (parameter[0] == ";rcoulomb"):
-                        md_file.update(parameter_nr, "1.0")
-                    elif (parameter[0] == "rvdw") or (parameter[0] == ";rvdw"):
-                        md_file.update(parameter_nr, "1.0")
-                    elif (parameter[0] == "Tcoupl") or (parameter[0] == ";Tcoupl"):
-                        md_file.update(parameter_nr, "v-rescale")
-                    elif (parameter[0] == "tau_t") or (parameter[0] == ";tau_t"):
-                        md_file.update(parameter_nr, "0.1 0.1")
-                    elif (parameter[0] == "tc-grps") or (parameter[0] == ";tc-grps"):
-                        md_file.update(parameter_nr, "protein Non-Protein")
-                    elif (parameter[0] == "ref_t") or (parameter[0] == ";ref_t"):
-                        md_file.update(parameter_nr, "298 298")
-                    elif (parameter[0] == "implicit-solvent") or (parameter[0] == ";implicit-solvent"):
-                        md_file.update(parameter_nr, "no")
-                    elif (parameter[0] == "pbc") or (parameter[0] == ";pbc"):
-                        md_file.update(parameter_nr, "no", 0)
-                    elif (parameter[0] == "rgbradii") or (parameter[0] == ";rgbradii"):
-                        md_file.update(parameter_nr, "0", 0)
-                    elif (parameter[0] == "comm_mode") or (parameter[0] == ";comm_mode"):
-                        md_file.update(parameter_nr, "ANGULAR", 0)
-                    elif (parameter[0] == "cutoff-scheme") or (parameter[0] == ";cutoff-scheme"):
-                        md_file.update(parameter_nr, "Verlet")
-                    elif (parameter[0] == "coulombtype") or (parameter[0] == ";coulombtype"):
-                        md_file.update(parameter_nr, "PME")
-                    parameter_nr = parameter_nr + 1
-        elif gromacs2.explicit == 0:
-            for button in self.implicit_buttons:
-                button.configure(state=ACTIVE)
-            for button in self.explicit_buttons:
-                button.configure(state=DISABLED)
-            progress.to_do[2] = 0
-            progress.to_do[3] = 0
-            progress.to_do[5] = 0
-            # em update
-            if not os.path.isfile(dynamics_dir + "em.mdp"):
-                parameter_nr = 0
-                for parameter in em_file.options:
-                    if (parameter[0] == "rlist") or (parameter[0] == ";rlist"):
-                        em_file.update(parameter_nr, "0")
-                    elif (parameter[0] == "rcoulomb") or (parameter[0] == ";rcoulomb"):
-                        em_file.update(parameter_nr, "0")
-                    elif (parameter[0] == "rvdw") or (parameter[0] == ";rvdw"):
-                        em_file.update(parameter_nr, "0")
-                    elif (parameter[0] == "implicit-solvent") or (parameter[0] == ";implicit-solvent"):
-                        em_file.update(parameter_nr, "GBSA")
-                    elif (parameter[0] == "pbc") or (parameter[0] == ";pbc"):
-                        em_file.update(parameter_nr, "no")
-                    elif (parameter[0] == "rgbradii") or (parameter[0] == ";rgbradii"):
-                        em_file.update(parameter_nr, "0")
-                    elif (parameter[0] == "cutoff-scheme") or (parameter[0] == ";cutoff-scheme"):
-                        em_file.update(parameter_nr, "group")
-                    elif (parameter[0] == "coulombtype") or (parameter[0] == ";coulombtype"):
-                        em_file.update(parameter_nr, "Cut-off")
-                    parameter_nr = parameter_nr + 1
-            # md update
-            if not os.path.isfile(dynamics_dir + "md.mdp"):
-                parameter_nr = 0
-                for parameter in md_file.options:
-                    if (parameter[0] == "nstlist") or (parameter[0] == ";nstlist"):
-                        md_file.update(parameter_nr, "0")
-                    elif (parameter[0] == "rlist") or (parameter[0] == ";rlist"):
-                        md_file.update(parameter_nr, "0")
-                    elif (parameter[0] == "rcoulomb") or (parameter[0] == ";rcoulomb"):
-                        md_file.update(parameter_nr, "0")
-                    elif (parameter[0] == "rvdw") or (parameter[0] == ";rvdw"):
-                        md_file.update(parameter_nr, "0")
-                    elif (parameter[0] == "Tcoupl") or (parameter[0] == ";Tcoupl"):
-                        md_file.update(parameter_nr, "berendsen", 0)
-                    elif (parameter[0] == "tau_t") or (parameter[0] == ";tau_t"):
-                        md_file.update(parameter_nr, "0.1 0.1", 0)
-                    elif (parameter[0] == "tc-grps") or (parameter[0] == ";tc-grps"):
-                        md_file.update(parameter_nr, "protein Non-Protein", 0)
-                    elif (parameter[0] == "ref_t") or (parameter[0] == ";ref_t"):
-                        md_file.update(parameter_nr, "298 298", 0)
-                    elif (parameter[0] == "implicit-solvent") or (parameter[0] == ";implicit-solvent"):
-                        md_file.update(parameter_nr, "GBSA")
-                    elif (parameter[0] == "pbc") or (parameter[0] == ";pbc"):
-                        md_file.update(parameter_nr, "no")
-                    elif (parameter[0] == "rgbradii") or (parameter[0] == ";rgbradii"):
-                        md_file.update(parameter_nr, "0")
-                    elif (parameter[0] == "comm_mode") or (parameter[0] == ";comm_mode"):
-                        md_file.update(parameter_nr, "ANGULAR")
-                    elif (parameter[0] == "cutoff-scheme") or (parameter[0] == ";cutoff-scheme"):
-                        md_file.update(parameter_nr, "group")
-                    elif (parameter[0] == "coulombtype") or (parameter[0] == ";coulombtype"):
-                        md_file.update(parameter_nr, "Cut-off")
-                    parameter_nr = parameter_nr + 1
-            self.change_i(v2, s_params)
-            # in implicit solvent watermodel must be set to "None"
-            v4_water.set(len(self.explicit_buttons) - 1)
-
-        self.change(v4_water, water_v, s_params)
-
-    # This function changes implicit water model
-    @staticmethod
-    def change_i(int_variable, s_params):
-        em_file = s_params.em_file
-        md_file = s_params.md_file
-        dynamics_dir = get_dynamics_dir()
-        if int_variable.get() == 0:
-            if not os.path.isfile(dynamics_dir + "em.mdp"):
-                parameter_nr = 0
-                for parameter in em_file.options:
-                    if (parameter[0] == "gb-algorithm") or (parameter[0] == ";gb-algorithm"):
-                        em_file.update(parameter_nr, "Still")
-                    parameter_nr = parameter_nr + 1
-            if not os.path.isfile(dynamics_dir + "md.mdp"):
-                parameter_nr = 0
-                for parameter in md_file.options:
-                    if (parameter[0] == "gb-algorithm") or (parameter[0] == ";gb-algorithm"):
-                        md_file.update(parameter_nr, "Still")
-                    parameter_nr = parameter_nr + 1
-        elif int_variable.get() == 1:
-            if not os.path.isfile(dynamics_dir + "em.mdp"):
-                parameter_nr = 0
-                for parameter in em_file.options:
-                    if (parameter[0] == "gb-algorithm") or (parameter[0] == ";gb-algorithm"):
-                        em_file.update(parameter_nr, "HCT")
-                    parameter_nr = parameter_nr + 1
-            if not os.path.isfile(dynamics_dir + "md.mdp"):
-                parameter_nr = 0
-                for parameter in md_file.options:
-                    if (parameter[0] == "gb-algorithm") or (parameter[0] == ";gb-algorithm"):
-                        md_file.update(parameter_nr, "HCT")
-                    parameter_nr = parameter_nr + 1
-        elif int_variable.get() == 2:
-            if not os.path.isfile(dynamics_dir + "em.mdp"):
-                parameter_nr = 0
-                for parameter in em_file.options:
-                    if (parameter[0] == "gb-algorithm") or (parameter[0] == ";gb-algorithm"):
-                        em_file.update(parameter_nr, "OBC")
-                    parameter_nr = parameter_nr + 1
-            if not os.path.isfile(dynamics_dir + "md.mdp"):
-                parameter_nr = 0
-                for parameter in md_file.options:
-                    if (parameter[0] == "gb-algorithm") or (parameter[0] == ";gb-algorithm"):
-                        md_file.update(parameter_nr, "OBC")
-                    parameter_nr = parameter_nr + 1
-
-    # Water box configuration window
-    @staticmethod
-    def box(master, s_params):
-        gromacs2 = s_params.gmx_input
-        root = Toplevel(master)
-        root.wm_title("Water Box Options")
-        root.wm_geometry("300x200")
-        v = StringVar(root)
-        v.set(gromacs2.box_type)
-        w = Label(root, text="Box type")
-        w.pack()
-        radio_button = Radiobutton(root, text="triclinic", value="triclinic", variable=v,
-                                   command=lambda: gromacs2.update({"box_type": v.get()}))
-        radio_button.pack(side=TOP, anchor=W)
-        radio_button = Radiobutton(root, text="cubic", value="cubic", variable=v,
-                                   command=lambda: gromacs2.update({"box_type": v.get()}))
-        radio_button.pack(side=TOP, anchor=W)
-        radio_button = Radiobutton(root, text="dodecahedron", value="dodecahedron", variable=v,
-                                   command=lambda: gromacs2.update({"box_type": v.get()}))
-        radio_button.pack(side=TOP, anchor=W)
-        radio_button = Radiobutton(root, text="octahedron", value="octahedron", variable=v,
-                                   command=lambda: gromacs2.update({"box_type": v.get()}))
-        radio_button.pack(side=TOP, anchor=W)
-        w1 = Label(root, text="Distance")
-        w1.pack()
-        distance = Entry(root)
-        distance.pack(side=TOP)
-        distance.insert(0, gromacs2.box_distance)
-        w2 = Label(root, text="Density [g/L]")
-        w2.pack()
-        density = Entry(root)
-        density.pack(side=TOP)
-        density.insert(0, gromacs2.box_density)
-        ok_button = Button(root, text="OK", command=lambda: gromacs2.update(
-            {"box_distance": distance.get(), "box_density": density.get()}, root))
-        ok_button.pack(side=TOP)
-
-    # Hydrogen configuration (for bigger time steps)
-    @staticmethod
-    def box2(master, s_params):
-        gromacs2 = s_params.gmx_input
-        root = Toplevel(master)
-        root.wm_title("Hydrogen options (for Pdb2gmx)")
-        root.wm_geometry("300x200")
-        v1 = StringVar(root)
-        v1.set(gromacs2.hydro)
-        w = Label(root, text="Hydrogen type (for pdb2gmx only)")
-        w.pack()
-        radio_button = Radiobutton(root, text="Normal Hydrogen", value="noheavyh", variable=v1,
-                                   command=lambda: gromacs2.update({"hydro": v1.get()}))
-        radio_button.pack(side=TOP, anchor=W)
-        radio_button = Radiobutton(root, text="Deuterium", value="deuterate", variable=v1,
-                                   command=lambda: gromacs2.update({"hydro": v1.get()}))
-        radio_button.pack(side=TOP, anchor=W)
-        radio_button = Radiobutton(root, text="Heavy Hydrogen (4amu) ", value="heavyh", variable=v1,
-                                   command=lambda: gromacs2.update({"hydro": v1.get()}))
-        radio_button.pack(side=TOP, anchor=W)
-        ok_button = Button(root, text="OK", command=root.destroy)
-        ok_button.pack(side=TOP)
-
-
-# Options for the genion class all the options
-class GenionWindow:
-
-    # Genion box configuration window
-    def window(self, master, s_params):
-        gromacs2 = s_params.gmx_input
-        root = Toplevel(master)
-        root.wm_title("GENION options")
-        root.wm_geometry("300x350")
-        v = StringVar(root)
-        v.set(gromacs2.neutrality)
-        w = Label(root, text="Parameters for genion")
-        w.pack()
-        radio_button = Radiobutton(root, text="Neutralize System", value="neutral", variable=v,
-                                   command=lambda: gromacs2.update({"neutrality": v.get()}))
-        radio_button.pack(side=TOP, anchor=W)
-        radio_button = Radiobutton(root, text="Do not Neutralize", value="noneutral", variable=v,
-                                   command=lambda: gromacs2.update({"neutrality": v.get()}))
-        radio_button.pack(side=TOP, anchor=W)
-        w1 = Label(root, text="Salt Concentration")
-        w1.pack()
-        salt = Entry(root)
-        salt.pack(side=TOP)
-        salt.insert(0, gromacs2.salt_conc)
-        w2 = Label(root, text="Positive Ion")
-        w2.pack()
-        posit = Entry(root)
-        posit.pack(side=TOP)
-        posit.insert(0, gromacs2.positive_ion)
-        w3 = Label(root, text="Negative Ion")
-        w3.pack()
-        negat = Entry(root)
-        negat.pack(side=TOP)
-        negat.insert(0, gromacs2.negative_ion)
-        ok_button = Button(root, text="OK", command=lambda: gromacs2.update(
-            {"salt_conc": salt.get(), "positive_ion": posit.get(), "negative_ion": negat.get()}, root))
-        ok_button.pack(side=TOP)
 
 # This is the window to setup ProDy options
 # def vectors_window(master, s_params):

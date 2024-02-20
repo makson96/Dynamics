@@ -1,3 +1,5 @@
+import pymol_plugin_dynamics
+import os
 # This class is responsible for performing molecular dynamics simulation with GROMACS tools.
 class GromacsInput:
     force = 1
@@ -52,7 +54,7 @@ class GromacsInput:
     # This function will create initial topology and trajectory using pdb file and choosen force field
     def pdb2top(self, s_params):
         status = ["ok", "Calculating topology using Force fields"]
-        status_update(status)
+        pymol_plugin_dynamics.status_update(status)
         hh = "-" + self.hydro
         gmx_cmd = s_params.gmx_output.command
         project_name = s_params.project_name
@@ -68,7 +70,7 @@ class GromacsInput:
         fo.close()
 
         command = "{0} pdb2gmx -f {1}.pdb -o {1}.gro -p {1}.top {2}".format(gmx_cmd, project_name, hh)
-        execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
+        pymol_plugin_dynamics.execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
 
         if os.path.isfile("{}.gro".format(project_name)):
             status = ["ok", ""]
@@ -76,8 +78,8 @@ class GromacsInput:
             status = ["fail", "Warning. Trying to ignore unnecessary hydrogen atoms."]
 
             command = "{0} pdb2gmx -ignh -f {1}.pdb -o {1}.gro -p {1}.top {2}".format(gmx_cmd, project_name, hh)
-            execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
-        status_update(status)
+            pymol_plugin_dynamics.execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
+        pymol_plugin_dynamics.status_update(status)
 
         stop = s_params.stop
         if os.path.isfile("{}.gro".format(project_name)) and not stop:
@@ -90,7 +92,7 @@ class GromacsInput:
     @staticmethod
     def x2top(s_params):
         status = ["ok", "Calculating topology using Force fields"]
-        status_update(status)
+        pymol_plugin_dynamics.status_update(status)
         gmx_cmd = s_params.gmx_output.command
         project_name = s_params.project_name
         try:
@@ -100,14 +102,14 @@ class GromacsInput:
             pass
 
         command = "{0} x2top -f {1}.pdb -o {1}.top".format(gmx_cmd, project_name)
-        execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
+        pymol_plugin_dynamics.execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
         stop = s_params.stop
         if os.path.isfile("{}.top".format(project_name)) and not stop:
             status = ["ok", "Calculating structure using trjconv."]
         else:
             status = ["fail", "Unable to create topology file."]
-        status_update(status)
+        pymol_plugin_dynamics.status_update(status)
 
         if status[0] == "ok":
             fo = open("gromacs_stdin.txt", "w")
@@ -115,7 +117,7 @@ class GromacsInput:
             fo.close()
 
             command = "{0} trjconv -f {1}.pdb -s {1}.pdb -o {1}.gro".format(gmx_cmd, project_name)
-            execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
+            pymol_plugin_dynamics.execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
 
             stop = s_params.stop
             if os.path.isfile("{}.gro".format(project_name)) and not stop:
@@ -138,10 +140,10 @@ class GromacsInput:
         except FileNotFoundError:
             pass
 
-        status_update(status)
+        pymol_plugin_dynamics.status_update(status)
         command = "{0} editconf -f {1}.gro -o {1}1.gro -c {2} {3} {4}".format(gmx_cmd, project_name, box_type, distance,
                                                                               density)
-        execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
+        pymol_plugin_dynamics.execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
         water_name = s_params.gmx_output.water_list[self.water - 1][1][4:8].lower()
         print(water_name)
@@ -155,9 +157,9 @@ class GromacsInput:
         command = "{0} solvate -cp {1}1.gro -cs {2} -o {1}_solv.gro -p {1}.top".format(gmx_cmd, project_name, water_gro)
 
         status = ["ok", "Adding Water Box"]
-        status_update(status)
+        pymol_plugin_dynamics.status_update(status)
 
-        execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
+        pymol_plugin_dynamics.execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
         stop = s_params.stop
         if os.path.isfile("{}1.gro".format(project_name)) and not stop:
@@ -182,20 +184,20 @@ class GromacsInput:
             pass
 
         command = "{0} grompp -f em -c {1}_solv.gro -o {1}_ions.tpr -p {1}.top -maxwarn 1".format(gmx_cmd, project_name)
-        status_update(status)
-        execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
+        pymol_plugin_dynamics.status_update(status)
+        pymol_plugin_dynamics.execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
         fo = open("gromacs_stdin.txt", "w")
         fo.write("13")
         fo.close()
 
         status = ["ok", "Adding salts and ions"]
-        status_update(status)
+        pymol_plugin_dynamics.status_update(status)
 
         command = "{0} genion -s {1}_ions.tpr -o {1}_b4em.gro {2} {3} {4} {5} -p {1}.top".format(gmx_cmd,
                                                                                                  project_name, positive,
                                                                                                  negative, salt, neu)
-        execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
+        pymol_plugin_dynamics.execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
 
         stop = s_params.stop
         if os.path.isfile("{}_b4em.gro".format(project_name)) and not stop:
@@ -226,12 +228,12 @@ class GromacsInput:
             elif os.path.isfile(project_name + "{}.gro".format(project_name)):
                 shutil.copy("{}.gro".format(project_name), "{}_b4em.gro".format(project_name))
 
-        status_update(status)
+        pymol_plugin_dynamics.status_update(status)
         command = "{0} grompp -f em -c {1}_b4em -p {1} -o {1}_em".format(gmx_cmd, project_name)
-        execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
+        pymol_plugin_dynamics.execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
         command = "{0} mdrun -nice 4 -s {1}_em -o {1}_em -c {1}_b4pr -v".format(gmx_cmd, project_name)
-        execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
+        pymol_plugin_dynamics.execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
         stop = s_params.stop
         if os.path.isfile("{}_em.tpr".format(project_name)) and os.path.isfile("{}_b4pr.gro".format(project_name)) and \
@@ -254,12 +256,12 @@ class GromacsInput:
         except FileNotFoundError:
             pass
 
-        status_update(status)
+        pymol_plugin_dynamics.status_update(status)
         command = "{0} grompp -f pr -c {1}_b4pr -r {1}_b4pr -p {1} -o {1}_pr".format(gmx_cmd, project_name)
-        execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
+        pymol_plugin_dynamics.execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
         command = "{0} mdrun -nice 4 -s {1}_pr -o {1}_pr -c {1}_b4md -v".format(gmx_cmd, project_name)
-        execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
+        pymol_plugin_dynamics.execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
         stop = s_params.stop
         if os.path.isfile("{}_pr.tpr".format(project_name)) and not stop:
@@ -284,9 +286,9 @@ class GromacsInput:
         fo.write("0")
         fo.close()
 
-        status_update(status)
+        pymol_plugin_dynamics.status_update(status)
         command = "{0} genrestr -f {1}.pdb -o posre_2.itp -n index_dynamics.ndx".format(gmx_cmd, project_name)
-        execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
+        pymol_plugin_dynamics.execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
 
         stop = s_params.stop
         if os.path.isfile("posre_2.itp") and not stop:
@@ -319,12 +321,12 @@ class GromacsInput:
                 # No pr
                 shutil.copy("{}_b4pr.gro".format(project_name), "{}_b4md.gro".format(project_name))
 
-        status_update(status)
+        pymol_plugin_dynamics.status_update(status)
         command = "{0} grompp -f md -c {1}_b4md  -p {1} -o {1}_md".format(gmx_cmd, project_name)
-        execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
+        pymol_plugin_dynamics.execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
         command = "{0} mdrun -nice 4 -s {1}_md -o {1}_md -c {1}_after_md -v".format(gmx_cmd, project_name)
-        execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
+        pymol_plugin_dynamics.execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
         stop = s_params.stop
         if os.path.isfile("{}_md.tpr".format(project_name)) and not stop:
@@ -349,9 +351,9 @@ class GromacsInput:
         fo.write("%s" % str(self.group))
         fo.close()
 
-        status_update(status)
+        pymol_plugin_dynamics.status_update(status)
         command = "{0} trjconv -f {1}_md.trr -s {1}_md.tpr -o {1}_multimodel.pdb".format(gmx_cmd, project_name)
-        execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
+        pymol_plugin_dynamics.execute_and_monitor_subprocess(command, 'gromacs_stdin.txt', 'log1.txt', 'log.txt')
 
         stop = s_params.stop
         if os.path.isfile("{}_multimodel.pdb".format(project_name)) and not stop:

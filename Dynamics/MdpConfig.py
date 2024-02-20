@@ -1,3 +1,6 @@
+# This class create and maintain abstraction mdp file representatives. em.mdp, pr.mdp, md.mdp
+
+import pymol_plugin_dynamics
 class MdpConfig:
     external_file = 0
     options = [[]]
@@ -22,7 +25,7 @@ class MdpConfig:
 
     def save_file(self, s_params):
         project_name = s_params.project_name
-        project_dir = get_project_dirs(project_name)
+        project_dir = pymol_plugin_dynamics.get_project_dirs(project_name)
         config = ""
         for option in self.options:
             # pass empty option
