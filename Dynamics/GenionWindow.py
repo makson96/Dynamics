@@ -1,4 +1,5 @@
 import pymol_plugin_dynamics
+from tkinter import *
 # Options for the genion class all the options
 class GenionWindow:
 

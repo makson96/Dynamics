@@ -1,4 +1,10 @@
 import pymol_plugin_dynamics
+from tkinter import *
+try:
+    import prody
+except ModuleNotFoundError:
+    prody = False
+from pymol import cmd, cgo, parsing, plugins, CmdException
 # This class will handle PCA by ProDy python library and show vectors from NMD file.
 class Vectors:
     nmd_name = []

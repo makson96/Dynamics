@@ -3,6 +3,7 @@ import GromacsInput
 import pymol_plugin_dynamics
 import ProgressStatus
 import os
+import Vectors
 try:
     import prody
 except ModuleNotFoundError:
@@ -23,7 +24,7 @@ class SimulationParameters:
         self.gmx_input = GromacsInput.GromacsInput()
         print("Found GROMACS VERSION {}".format(self.gmx_output.version))
         if prody:
-            self.vectors_prody = Vectors()
+            self.vectors_prody = Vectors.Vectors()
             print("ProDy correctly imported")
         self.progress = ProgressStatus.ProgressStatus()
 

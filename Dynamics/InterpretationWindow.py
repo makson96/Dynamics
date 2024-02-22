@@ -1,5 +1,13 @@
 import pymol_plugin_dynamics
 import queue as Queue
+from tkinter import *
+import _thread as thread
+from pymol import cmd, cgo, parsing, plugins, CmdException
+try:
+    import prody
+except ModuleNotFoundError:
+    prody = False
+import time
 # This window will allow to manipulate final molecule to interprate MD simulation results
 class InterpretationWindow:
     dt = 0.0
@@ -151,9 +159,9 @@ class InterpretationWindow:
         frame1_8.pack(side=TOP)
         exit_button = Button(frame1_8, text="Exit", command=root.destroy)
         exit_button.pack(side=LEFT)
-        save_button = Button(frame1_8, text="Save", command=lambda: select_file_save(s_params))
+        save_button = Button(frame1_8, text="Save", command=lambda: pymol_plugin_dynamics.select_file_save(s_params))
         save_button.pack(side=LEFT)
-        log_button = Button(frame1_8, text="Log", command=log_window)
+        log_button = Button(frame1_8, text="Log", command=pymol_plugin_dynamics.log_window)
         log_button.pack(side=LEFT)
 
         if not prody:

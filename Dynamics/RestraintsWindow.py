@@ -1,4 +1,11 @@
 import pymol_plugin_dynamics
+from pymol import cmd, cgo, parsing, plugins, CmdException
+from tkinter import *
+try:
+    from pymol import stored
+except ImportError:
+    stored = False
+
 # This class is resposible for graphic edition of restraints
 class RestraintsWindow:
     atom_list = []

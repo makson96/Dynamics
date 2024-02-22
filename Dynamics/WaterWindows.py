@@ -1,5 +1,6 @@
 import pymol_plugin_dynamics
 import os
+from tkinter import *
 # Gather all water options windows in one class
 class WaterWindows:
     implicit_buttons = []

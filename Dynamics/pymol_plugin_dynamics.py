@@ -875,7 +875,7 @@ def root_window(status, s_params, parent):
                 else:
                     radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name,
                                                 command=lambda: set_variables(v1_name.get(), v2_group, v3_force,
-                                                                              v4_water, water_v, check1_button))
+                                                                              v4_water, water_v, check1_button, s_params))
                     radio_button1.pack(side=TOP, anchor=W)
 
     # List of group for final model
@@ -1120,7 +1120,7 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
         water_v.set(gromacs.water_list[v4_water.get() - 1][1])
         radio_button1 = Radiobutton(frame1_1a, text=project_name, value=project_name, variable=v1_name,
                                     command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v,
-                                                                  config_button_restraints))
+                                                                  config_button_restraints, s_params))
         radio_button1.pack(side=TOP, anchor=W)
     root.destroy()
 

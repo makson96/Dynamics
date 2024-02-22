@@ -1,5 +1,6 @@
 import pymol_plugin_dynamics
 import os
+import shutil
 # This class is responsible for performing molecular dynamics simulation with GROMACS tools.
 class GromacsInput:
     force = 1

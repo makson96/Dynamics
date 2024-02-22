@@ -1,5 +1,10 @@
 import pymol_plugin_dynamics
 import queue as Queue
+from tkinter import *
+from tkinter.ttk import Progressbar, Scrollbar
+import _thread as thread
+import time
+from tkinter import messagebox as tkMessageBox
 # Molecular Dynamics Performing window
 class CalculationWindow:
     tasks_to_do = 0
@@ -21,7 +26,7 @@ class CalculationWindow:
             root = Toplevel(g_parent)
             self.window(root, s_params, status, g_parent)
         elif project_name == "nothing":
-            no_molecule_warning()
+            pymol_plugin_dynamics.no_molecule_warning()
 
     # This function will create main Calculation Window
     def window(self, root, s_params, status, parent):
@@ -42,7 +47,7 @@ class CalculationWindow:
         exit_button = Button(frame2, text="EXIT", command=root.destroy)
         exit_button.pack(side=LEFT)
 
-        save_button = Button(frame2, text="SAVE", command=lambda: select_file_save(1))
+        save_button = Button(frame2, text="SAVE", command=lambda: pymol_plugin_dynamics.select_file_save(1))
         save_button.pack(side=LEFT)
 
         stop_button = Button(frame2, text="STOP", command=lambda: self.start_counting(0))
@@ -58,7 +63,7 @@ class CalculationWindow:
             start_button.configure(state=DISABLED)
         self.start_button = start_button
 
-        log_button = Button(frame2, text="LOG", command=log_window)
+        log_button = Button(frame2, text="LOG", command=pymol_plugin_dynamics.log_window)
         log_button.pack(side=LEFT)
         log_button.configure(state=DISABLED)
         self.log_button = log_button
@@ -68,7 +73,8 @@ class CalculationWindow:
         for task in s_params.progress.to_do:
             tasks_nr = tasks_nr + task
         self.tasks_to_do = tasks_nr
-        thread.start_new_thread(self.bar_update, s_params, status)
+       # thread.start_new_thread(self.bar_update, s_params, status)
+        thread.start_new_thread(self.bar_update, ())
         self.bar_display(root, parent, s_params)
 
     # This function will update status bar during molecular dynamics simulation (beware this is separate thread)
@@ -78,7 +84,7 @@ class CalculationWindow:
             time.sleep(0.5)
         while percent != 100:  # and error == ""
             time.sleep(0.5)
-            percent = steps_status_bar("only_bar", s_params)
+            percent = pymol_plugin_dynamics.steps_status_bar("only_bar", s_params)
             self.queue_percent.put(percent)
             if s_params.stop == 0:
                 self.queue_status.put(status[1])
@@ -107,7 +113,7 @@ class CalculationWindow:
         if status == "Finished!":
             root.destroy()
             # Show interpretation window after successful completion of the calculations...
-            show_interpretation_window(parent, s_params)
+            pymol_plugin_dynamics.show_interpretation_window(parent, s_params)
         else:
             root.after(100, self.bar_display, root)
 
@@ -115,7 +121,7 @@ class CalculationWindow:
     def start_counting(self, value):
         if value == 1:
             stop = 0
-            thread.start_new_thread(dynamics, ())
+            thread.start_new_thread(pymol_plugin_dynamics.dynamics, ())
             self.stop_button.configure(state=ACTIVE)
             self.start_button.configure(state=DISABLED)
             self.log_button.configure(state=DISABLED)
