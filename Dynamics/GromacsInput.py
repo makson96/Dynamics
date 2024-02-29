@@ -147,7 +147,7 @@ class GromacsInput:
         pymol_plugin_dynamics.execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
         water_name = s_params.gmx_output.water_list[self.water - 1][1][4:8].lower()
-        print(water_name)
+        
         if water_name == "tip4":
             water_gro = "tip4p.gro"
         elif water_name == "tip5":

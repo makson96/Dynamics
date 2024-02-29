@@ -35,7 +35,7 @@ class CalculationWindow:
         frame1.pack(side=TOP)
         frame2 = Frame(root)
         frame2.pack(side=TOP)
-
+        s_params.change_stop_value(True);
         self.bar_var = StringVar(root)
         self.bar_var.set("Ready to start")
 
@@ -50,14 +50,14 @@ class CalculationWindow:
         save_button = Button(frame2, text="SAVE", command=lambda: pymol_plugin_dynamics.select_file_save(1))
         save_button.pack(side=LEFT)
 
-        stop_button = Button(frame2, text="STOP", command=lambda: self.start_counting(0))
+        stop_button = Button(frame2, text="STOP", command=lambda: self.start_counting(0, s_params))
         stop_button.pack(side=LEFT)
         stop = s_params.stop
         if stop:
             stop_button.configure(state=DISABLED)
         self.stop_button = stop_button
 
-        start_button = Button(frame2, text="START", command=lambda: self.start_counting(1))
+        start_button = Button(frame2, text="START", command=lambda: self.start_counting(1, s_params))
         start_button.pack(side=LEFT)
         if stop == 0:
             start_button.configure(state=DISABLED)
@@ -72,9 +72,8 @@ class CalculationWindow:
         tasks_nr = 0.0
         for task in s_params.progress.to_do:
             tasks_nr = tasks_nr + task
-        self.tasks_to_do = tasks_nr
-       # thread.start_new_thread(self.bar_update, s_params, status)
-        thread.start_new_thread(self.bar_update, ())
+        self.tasks_to_do = tasks_nr       
+        thread.start_new_thread(self.bar_update, (s_params, status))
         self.bar_display(root, parent, s_params)
 
     # This function will update status bar during molecular dynamics simulation (beware this is separate thread)
@@ -107,7 +106,7 @@ class CalculationWindow:
         except:
             pass
         if status == "Fatal Error":
-            self.start_counting(0)
+            self.start_counting(0, s_params)
             self.start_button.configure(state=DISABLED)
             tkMessageBox.showerror("GROMACS Error Message", "Error")  # error)
         if status == "Finished!":
@@ -115,13 +114,13 @@ class CalculationWindow:
             # Show interpretation window after successful completion of the calculations...
             pymol_plugin_dynamics.show_interpretation_window(parent, s_params)
         else:
-            root.after(100, self.bar_display, root)
+            root.after(100, self.bar_display, root, parent, s_params)
 
     # This function will change global value if stop is clicked during simulation
-    def start_counting(self, value):
+    def start_counting(self, value, s_params):
         if value == 1:
             stop = 0
-            thread.start_new_thread(pymol_plugin_dynamics.dynamics, ())
+            thread.start_new_thread(pymol_plugin_dynamics.dynamics, (s_params,))
             self.stop_button.configure(state=ACTIVE)
             self.start_button.configure(state=DISABLED)
             self.log_button.configure(state=DISABLED)

@@ -209,6 +209,7 @@ def create_config_files(project_name):
         em_file = MdpConfig.MdpConfig("em.mdp", em_file_config, 1)
     else:
         em_file = MdpConfig.MdpConfig("em.mdp", EM_INIT_CONFIG, 0)
+        print(em_file)
     if os.path.isfile(dynamics_dir + "pr.mdp"):
         shutil.copy(dynamics_dir + "pr.mdp", project_dir + "pr.mdp")
         print("Found pr.mdp file. Using it instead of local configuration.")
@@ -546,6 +547,7 @@ def mdp_files(s_params):
     pr_file = s_params.pr_file
     md_file = s_params.md_file
     if not os.path.isfile("{}em.mdp".format(dynamics_dir)):
+        print(em_file)
         em_file.save_file(s_params)
     if not os.path.isfile("{}pr.mdp".format(dynamics_dir)):
         pr_file.save_file(s_params)
@@ -633,6 +635,7 @@ def load_file(file_path, s_params):
     tar.extractall(dynamics_dir)
     project_name = names[0]
     s_params.change_project_name(project_name)
+    print("Load Options 1")
     load_options(s_params)
 
 
@@ -669,17 +672,17 @@ def load_options(s_params):
     options = pickle.load(pickle_file)
 
     print("Loading project {}".format(project_name))
-    print("Project was created for Dynamics PyMOL Plugin {} and GROMACS {}".format(options[0], options[1]))
+    print("Project was created for Dynamics PyMOL Plugin {} and GROMACS {}".format(options[0], options[1]))    
     if gmx_version != options[1]:
         print("GROMACS versions is different for loaded file.")
 
-    if options[0][1:4] == "2.2":
+    if options[0][1:4] == "2.2" or options[0][1:4] == "3.0":
         gromacs2.update({"force": options[2].force, "water": options[2].water, "group": options[2].group,
                          "box_type": options[2].box_type, "hydro": options[2].hydro,
                          "box_distance": options[2].box_distance, "box_density": options[2].box_density,
                          "restraints_nr": options[2].restraints_nr, "neutrality": options[2].neutrality,
                          "salt_conc": options[2].salt_conc, "positive_ion": options[2].positive_ion,
-                         "negative_ion": options[2].negative_ion, "explicit": options[2].explicit})
+                         "negative_ion": options[2].negative_ion, "explicit": options[2].explicit})        
         em_file = options[3]
         pr_file = options[4]
         md_file = options[5]
@@ -700,7 +703,7 @@ def load_options(s_params):
         progress = options[6]
         gromacs2.update({"explicit": options[7]})
         if prody and options[8] != 0:
-            vectors_prody = options[8]
+            vectors_prody = options[8]    
     else:
         print("Warning. Importing projects from plugin version " + options[0] + " is not supported. Aboring import.")
 
@@ -843,6 +846,7 @@ def root_window(status, s_params, parent):
     # List of PyMOL loaded PDB files
     if all_names[0] != "nothing":
         for molecule in all_names:
+            print("set variables 4")
             radio_button1 = Radiobutton(frame1_1a, text=molecule, value=molecule, variable=v1_name,
                                         command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water,
                                                                       water_v, check1_button, s_params))
@@ -873,6 +877,7 @@ def root_window(status, s_params, parent):
                 if molecule1[0] == "gromacs":
                     pass
                 else:
+                    print("set variables 3")
                     radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name,
                                                 command=lambda: set_variables(v1_name.get(), v2_group, v3_force,
                                                                               v4_water, water_v, check1_button, s_params))
@@ -1082,7 +1087,8 @@ def select_file(v_name, s_params):
             os.makedirs(project_dir)
             shutil.copyfile(file.name, project_dir + project_name + ".pdb")
             print("pdb_copied")
-        create_config_files(project_name)
+        s_params.project_name = project_name
+        s_params.create_cfg_files()
     except:
         pass
     root.destroy()
@@ -1118,6 +1124,7 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
         v3_force.set(gromacs.force_list[gromacs2.force - 1][0])
         v4_water.set(gromacs.water_list[gromacs2.water - 1][0])
         water_v.set(gromacs.water_list[v4_water.get() - 1][1])
+        print("set variables 1")
         radio_button1 = Radiobutton(frame1_1a, text=project_name, value=project_name, variable=v1_name,
                                     command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v,
                                                                   config_button_restraints, s_params))
@@ -1137,13 +1144,15 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
         s_params.change_project_name(project_name)
     project_dir = get_project_dirs(project_name)
     if os.path.isfile("{}options.pickle".format(project_dir)):
+        print("Load Options 2")
         load_options(s_params)
         v2_group.set(gromacs.group_list[gromacs2.group][0])
         v3_force.set(gromacs.force_list[gromacs2.force - 1][0])
         v4_water.set(gromacs.water_list[gromacs2.water - 1][0])
         water_v.set(gromacs.water_list[v4_water.get() - 1][1])
     else:
-        create_config_files(project_name)
+        s_params.project_name = project_name
+        s_params.create_cfg_files()
     # Correct set of restraints button
     if progress.to_do[6] == 0:
         config_button_restraints.configure(state=DISABLED)
