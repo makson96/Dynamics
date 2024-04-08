@@ -57,6 +57,7 @@ import SimulationParameters
 import Vectors
 import MdpConfig
 import CalculationWindow
+import InterpretationWindow
 import WaterWindows
 import RestraintsWindow
 import GenionWindow
@@ -146,13 +147,14 @@ implicit-solvent = no
 ;comm_mode = ANGULAR
 cutoff-scheme = Verlet
 coulombtype = PME"""
-
+calculationW = CalculationWindow.CalculationWindow()
 
 # This function will initialize all plugin stufs
 def init_function(travis_ci=False, gui_library="qt", parent=False):
     # Fallback to tk, till qt is ready
     gui_library = "tk"
     status = ["ok", ""]
+    
     # Make sure HOME environment variable is defined before setting up directories...
     home_dir = os.path.expanduser('~')
     if home_dir:
@@ -209,7 +211,6 @@ def create_config_files(project_name):
         em_file = MdpConfig.MdpConfig("em.mdp", em_file_config, 1)
     else:
         em_file = MdpConfig.MdpConfig("em.mdp", EM_INIT_CONFIG, 0)
-        print(em_file)
     if os.path.isfile(dynamics_dir + "pr.mdp"):
         shutil.copy(dynamics_dir + "pr.mdp", project_dir + "pr.mdp")
         print("Found pr.mdp file. Using it instead of local configuration.")
@@ -428,21 +429,24 @@ def steps_status_done(step_nr, s_params):
 # This function will receive status from gromacs2 class and change it to global variable.
 def status_update(input_status):
     status = input_status
-    print(status[1])
+    print("Status after update")
+    print(status)
 
 
 # This function will start real workflow of the plugin, once everything is set
 def dynamics(s_params):
-    print("Starting PyMOL plugin 'dynamics' ver. {}".format(plugin_ver))
+    print("Starting PyMOL plugin 'dynamics' ver. {}".format(plugin_ver))    
     status = ["ok", ""]
     project_name = s_params.project_name
     project_dir = get_project_dirs(project_name)
     progress = s_params.progress
     gromacs2 = s_params.gmx_input
     vectors_prody = s_params.vectors_prody
+    print("Vectors prody")
+    print(vectors_prody)
     os.chdir(project_dir)
     stop = 0
-
+    
     # Saving configuration files
     if status[0] == "ok" and stop == 0 and progress.to_do[0] == 1:
         mdp_files(s_params)
@@ -453,61 +457,68 @@ def dynamics(s_params):
 
     # Counting topology
     if status[0] == "ok" and stop == 0 and progress.to_do[1] == 1 and progress.x2top == 0:
-        status = gromacs2.pdb2top(s_params)
+        status = gromacs2.pdb2top(s_params)        
         if status[0] == "ok":
             progress.status[1] = 1
             progress.to_do[1] = 0
+            calculationW.bar_update(s_params, status)
             save_options(s_params)
 
     elif status[0] == "ok" and stop == 0 and progress.to_do[1] == 1 and progress.x2top == 1:
-        status = gromacs2.x2top(s_params)
+        status = gromacs2.x2top(s_params)        
         if status[0] == "ok":
             progress.status[1] = 1
             progress.to_do[1] = 0
+            calculationW.bar_update(s_params, status)
             save_options(s_params)
 
     # Adding water box
     if status[0] == "ok" and stop == 0 and progress.to_do[2] == 1:
-        status = gromacs2.waterbox(s_params)
+        status = gromacs2.waterbox(s_params)        
         if status[0] == "ok":
             progress.status[2] = 1
             progress.to_do[2] = 0
+            calculationW.bar_update(s_params, status)
             save_options(s_params)
 
     # Adding ions
     if status[0] == "ok" and stop == 0 and progress.to_do[3] == 1:
-        status = gromacs2.saltadd(s_params)
+        status = gromacs2.saltadd(s_params)        
         if status[0] == "ok":
             progress.status[3] = 1
             progress.to_do[3] = 0
+            calculationW.bar_update(s_params, status)
             save_options(s_params)
 
     # EM
     if status[0] == "ok" and stop == 0 and progress.to_do[4] == 1:
-        status = gromacs2.em(s_params)
+        status = gromacs2.em(s_params)        
         if status[0] == "ok":
             progress.status[4] = 1
             progress.to_do[4] = 0
+            calculationW.bar_update(s_params, status)
             save_options(s_params)
     elif status[0] == "ok" and stop == 0 and progress.to_do[4] == 0 and progress.status[4] == 0:
         shutil.copy(project_name + "_b4em.gro", project_name + "_b4pr.gro")
 
     # PR
     if status[0] == "ok" and stop == 0 and progress.to_do[5] == 1:
-        status = gromacs2.pr(s_params)
+        status = gromacs2.pr(s_params)        
         if status[0] == "ok":
             progress.status[5] = 1
             progress.to_do[5] = 0
+            calculationW.bar_update(s_params, status)
             save_options(s_params)
     elif status[0] == "ok" and stop == 0 and progress.to_do[5] == 0 and progress.status[5] == 0:
         shutil.copy(project_name + "_b4pr.gro", project_name + "_b4md.gro")
 
     # Restraints
     if status[0] == "ok" and stop == 0 and progress.to_do[6] == 1:
-        status = gromacs2.restraints(project_name)
+        status = gromacs2.restraints(project_name)        
         if status[0] == "ok":
             progress.status[6] = 1
             progress.to_do[6] = 0
+            calculationW.bar_update(s_params, status)
             save_options(s_params)
 
     # MD
@@ -516,6 +527,7 @@ def dynamics(s_params):
         if status[0] == "ok":
             progress.status[7] = 1
             progress.to_do[7] = 0
+            calculationW.bar_update(s_params, status)
             save_options(s_params)
 
     # Trjconv
@@ -524,6 +536,7 @@ def dynamics(s_params):
         show_multipdb(s_params)
         progress.status[8] = 1
         progress.to_do[8] = 0
+        calculationW.bar_update(s_params, status)
         save_options(s_params)
 
     # Calculating vectors
@@ -533,9 +546,10 @@ def dynamics(s_params):
         vectors_prody.show_vectors()
         progress.status[9] = 1
         progress.to_do[9] = 0
+        calculationW.bar_update(s_params, status)
         save_options(s_params)
     elif status[0] == "fail":
-        print(status[1])
+        print(status[1])        
         if stop == 0:
             error_message(s_params)
 
@@ -547,7 +561,6 @@ def mdp_files(s_params):
     pr_file = s_params.pr_file
     md_file = s_params.md_file
     if not os.path.isfile("{}em.mdp".format(dynamics_dir)):
-        print(em_file)
         em_file.save_file(s_params)
     if not os.path.isfile("{}pr.mdp".format(dynamics_dir)):
         pr_file.save_file(s_params)
@@ -792,7 +805,6 @@ def root_window(status, s_params, parent):
             root_pymol = plugins.get_tk_root()
         root = Toplevel(root_pymol)
     root.wm_title("Dynamics with Gromacs" + plugin_ver)
-    calculationW = CalculationWindow.CalculationWindow()
     waterW = WaterWindows.WaterWindows()
     restraintsW = RestraintsWindow.RestraintsWindow()
     genionW = GenionWindow.GenionWindow()
@@ -846,7 +858,6 @@ def root_window(status, s_params, parent):
     # List of PyMOL loaded PDB files
     if all_names[0] != "nothing":
         for molecule in all_names:
-            print("set variables 4")
             radio_button1 = Radiobutton(frame1_1a, text=molecule, value=molecule, variable=v1_name,
                                         command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water,
                                                                       water_v, check1_button, s_params))
@@ -877,7 +888,6 @@ def root_window(status, s_params, parent):
                 if molecule1[0] == "gromacs":
                     pass
                 else:
-                    print("set variables 3")
                     radio_button1 = Radiobutton(frame1_1, text=molecule, value=molecule, variable=v1_name,
                                                 command=lambda: set_variables(v1_name.get(), v2_group, v3_force,
                                                                               v4_water, water_v, check1_button, s_params))
@@ -1032,7 +1042,7 @@ def root_window(status, s_params, parent):
 
 # Show interpretation window...
 def show_interpretation_window(parent, s_params):
-    InterpretationWindow(parent, s_params)
+    InterpretationWindow.InterpretationWindow(parent, s_params)
 
 
 def help_window(master):
@@ -1117,14 +1127,13 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
     gromacs2 = s_params.gmx_input
     root = Tk()
     file = tkFileDialog.askopenfile(parent=root, mode='rb', defaultextension=".tar.bz2", title='Choose file to load')
-    if not file:
+    if file:
         load_file(file.name, s_params)
         v1_name.set(project_name)
         v2_group.set(gromacs.group_list[gromacs2.group][0])
         v3_force.set(gromacs.force_list[gromacs2.force - 1][0])
         v4_water.set(gromacs.water_list[gromacs2.water - 1][0])
         water_v.set(gromacs.water_list[v4_water.get() - 1][1])
-        print("set variables 1")
         radio_button1 = Radiobutton(frame1_1a, text=project_name, value=project_name, variable=v1_name,
                                     command=lambda: set_variables(v1_name.get(), v2_group, v3_force, v4_water, water_v,
                                                                   config_button_restraints, s_params))
@@ -1134,9 +1143,10 @@ def select_file_load(frame1_1a, v1_name, v2_group, v3_force, v4_water, water_v, 
 
 # This function sets variables after choosing new molecule
 def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_restraints, s_params):
-    print("Set Variables")
     gromacs = s_params.gmx_output
     gromacs2 = s_params.gmx_input
+    
+
     progress = s_params.progress
     # Set project name and dir
     project_name = name
@@ -1144,7 +1154,6 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
         s_params.change_project_name(project_name)
     project_dir = get_project_dirs(project_name)
     if os.path.isfile("{}options.pickle".format(project_dir)):
-        print("Load Options 2")
         load_options(s_params)
         v2_group.set(gromacs.group_list[gromacs2.group][0])
         v3_force.set(gromacs.force_list[gromacs2.force - 1][0])
@@ -1154,11 +1163,12 @@ def set_variables(name, v2_group, v3_force, v4_water, water_v, config_button_res
         s_params.project_name = project_name
         s_params.create_cfg_files()
     # Correct set of restraints button
-    if progress.to_do[6] == 0:
+    if progress.to_do[6] == 0:        
         config_button_restraints.configure(state=DISABLED)
     elif progress.to_do[6] == 1:
         config_button_restraints.configure(state=ACTIVE)
     # If Resume is zero than initial Steps are all ON
+    
     if progress.resume == 0:
         progress.to_do = [1, 1, 1, 1, 1, 1, 0, 1, 1, 1]
 
@@ -1209,7 +1219,6 @@ def mdp_configure(config_name, master, s_params):
         # attach canvas (with frame1 in it) to scrollbar
         canvas.config(yscrollcommand=sb.set)
         sb.config(command=canvas.yview)
-
         # bind canvas with frame1 1/2
         canvas.create_window((1, 1), window=frame1, anchor="nw", tags="frame1")
         for option, value in options:
@@ -1269,7 +1278,7 @@ def mdp_update(values, check_list, mdp, s_params, root_to_kill=""):
         elif mdp == "md":
             md_file.update(index_nr, value.get(), check_list[index_nr].get())
         index_nr = index_nr + 1
-    save_options(em_file, pr_file, md_file, s_params)
+    save_options(s_params)
 
 
 # This function will create Simulation Steps configuration window
@@ -1433,7 +1442,7 @@ def steps_status_bar(var, s_params, variable_list=[]):
                 variable_list[to_do_nr].set(1)
             to_do_nr = to_do_nr + 1
         progress.resume = 1
-    elif var == 0:
+    elif var == 0:       
         percent = 0.0
         progress.to_do = [1, 1, 1, 1, 1, 1, 0, 1, 1, 1]
         to_do_nr = 0
@@ -1446,7 +1455,11 @@ def steps_status_bar(var, s_params, variable_list=[]):
         progress.resume = 0
 
     if progress.steps != 0:
-        percent = ((progress.steps - sum(progress.to_do)) * 100) / progress.steps
+        #print("progress.steps: "+str(progress.steps))
+        #print("progress.to_do: "+str(progress.to_do))
+        #percent = ((progress.steps - sum(progress.to_do)) * 100) / progress.steps
+        #percent = sum(progress.to_do) / progress.steps * 100
+        percent = sum(progress.status)/sum(progress.to_do) * 100 
     else:
         percent = 100
 

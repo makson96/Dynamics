@@ -52,7 +52,7 @@ class WaterWindows:
         radio_button3_3.pack(side=TOP, anchor=W)
 
         self.implicit_buttons = [radio_button3_1, radio_button3_2, radio_button3_3]
-        self.change_e(gromacs2.explicit, v4_water, water_v, v2)
+        self.change_e(gromacs2.explicit, v4_water, water_v, v2, s_params)
 
         ok_button = Button(root, text="OK", command=root.destroy)
         ok_button.pack(side=TOP)
@@ -291,7 +291,7 @@ class WaterWindows:
         density.pack(side=TOP)
         density.insert(0, gromacs2.box_density)
         ok_button = Button(root, text="OK", command=lambda: gromacs2.update(
-            {"box_distance": distance.get(), "box_density": density.get()}, root))
+            {"box_distance": distance.get(), "box_density": density.get()}))
         ok_button.pack(side=TOP)
 
     # Hydrogen configuration (for bigger time steps)

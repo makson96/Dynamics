@@ -34,6 +34,6 @@ class GenionWindow:
         negat = Entry(root)
         negat.pack(side=TOP)
         negat.insert(0, gromacs2.negative_ion)
-        ok_button = Button(root, text="OK", command=lambda: gromacs2.update(
-            {"salt_conc": salt.get(), "positive_ion": posit.get(), "negative_ion": negat.get()}, root))
+        ok_button = Button(root, text="OK", command=lambda: [gromacs2.update(
+            {"salt_conc": salt.get(), "positive_ion": posit.get(), "negative_ion": negat.get()}), root.destroy()])
         ok_button.pack(side=TOP)

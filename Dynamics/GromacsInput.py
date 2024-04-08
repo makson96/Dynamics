@@ -184,7 +184,7 @@ class GromacsInput:
         except FileNotFoundError:
             pass
 
-        command = "{0} grompp -f em -c {1}_solv.gro -o {1}_ions.tpr -p {1}.top -maxwarn 1".format(gmx_cmd, project_name)
+        command = "{0} grompp -f em -c {1}_solv.gro -o {1}_ions.tpr -p {1}.top -maxwarn 2".format(gmx_cmd, project_name)
         pymol_plugin_dynamics.status_update(status)
         pymol_plugin_dynamics.execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
@@ -230,7 +230,7 @@ class GromacsInput:
                 shutil.copy("{}.gro".format(project_name), "{}_b4em.gro".format(project_name))
 
         pymol_plugin_dynamics.status_update(status)
-        command = "{0} grompp -f em -c {1}_b4em -p {1} -o {1}_em".format(gmx_cmd, project_name)
+        command = "{0} grompp -f em -c {1}_b4em -p {1} -o {1}_em -maxwarn 2".format(gmx_cmd, project_name)
         pymol_plugin_dynamics.execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
         command = "{0} mdrun -nice 4 -s {1}_em -o {1}_em -c {1}_b4pr -v".format(gmx_cmd, project_name)
@@ -258,7 +258,7 @@ class GromacsInput:
             pass
 
         pymol_plugin_dynamics.status_update(status)
-        command = "{0} grompp -f pr -c {1}_b4pr -r {1}_b4pr -p {1} -o {1}_pr".format(gmx_cmd, project_name)
+        command = "{0} grompp -f pr -c {1}_b4pr -r {1}_b4pr -p {1} -o {1}_pr -maxwarn 2".format(gmx_cmd, project_name)
         pymol_plugin_dynamics.execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
         command = "{0} mdrun -nice 4 -s {1}_pr -o {1}_pr -c {1}_b4md -v".format(gmx_cmd, project_name)
@@ -323,7 +323,7 @@ class GromacsInput:
                 shutil.copy("{}_b4pr.gro".format(project_name), "{}_b4md.gro".format(project_name))
 
         pymol_plugin_dynamics.status_update(status)
-        command = "{0} grompp -f md -c {1}_b4md  -p {1} -o {1}_md".format(gmx_cmd, project_name)
+        command = "{0} grompp -f md -c {1}_b4md  -p {1} -o {1}_md -maxwarn 2".format(gmx_cmd, project_name)
         pymol_plugin_dynamics.execute_and_monitor_subprocess(command, None, 'log1.txt', 'log.txt')
 
         command = "{0} mdrun -nice 4 -s {1}_md -o {1}_md -c {1}_after_md -v".format(gmx_cmd, project_name)

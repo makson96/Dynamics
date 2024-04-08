@@ -30,12 +30,13 @@ class CalculationWindow:
 
     # This function will create main Calculation Window
     def window(self, root, s_params, status, parent):
-        root.wm_title("Calculation Window")
+        self.root = root
+        self.parent = parent
         frame1 = Frame(root)
         frame1.pack(side=TOP)
         frame2 = Frame(root)
         frame2.pack(side=TOP)
-        s_params.change_stop_value(True);
+        #s_params.change_stop_value(True)
         self.bar_var = StringVar(root)
         self.bar_var.set("Ready to start")
 
@@ -47,7 +48,7 @@ class CalculationWindow:
         exit_button = Button(frame2, text="EXIT", command=root.destroy)
         exit_button.pack(side=LEFT)
 
-        save_button = Button(frame2, text="SAVE", command=lambda: pymol_plugin_dynamics.select_file_save(1))
+        save_button = Button(frame2, text="SAVE", command=lambda: pymol_plugin_dynamics.select_file_save(s_params, 1))
         save_button.pack(side=LEFT)
 
         stop_button = Button(frame2, text="STOP", command=lambda: self.start_counting(0, s_params))
@@ -63,7 +64,7 @@ class CalculationWindow:
             start_button.configure(state=DISABLED)
         self.start_button = start_button
 
-        log_button = Button(frame2, text="LOG", command=pymol_plugin_dynamics.log_window)
+        log_button = Button(frame2, text="LOG", command=pymol_plugin_dynamics.log_window(s_params))
         log_button.pack(side=LEFT)
         log_button.configure(state=DISABLED)
         self.log_button = log_button
@@ -72,46 +73,48 @@ class CalculationWindow:
         tasks_nr = 0.0
         for task in s_params.progress.to_do:
             tasks_nr = tasks_nr + task
-        self.tasks_to_do = tasks_nr       
+        self.tasks_to_do = tasks_nr      
+        self.start_counting(1, s_params)
+
         thread.start_new_thread(self.bar_update, (s_params, status))
         self.bar_display(root, parent, s_params)
-
+        
     # This function will update status bar during molecular dynamics simulation (beware this is separate thread)
-    def bar_update(self, s_params, status):
+    def bar_update(self, s_params, status):    
         percent = 0.0
-        while s_params.stop:
+        while s_params.stop:            
             time.sleep(0.5)
-        while percent != 100:  # and error == ""
+        if percent != 100:  # and error == ""          
             time.sleep(0.5)
-            percent = pymol_plugin_dynamics.steps_status_bar("only_bar", s_params)
+            percent = pymol_plugin_dynamics.steps_status_bar(0, s_params)
             self.queue_percent.put(percent)
             if s_params.stop == 0:
                 self.queue_status.put(status[1])
             elif s_params.stop == 1:
-                self.queue_status.put("User Stoped")
-
+                self.queue_status.put("User Stoped")  
     #        if error != "":
     #            self.queue_status.put("Fatal Error")
 
     # This function will update status bar in thread safe manner
     def bar_display(self, root, parent, s_params):
-        try:
+        try:            
             status = self.queue_status.get(block=False)
-            self.bar_var.set(status)
-        except Queue.Empty:
+            self.bar_var.set(status)            
+        except Queue.Empty:      
             status = "No change"
+
         try:
             percent = self.queue_percent.get(block=False)
             self.bar_widget.configure(value=percent)
         except:
             pass
-        if status == "Fatal Error":
+        if status == "Fatal Error":            
             self.start_counting(0, s_params)
             self.start_button.configure(state=DISABLED)
             tkMessageBox.showerror("GROMACS Error Message", "Error")  # error)
         if status == "Finished!":
             root.destroy()
-            # Show interpretation window after successful completion of the calculations...
+            #Show interpretation window after successful completion of the calculations...
             pymol_plugin_dynamics.show_interpretation_window(parent, s_params)
         else:
             root.after(100, self.bar_display, root, parent, s_params)

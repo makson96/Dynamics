@@ -95,7 +95,6 @@ class Vectors:
     # Show contact map on PyMOL screen
     def show_contact_map(self, sensitivity, project_name):
         contact_matrix = self.enm.getKirchhoff()
-        print(contact_matrix)
         c_alpha_nr = 0
         for c_alpha_list in contact_matrix:
             c_alpha_nr = c_alpha_nr + 1

@@ -42,7 +42,7 @@ class InterpretationWindow:
         self.max_time = max_time
 
     def window(self, root, s_params):
-        vectors_prody = s_params.vector_prody
+        vectors_prody = s_params.vectors_prody
         root.wm_title("MD Interpretation")
         self.tentry_value = StringVar(root)
         self.tentry_value.set("0.0")
@@ -161,7 +161,7 @@ class InterpretationWindow:
         exit_button.pack(side=LEFT)
         save_button = Button(frame1_8, text="Save", command=lambda: pymol_plugin_dynamics.select_file_save(s_params))
         save_button.pack(side=LEFT)
-        log_button = Button(frame1_8, text="Log", command=pymol_plugin_dynamics.log_window)
+        log_button = Button(frame1_8, text="Log", command=pymol_plugin_dynamics.log_window(s_params))
         log_button.pack(side=LEFT)
 
         if not prody:
