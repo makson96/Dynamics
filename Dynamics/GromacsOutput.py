@@ -1,53 +1,56 @@
 # This class is responsible for interface to GROMACS. It will read all important data from GROMACS tools.
 import pymol_plugin_dynamics
 import os
+import re
+
+
 class GromacsOutput:
-    version = "GROMACS not found"
-    command = ""
-    force_list = []
-    water_list = []
-    group_list = []
-    restraints = []
 
     def __init__(self):
         # Remove garbage
-        dynamics_dir = pymol_plugin_dynamics.get_dynamics_dir()
-        garbage_files = next(os.walk(dynamics_dir))[2]
+        self.dynamics_dir = pymol_plugin_dynamics.get_dynamics_dir()
+        self.gmx_exe = ""
+        self.version = ""
+        self.build_arch = ""
+        self.build_on_cygwin = 0
+        self.get_gromacs_exe_info()
+
+        self.force_list = []
+        self.water_list = []
+        self.group_list = []
+        self.restraints = []
+        if self.gmx_exe:
+            # Track current directory and switch to dynamics_dir before invoking gmx...
+            current_dir = os.getcwd()
+            os.chdir(self.dynamics_dir)
+            self.gmx_stdout_file_path = "test_gromacs.txt"
+            self.create_gmx_stdout_file()
+            self.init2()
+            # Switch back to current directory...
+            os.chdir(current_dir)
+
+    def create_gmx_stdout_file(self):
+        garbage_files = next(os.walk(self.dynamics_dir))[2]
         for garbage in garbage_files:
             if garbage[0] == "#":
-                os.remove(dynamics_dir + garbage)
+                os.remove(self.dynamics_dir + garbage)
 
-        gmx_exe, gmx_version, gmx_build_arch, gmx_on_cygwin = pymol_plugin_dynamics.get_gromacs_exe_info()
-        self.version = gmx_version
-        self.command = gmx_exe
-
-        # Track current directiry and switch to dynamics_dir before invoking gmx...
-        current_dir = os.getcwd()
-        os.chdir(dynamics_dir)
-
-        self.init2()
-
-        # Switch back to current directory...
-        os.chdir(current_dir)
-
-    def init2(self):
         print("Reading available force fields and water models")
-
-        fo = open("test_gromacs.pdb", "wb")
-        fo.write(b"ATOM      1  N   LYS     1      24.966  -0.646  22.314  1.00 32.74      1SRN  99\n")
-        fo.close()
+        tg_pdb_file_path = "test_gromacs.pdb"
+        tg_pdb_file = open(tg_pdb_file_path, "wb")
+        tg_pdb_file.write(b"ATOM      1  N   LYS     1      24.966  -0.646  22.314  1.00 32.74      1SRN  99\n")
+        tg_pdb_file.close()
 
         gmx_stdin_file_path = "gromacs_stdin.txt"
-        fo = open(gmx_stdin_file_path, "w")
-        fo.write("1\n")
-        fo.write("1")
-        fo.close()
+        gmx_stdin_file = open(gmx_stdin_file_path, "w")
+        gmx_stdin_file.write("1\n1")
+        gmx_stdin_file.close()
 
-        gmx_stdout_file_path = "test_gromacs.txt"
+        cmd = f"{self.gmx_exe} pdb2gmx -f {tg_pdb_file_path} -o test_gromacs.gro -p test_gromacs.top"
+        pymol_plugin_dynamics.execute_subprocess(cmd, gmx_stdin_file_path, self.gmx_stdout_file_path)
 
-        cmd = "{} pdb2gmx -f test_gromacs.pdb -o test_gromacs.gro -p test_gromacs.top".format(self.command)
-        pymol_plugin_dynamics.execute_subprocess(cmd, gmx_stdin_file_path, gmx_stdout_file_path)
-        lista_gromacs = pymol_plugin_dynamics.read_text_lines(gmx_stdout_file_path)
+    def init2(self):
+        lista_gromacs = pymol_plugin_dynamics.read_lines_standardize(self.gmx_stdout_file_path)
 
         # Reading available force fields
         force_start_line = 0
@@ -78,10 +81,10 @@ class GromacsOutput:
 
         gmx_stdout_file_path = "test_gromacs.txt"
 
-        cmd = "{} trjconv -f  test_gromacs.pdb -s test_gromacs.pdb -o test_gromacs2.pdb".format(self.command)
+        cmd = "{} trjconv -f  test_gromacs.pdb -s test_gromacs.pdb -o test_gromacs2.pdb".format(self.gmx_exe)
         pymol_plugin_dynamics.execute_subprocess(cmd, gmx_stdin_file_path, gmx_stdout_file_path)
 
-        group_test_list = pymol_plugin_dynamics.read_text_lines(gmx_stdout_file_path)
+        group_test_list = pymol_plugin_dynamics.read_lines_standardize(gmx_stdout_file_path)
 
         # Reading available groups
         group_start_line = 0
@@ -118,10 +121,10 @@ class GromacsOutput:
 
         gmx_stdout_file_path = "test_gromacs.txt"
 
-        cmd = "{} pdb2gmx -f  test_gromacs.pdb -o test_gromacs.gro -p test_gromacs.top".format(self.command)
+        cmd = "{} pdb2gmx -f  test_gromacs.pdb -o test_gromacs.gro -p test_gromacs.top".format(self.gmx_exe)
         pymol_plugin_dynamics.execute_subprocess(cmd, gmx_stdin_file_path, gmx_stdout_file_path)
 
-        lista_gromacs = pymol_plugin_dynamics.read_text_lines(gmx_stdout_file_path)
+        lista_gromacs = pymol_plugin_dynamics.read_lines_standardize(gmx_stdout_file_path)
         self.water_list = pymol_plugin_dynamics.get_water_models_info(lista_gromacs)
 
         # Switch back to current directory...
@@ -140,10 +143,10 @@ class GromacsOutput:
         fo.write("q")
         fo.close()
 
-        cmd = "{} make_ndx -f {}.pdb -o index.ndx".format(self.command, project_name)
+        cmd = "{} make_ndx -f {}.pdb -o index.ndx".format(self.gmx_exe, project_name)
         pymol_plugin_dynamics.execute_subprocess(cmd, "gromacs_stdin.txt", "restraints.log")
 
-        index_list = pymol_plugin_dynamics.read_text_lines("restraints.log")
+        index_list = pymol_plugin_dynamics.read_lines_standardize("restraints.log")
 
         index_position = 0
         atoms = ""
@@ -159,3 +162,27 @@ class GromacsOutput:
                 atoms = atoms + line
         self.restraints[index_position - 1].append(atoms)
         os.chdir(current_dir)
+
+    # Detect gmx executable along with other associated information...
+    def get_gromacs_exe_info(self):
+        gmx_exes = ['gmx_mpi_d', 'gmx_mpi', 'gmx']
+
+        for gmx in gmx_exes:
+            cmd = f"{gmx} -version"
+            output = pymol_plugin_dynamics.check_output_subprocess(cmd)
+            if not re.search("GROMACS version:", output, re.I):
+                continue
+
+            self.gmx_exe = gmx
+            for line in output.split("\n"):
+                if re.search("^[ ]*GROMACS version:", line, re.I):
+                    self.gmx_exe = gmx
+                    self.version = re.sub("^[ ]*GROMACS version:[ ]*", "", line, flags=re.I)
+                    if "VERSION " in self.version:
+                        self.version = self.version.split("VERSION ")[1].rstrip()
+                elif re.search(r"^[ ]*Build OS/arch:", line, re.I):
+                    self.build_arch = re.sub("^[ ]*Build OS/arch:[ ]*", "", line, flags=re.I)
+
+                    if re.search(r"CYGWIN", self.build_arch, re.I):
+                        self.build_on_cygwin = 1
+            break

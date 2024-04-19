@@ -29,7 +29,7 @@ class SimulationParameters:
         self.progress = ProgressStatus.ProgressStatus()
 
     def create_cfg_files(self):
-        self.em_file, self.pr_file, self.md_file =  pymol_plugin_dynamics.create_config_files(self.project_name)
+        self.em_file, self.pr_file, self.md_file = pymol_plugin_dynamics.create_config_files(self.project_name)
 
     def change_stop_value(self, value):
         if value:

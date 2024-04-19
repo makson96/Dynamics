@@ -10,12 +10,12 @@
 # - Sara Boch Kminikowska
 # - Manish Sud (msud@san.rr.com; URL: www.MayaChemTools.org)
 # - Thomas Holder
-#
+# - Natalia Floriańska
 
 from __future__ import print_function
 
 # --Import libraries--
-# Import nativ python libraries
+# Import native python libraries
 import os
 import pickle
 import shutil
@@ -27,14 +27,12 @@ import tarfile
 import re
 
 # Import libraries for tk graphic interface
-import _thread as thread
-import queue as Queue
 from tkinter import *
 from tkinter import messagebox as tkMessageBox
 from tkinter import filedialog as tkFileDialog
 from tkinter.ttk import Progressbar, Scrollbar
 # Import libraries from PyMOL specific work.
-from pymol import cmd, cgo, parsing, plugins, CmdException
+from pymol import cmd, parsing, plugins, CmdException
 
 # TODO: It seams that stored is removed from PyMOL API. We need to handle it correctly
 try:
@@ -48,19 +46,17 @@ try:
 except ModuleNotFoundError:
     prody = False
 
-# Plugin Version
+# Import Dynamics libraries
 from version import VERSION
-plugin_ver = f" {VERSION}"
-import GromacsInput
-import GromacsOutput
 import SimulationParameters
-import Vectors
 import MdpConfig
 import CalculationWindow
 import InterpretationWindow
 import WaterWindows
 import RestraintsWindow
 import GenionWindow
+
+plugin_ver = f" {VERSION}"
 EM_INIT_CONFIG = """define = -DFLEX_SPC
 constraints = none
 integrator = steep
@@ -149,7 +145,8 @@ cutoff-scheme = Verlet
 coulombtype = PME"""
 calculationW = CalculationWindow.CalculationWindow()
 
-# This function will initialize all plugin stufs
+
+# This function will initialize all plugin stuffs
 def init_function(travis_ci=False, gui_library="qt", parent=False):
     # Fallback to tk, till qt is ready
     gui_library = "tk"
@@ -172,26 +169,21 @@ def init_function(travis_ci=False, gui_library="qt", parent=False):
         os.makedirs(project_dir)
 
     print("Searching for GROMACS installation")
-    os.chdir(dynamics_dir)
-    gmx_exe, gmx_version, gmx_build_arch, gmx_on_cygwin = get_gromacs_exe_info()
-    os.chdir(home_dir)
+    simulation_parameters = SimulationParameters.SimulationParameters()
 
     supported_gmx_versions = ["2016", "2018"]
-    if not len(gmx_exe):
+    if not len(simulation_parameters.gmx_output.gmx_exe):
         print("GROMACS 2016 or newer not detected.")
         status = ["fail",
                   "GROMACS not detected. Please install and setup GROMACS 2016 or newer correctly for your platform."
                   " Check '~/.dynamics/test_gromacs.txt' for more details. Don't forget to add GROMACS bin directory"
                   " to your PATH"]
-    elif gmx_version[0:4] not in supported_gmx_versions:
+    elif simulation_parameters.gmx_output.version[0:4] not in supported_gmx_versions:
         print("Warning. Unsupported GROMACS Version")
-    if status[0] == "ok":
-        simulation_parameters = SimulationParameters.SimulationParameters()
-    else:
-        simulation_parameters = False
     if not travis_ci:
         create_gui(gui_library, status, simulation_parameters, parent)
     return status, simulation_parameters
+
 
 # This function creates files needed by the project
 def create_config_files(project_name):
@@ -236,47 +228,6 @@ def create_config_files(project_name):
         pass
     return em_file, pr_file, md_file
 
-# Detect gmx executable along with other associated information...
-def get_gromacs_exe_info():
-    gmx_exes = ['gmx_mpi_d', 'gmx_mpi', 'gmx']
-
-    gmx_exe = ""
-    version = ""
-    build_arch = ""
-    build_on_cygwin = 0
-
-    stdout_file = "test_gromacs.txt"
-    if os.path.isfile(stdout_file):
-        os.remove(stdout_file)
-
-    for gmx in gmx_exes:
-        cmd = gmx + " -version"
-        execute_subprocess(cmd, None, stdout_file)
-
-        ofs = open(stdout_file, "r")
-        output = ofs.read()
-        ofs.close()
-
-        output = standardize_new_line_char(output)
-        if not re.search("GROMACS version:", output, re.I):
-            continue
-
-        gmx_exe = gmx
-        for line in output.split("\n"):
-            if re.search("^[ ]*GROMACS version:", line, re.I):
-                gmx_exe = gmx
-                version = re.sub("^[ ]*GROMACS version:[ ]*", "", line, flags=re.I)
-                if "VERSION " in version:
-                    version = version.split("VERSION ")[1].rstrip()
-            elif re.search(r"^[ ]*Build OS/arch:", line, re.I):
-                build_arch = re.sub("^[ ]*Build OS/arch:[ ]*", "", line, flags=re.I)
-
-                if re.search(r"CYGWIN", build_arch, re.I):
-                    build_on_cygwin = 1
-        break
-
-    return gmx_exe, version, build_arch, build_on_cygwin
-
 
 def get_dynamics_dir():
     home_dir = os.path.expanduser('~')
@@ -289,6 +240,20 @@ def get_project_dirs(project_name="nothing"):
     dynamics_dir = get_dynamics_dir()
     project_dir = os.path.join(dynamics_dir, project_name, '')
     return project_dir
+
+
+def check_output_subprocess(command, stdin_file_path=None):
+    stdin_file = None
+    stdin_msg = "None"
+    if stdin_file_path:
+        stdin_file = open(stdin_file_path, "r")
+        stdin_msg = stdin_file_path
+    print("Running command: " + command + "; STDIN: " + stdin_msg)
+    output = subprocess.check_output(command, shell=True, stdin=stdin_file).decode(sys.stdout.encoding)
+    if stdin_file_path:
+        stdin_file.close()
+
+    return output
 
 
 # Execute command using stdin/stdout as needed...
@@ -364,19 +329,13 @@ def execute_and_monitor_subprocess(command, stdin_file_path=None, stdout_file_pa
         stdout_file.close()
 
 
-# Change Windows and Mac new line char to UNIX...
-def standardize_new_line_char(in_text):
-    out_text = re.sub("(\r\n)|(\r)", "\n", in_text)
-    return out_text
-
-
-# Read text lines and standardize new line char...
-def read_text_lines(text_file_path):
+# Read lines of text file and standardize new line char. Returns list.
+def read_lines_standardize(text_file_path):
     text_lines = []
 
     ifs = open(text_file_path, "r")
     for line in iter(ifs.readline, ''):
-        new_line = standardize_new_line_char(line)
+        new_line = re.sub("(\r\n)|(\r)", "\n", line)
         text_lines.append(new_line)
     ifs.close()
 
@@ -1260,7 +1219,7 @@ def mdp_configure(config_name, master, s_params):
         no_molecule_warning()
 
 
-# This function will update MDP class objects alfter closing "mdp_configure" window
+# This function will update MDP class objects after closing "mdp_configure" window
 def mdp_update(values, check_list, mdp, s_params, root_to_kill=""):
     em_file = s_params.em_file
     pr_file = s_params.pr_file
@@ -1282,7 +1241,7 @@ def mdp_update(values, check_list, mdp, s_params, root_to_kill=""):
 
 
 # This function will create Simulation Steps configuration window
-def steps_configure(master, restraints_button, s_params, restraintsW):
+def steps_configure(master, restraints_button, s_params, restraints_w):
     project_name = s_params.project_name
     progress = s_params.progress
     gromacs2 = s_params.gmx_input
@@ -1358,7 +1317,7 @@ def steps_configure(master, restraints_button, s_params, restraintsW):
         c6.pack(side=TOP, anchor=W)
 
         c7 = Checkbutton(frame1, text="Restraints (optional)" + steps_status_done(6, s_params), variable=check_var7,
-                         command=lambda: restraintsW.check(check_var7.get(), restraints_button))
+                         command=lambda: restraints_w.check(check_var7.get(), restraints_button))
         c7.pack(side=TOP, anchor=W)
 
         c8 = Checkbutton(frame1, text="Molecular Dynamics Simulation" + steps_status_done(7, s_params),
@@ -1417,7 +1376,7 @@ def steps_click_resume(var, bar, s_params, variable_list=[]):
     bar.configure(value=percent)
 
 
-# This function will close steps window and update number of steps to do
+# This function will close steps window and update number of steps to take
 def steps_click_ok(root, s_params):
     root.destroy()
     progress = s_params.progress
@@ -1455,16 +1414,15 @@ def steps_status_bar(var, s_params, variable_list=[]):
         progress.resume = 0
 
     if progress.steps != 0:
-        #print("progress.steps: "+str(progress.steps))
-        #print("progress.to_do: "+str(progress.to_do))
-        #percent = ((progress.steps - sum(progress.to_do)) * 100) / progress.steps
-        #percent = sum(progress.to_do) / progress.steps * 100
+        # print("progress.steps: "+str(progress.steps))
+        # print("progress.to_do: "+str(progress.to_do))
+        # percent = ((progress.steps - sum(progress.to_do)) * 100) / progress.steps
+        # percent = sum(progress.to_do) / progress.steps * 100
         percent = sum(progress.status)/sum(progress.to_do) * 100 
     else:
         percent = 100
 
     return percent
-
 
 
 # This is the window to setup ProDy options
